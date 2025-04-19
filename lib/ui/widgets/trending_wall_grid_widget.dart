@@ -47,7 +47,7 @@ class TrendingWallGridWidget extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 15,
                   mainAxisSpacing: 15,
-                  childAspectRatio: 0.6,
+                  childAspectRatio: 0.55,
                   children: List.generate(
                       8,
                       (index) => const ShimmerWidget(
@@ -71,7 +71,7 @@ class TrendingWallGridWidget extends StatelessWidget {
                                   crossAxisCount: 2,
                                   mainAxisSpacing: 15,
                                   crossAxisSpacing: 15,
-                                  childAspectRatio: 0.6),
+                                  childAspectRatio: 0.55),
                           delegate: SliverChildBuilderDelegate(
                               childCount: isActionGrid
                                   ? provider.actionWallList.length

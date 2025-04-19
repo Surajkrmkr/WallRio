@@ -12,12 +12,12 @@ class WallRioThemeData {
               color: isDarkTheme ? bgDarkColor : whiteColor,
               surfaceTintColor: isDarkTheme ? bgDarkColor : whiteColor),
           navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
+            backgroundColor: isDarkTheme ? bgDark2Color : whiteColor,
             indicatorColor: isDarkTheme ? bgDarkAccentColor : blackColor,
             // labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-            iconTheme: MaterialStateProperty.resolveWith(
+            iconTheme: WidgetStateProperty.resolveWith(
               (states) {
-                if (states.contains(MaterialState.selected)) {
+                if (states.contains(WidgetState.selected)) {
                   return const IconThemeData(color: whiteColor);
                 }
                 return IconThemeData(
@@ -27,9 +27,9 @@ class WallRioThemeData {
             elevation: 0,
           ),
           switchTheme: SwitchThemeData(
-              thumbColor: MaterialStateProperty.all(
+              thumbColor: WidgetStateProperty.all(
                   isDarkTheme ? whiteColor : blackColor),
-              trackColor: MaterialStateProperty.all(
+              trackColor: WidgetStateProperty.all(
                   isDarkTheme ? bgDarkAccentColor : whiteColor)),
           dialogTheme: DialogTheme(
               backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
@@ -52,20 +52,20 @@ class WallRioThemeData {
               surfaceTintColor: Colors.transparent),
           filledButtonTheme: FilledButtonThemeData(
               style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(
+                  backgroundColor: WidgetStateProperty.all(
                       isDarkTheme ? bgDarkAccentColor : blackColor),
-                  foregroundColor: MaterialStateProperty.all(whiteColor))),
+                  foregroundColor: WidgetStateProperty.all(whiteColor))),
           outlinedButtonTheme: OutlinedButtonThemeData(
               style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(
+                  foregroundColor: WidgetStateProperty.all(
                       isDarkTheme ? whiteColor : blackColor),
-                  overlayColor: MaterialStateProperty.all(isDarkTheme
+                  overlayColor: WidgetStateProperty.all(isDarkTheme
                       ? blackColor.withOpacity(0.1)
                       : whiteColor.withOpacity(0.4)))),
           textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
-            foregroundColor: MaterialStateProperty.all(
-                isDarkTheme ? whiteColor : blackColor),
+            foregroundColor:
+                WidgetStateProperty.all(isDarkTheme ? whiteColor : blackColor),
           )),
           chipTheme: ChipThemeData(
               backgroundColor: isDarkTheme
@@ -79,7 +79,7 @@ class WallRioThemeData {
               showCheckmark: false),
           textTheme: TextTheme(
               displayLarge: TextStyle(
-                  fontSize: 25,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
               displayMedium: TextStyle(
@@ -98,33 +98,38 @@ class WallRioThemeData {
 
 const Color whiteColor = Colors.white;
 const Color blackColor = Colors.black;
-const Color bgDarkColor = Color(0xFF0A0A1E);
-const Color bgDarkAccentColor = Color(0xFF2B2B52);
+const Color bgDarkColor = Color(0xFF1B1F28);
+const Color bgDark2Color = Color(0xFF2D3340);
+const Color bgDarkAccentColor = Color(0xFF37C3A3);
 
 const Map<GradientAccentType, List<Color>> gradientColorMap = {
-  GradientAccentType.defaultType: [Color(0xFFFF4949), Color(0xFF5344FF)],
-  GradientAccentType.mild: [Color(0xFF67B26F), Color(0xFF4ca2cd)],
-  GradientAccentType.sunset: [Color(0xFFee0979), Color(0xFFff6a00)],
-  GradientAccentType.radar: [Color(0xFFA770EF), Color(0xFFCF8BF3), Color(0xFFFDB99B)],
-  GradientAccentType.viceCity: [Color(0xFF3494E6), Color(0xFFEC6EAD)],
-  GradientAccentType.bradyFun: [Color(0xFF00c3ff), Color(0xFFffff1c)],
-  GradientAccentType.bloodRed: [Color(0xFFf85032), Color(0xFFe73827)],
-  GradientAccentType.sherbert: [Color(0xFFf79d00), Color(0xFF64f38c)],
-  GradientAccentType.grapeFruit: [Color(0xFFe96443), Color(0xFF64f38c)],
-  GradientAccentType.sweetMorning: [Color(0xFFff5f6d), Color(0xFFffc371)],
+  GradientAccentType.defaultType: [Color(0xFF37C3A3), Color(0xFF37C3A3)],
+  // GradientAccentType.mild: [Color(0xFF67B26F), Color(0xFF4ca2cd)],
+  // GradientAccentType.sunset: [Color(0xFFee0979), Color(0xFFff6a00)],
+  // GradientAccentType.radar: [
+  //   Color(0xFFA770EF),
+  //   Color(0xFFCF8BF3),
+  //   Color(0xFFFDB99B)
+  // ],
+  // GradientAccentType.viceCity: [Color(0xFF3494E6), Color(0xFFEC6EAD)],
+  // GradientAccentType.bradyFun: [Color(0xFF00c3ff), Color(0xFFffff1c)],
+  // GradientAccentType.bloodRed: [Color(0xFFf85032), Color(0xFFe73827)],
+  // GradientAccentType.sherbert: [Color(0xFFf79d00), Color(0xFF64f38c)],
+  // GradientAccentType.grapeFruit: [Color(0xFFe96443), Color(0xFF64f38c)],
+  // GradientAccentType.sweetMorning: [Color(0xFFff5f6d), Color(0xFFffc371)],
 };
 
 enum GradientAccentType {
   defaultType,
-  viceCity,
-  mild,
-  sunset,
-  radar,
-  bradyFun,
-  bloodRed,
-  sherbert,
-  grapeFruit,
-  sweetMorning
+  // viceCity,
+  // mild,
+  // sunset,
+  // radar,
+  // bradyFun,
+  // bloodRed,
+  // sherbert,
+  // grapeFruit,
+  // sweetMorning
 }
 
 extension ColorExtensions on String {

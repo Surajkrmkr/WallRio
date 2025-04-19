@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:wallrio/model/collection_model.dart';
 import 'package:wallrio/services/export.dart';
 
 class WallRioModel {
   final List<Banners> banners;
+  final List<TagBanners> tagBanners;
   final List<Walls> walls;
+  WallRioCollection collection;
   String error = "";
 
-  WallRioModel({this.banners = const [], this.walls = const []});
+  WallRioModel(
+      {this.banners = const [],
+      this.walls = const [],
+      this.collection = const WallRioCollection(),
+      this.tagBanners = const []});
+
+  set setCollection(WallRioCollection value) => collection = value;
 
   factory WallRioModel.fromJson(Map<String, dynamic> json) => WallRioModel(
+      tagBanners: json['tagBanners'] == null
+          ? []
+          : (json['tagBanners'] as List<dynamic>)
+              .map((v) => TagBanners.fromJson(v))
+              .toList(),
       banners: json['banners'] == null
           ? []
           : (json['banners'] as List<dynamic>)
@@ -41,9 +55,24 @@ class Banners {
       );
 }
 
+class TagBanners {
+  final int id;
+  final String url;
+  final String tag;
+
+  TagBanners({required this.id, required this.url, required this.tag});
+
+  factory TagBanners.fromJson(Map<String, dynamic> json) => TagBanners(
+        id: json['id'] ?? 0,
+        url: json['url'] ?? "",
+        tag: json['tag'] ?? "",
+      );
+}
+
 class Walls {
   final int id;
   final String name;
+  final String subjectId;
   final String author;
   final String url;
   final String thumbnail;
@@ -56,6 +85,7 @@ class Walls {
   Walls(
       {required this.id,
       required this.name,
+      required this.subjectId,
       required this.author,
       required this.url,
       required this.isPremium,
@@ -66,8 +96,9 @@ class Walls {
       required this.colorList});
 
   factory Walls.fromJson(Map<String, dynamic> json) => Walls(
-        id: json['id'] ?? 0,
+        id: json['id'] != null ? int.parse(json['id'].toString()) : 0,
         name: json['name'] ?? "",
+        subjectId: json['subjectId'] ?? "",
         author: json['author'] ?? "",
         url: json['url'] ?? "",
         thumbnail: json['thumbnail'] ?? "",

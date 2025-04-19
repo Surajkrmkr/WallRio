@@ -5,7 +5,7 @@ import 'package:wallrio/ui/widgets/export.dart';
 class DarkThemeProvider with ChangeNotifier {
   bool _darkTheme = true;
 
-  GradientAccentType _gradType = GradientAccentType.sunset;
+  GradientAccentType _gradType = GradientAccentType.defaultType;
 
   bool get darkTheme => _darkTheme;
 

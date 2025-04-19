@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -5,8 +6,8 @@ import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
-class CategoryPage extends StatelessWidget {
-  const CategoryPage({super.key});
+class CollectionPage extends StatelessWidget {
+  const CollectionPage({super.key});
 
   void _onLongPressHandler(context, model) {
     showModalBottomSheet(
@@ -48,7 +49,7 @@ class CategoryPage extends StatelessWidget {
                     secondaryText: "Rio",
                     userProfileIconRight: false,
                     showUserProfileIcon: true),
-                _buildCategoryUI()
+                _buildCollectionUI()
               ],
             ),
           ),
@@ -59,7 +60,7 @@ class CategoryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryUI() {
+  Widget _buildCollectionUI() {
     return Consumer<WallRio>(builder: (context, provider, _) {
       return provider.isLoading
           ? SliverPadding(
@@ -69,17 +70,15 @@ class CategoryPage extends StatelessWidget {
           : provider.error.isEmpty
               ? SliverList(
                   delegate: SliverChildBuilderDelegate(
-                      childCount: provider.categories!.length,
+                      childCount: provider.collections.length,
                       (context, index) {
-                  final categoryName =
-                      provider.categories!.keys.elementAt(index);
-                  final categoryWalls =
-                      provider.categories!.values.elementAt(index);
+                  final collectionName = provider.collections[index].name;
+                  final collectionsWalls = provider.collections[index].walls!;
                   return Column(children: [
-                    _buildCategoryHeaderUI(
-                        categoryName, categoryWalls, context),
-                    _buildListViewUI(categoryWalls),
-                    if (index == provider.categories!.length - 1)
+                    _buildCollectionHeaderUI(
+                        collectionName, collectionsWalls, context),
+                    _buildListViewUI(collectionsWalls),
+                    if (index == provider.collections.length - 1)
                       const SizedBox(height: 20)
                   ]);
                 }))
@@ -115,37 +114,47 @@ class CategoryPage extends StatelessWidget {
 
   SizedBox _buildListViewUI(List<Walls?> categoryWalls) {
     return SizedBox(
-      height: 230,
-      child: ListView.separated(
-          separatorBuilder: (context, index) => const SizedBox(width: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: categoryWalls.length < 8 ? categoryWalls.length : 8,
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (context, i) {
-            return Hero(
-              tag: categoryWalls[i]!.url,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: SizedBox(
-                  width: 120,
-                  child: Stack(fit: StackFit.expand, children: [
-                    CNImage(imageUrl: categoryWalls[i]!.thumbnail),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _onTapHandler(context, categoryWalls[i]),
-                        onLongPress: () =>
-                            _onLongPressHandler(context, categoryWalls[i]),
-                        splashColor: blackColor.withOpacity(0.3),
-                      ),
+      height: 220,
+      child: CarouselSlider.builder(
+        itemCount: categoryWalls.length < 8 ? categoryWalls.length : 8,
+        options: CarouselOptions(
+            height: 220.0,
+            viewportFraction: 0.35,
+            padEnds: true,
+            autoPlay: true,
+            aspectRatio: 1080 / 2600,
+            enlargeCenterPage: true,
+            enlargeFactor: 0.4,
+            pageSnapping: true,
+            enableInfiniteScroll: true,
+            enlargeStrategy: CenterPageEnlargeStrategy.height),
+        itemBuilder: (BuildContext context, int i, int index) => Hero(
+          tag: categoryWalls[i]!.url,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(25),
+              child: SizedBox(
+                width: 120,
+                child: Stack(fit: StackFit.expand, children: [
+                  CNImage(imageUrl: categoryWalls[i]!.thumbnail),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _onTapHandler(context, categoryWalls[i]),
+                      onLongPress: () =>
+                          _onLongPressHandler(context, categoryWalls[i]),
+                      splashColor: blackColor.withOpacity(0.3),
                     ),
-                    buildImgBottomUI(categoryWalls[i]!),
-                    VerifyIconWidget(visibility: !categoryWalls[i]!.isPremium)
-                  ]),
-                ),
+                  ),
+                  buildImgBottomUI(categoryWalls[i]!),
+                  VerifyIconWidget(visibility: !categoryWalls[i]!.isPremium)
+                ]),
               ),
-            );
-          }),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -194,7 +203,7 @@ class CategoryPage extends StatelessWidget {
     return IconButton(onPressed: onTap, icon: Icon(iconData, color: color));
   }
 
-  Widget _buildCategoryHeaderUI(
+  Widget _buildCollectionHeaderUI(
       String categoryName, List<Walls?> walls, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),

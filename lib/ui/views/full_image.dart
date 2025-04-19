@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_windowmanager/flutter_windowmanager.dart';
+// import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -13,8 +13,8 @@ class FullImage extends StatefulWidget {
 }
 
 class _FullImageState extends State<FullImage> {
-  _secureScreen() =>
-      FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+  _secureScreen() => {};
+  // FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _FullImageState extends State<FullImage> {
   @override
   void dispose() async {
     super.dispose();
-    await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
+    // await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
   }
 
   @override

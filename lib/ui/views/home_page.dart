@@ -16,22 +16,13 @@ class HomePage extends StatelessWidget {
               primary: false,
               slivers: [
                 const SliverAppBarWidget(
-                    showLogo: true,
+                    showLogo: false,
                     showSearchBtn: true,
-                    text: "WallRio",
+                    text: "Wall",
+                    secondaryText: "Rio",
                     userProfileIconRight: false,
                     showUserProfileIcon: true),
-                const SliverToBoxAdapter(child: BannerWidget()),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(top: 20, bottom: 20, left: 25),
-                    child: Text(
-                      "Trending Wallpapers",
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ),
+                SliverToBoxAdapter(child: BannerWidget()),
                 const TrendingWallGridWidget()
               ],
             ),

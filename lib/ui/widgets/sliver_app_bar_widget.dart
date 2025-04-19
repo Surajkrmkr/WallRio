@@ -9,6 +9,7 @@ class SliverAppBarWidget extends StatelessWidget {
   final bool showLogo;
   final bool showSearchBtn;
   final String text;
+  final String secondaryText;
   final bool showBackBtn;
   final bool clearSearchedData;
   final bool centeredTitle;
@@ -18,6 +19,7 @@ class SliverAppBarWidget extends StatelessWidget {
       {super.key,
       required this.showLogo,
       required this.text,
+      this.secondaryText = '',
       required this.showSearchBtn,
       this.showBackBtn = false,
       this.clearSearchedData = false,
@@ -54,40 +56,31 @@ class SliverAppBarWidget extends StatelessWidget {
                   isActionReset: clearSearchedData))
         ],
       ),
-      toolbarHeight: MediaQuery.of(context).size.height * 0.10,
-      centerTitle: centeredTitle,
+      toolbarHeight: MediaQuery.of(context).size.height * 0.08,
+      centerTitle: true,
       title: Column(
         children: [
           Consumer<DarkThemeProvider>(
             builder: (context, provider, _) {
-              return Padding(
-                padding: EdgeInsets.only(left: centeredTitle ? 0.0 : 10),
-                child: GradientText(
-                  text,
-                  style: Theme.of(context).textTheme.displayLarge,
-                  colors: gradientColorMap[provider.gradType]!,
-                ),
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    text,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                  Text(
+                    secondaryText,
+                    style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                        color: gradientColorMap[provider.gradType]!.first),
+                  )
+                ],
               );
             },
           ),
-          Offstage(
-            offstage: !showLogo,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Theme.of(context).hintColor.withOpacity(0.1),
-              ),
-              child: Text(
-                "Team Shadow",
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ),
-          )
         ],
       ),
       actions: [
-        _buildUserProfileIcon(context, !userProfileIconRight),
         _buildSearchIcon(context),
         const SizedBox(width: 20),
       ],

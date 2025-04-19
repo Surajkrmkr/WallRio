@@ -36,11 +36,11 @@ class FavouritePage extends StatelessWidget {
           slivers: [
             const SliverAppBarWidget(
                 showLogo: false,
-                showSearchBtn: false,
-                centeredTitle: false,
-                showUserProfileIcon: true,
-                userProfileIconRight: true,
-                text: "Your\nChoice"),
+                showSearchBtn: true,
+                text: "Wall",
+                secondaryText: "Rio",
+                userProfileIconRight: false,
+                showUserProfileIcon: true),
             _buildListUI(context)
           ],
         ),

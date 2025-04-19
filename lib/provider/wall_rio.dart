@@ -4,10 +4,13 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 
+import '../model/collection_model.dart';
+
 class WallRio extends ChangeNotifier {
   List<Walls> originalWallList = [];
   List<Walls> actionWallList = [];
   List<Banners> bannerList = [];
+  List<Collections> collections = [];
 
   Map<String, List<Walls?>>? categories = <String, List<Walls?>>{};
   Tag tag = Tag(selectedTags: [], unSelectedTags: []);
@@ -15,6 +18,13 @@ class WallRio extends ChangeNotifier {
   String error = "";
   String currentVersion = "1.0.0";
   bool isLoading = false;
+
+  int bannerIndex = 0;
+
+  set setBannerIndex(int index) {
+    bannerIndex = index;
+    notifyListeners();
+  }
 
   set setIsLoading(bool val) {
     isLoading = val;
@@ -33,6 +43,11 @@ class WallRio extends ChangeNotifier {
 
   set setBannerList(List<Banners> list) {
     bannerList = list;
+    notifyListeners();
+  }
+
+  set setCollections(List<Collections> list) {
+    collections = list;
     notifyListeners();
   }
 
@@ -69,11 +84,13 @@ class WallRio extends ChangeNotifier {
     setWallList = [];
     setActionWallList = [];
     setBannerList = [];
+    setCollections = [];
     WallRioModel model = await ApiServices.getData();
     if (model.error.isEmpty) {
       setWallList = model.walls;
       setActionWallList = model.walls;
       setBannerList = model.banners;
+      setCollections = model.collection.collections;
       _buildCategoryAndTags();
     } else {
       setError = model.error;

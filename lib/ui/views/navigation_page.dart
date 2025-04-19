@@ -78,9 +78,12 @@ class _NavigationPageState extends State<NavigationPage> {
               NavigationBar(
                   destinations: const [
                     NavigationDestination(
-                        icon: Icon(Icons.home_rounded), label: 'Home'),
+                        icon: Icon(Icons.trending_up_rounded),
+                        label: 'Trending'),
                     NavigationDestination(
                         icon: Icon(Icons.grid_view_rounded), label: 'Category'),
+                    NavigationDestination(
+                        icon: Icon(Icons.diamond_rounded), label: 'Collection'),
                     NavigationDestination(
                         icon: Icon(Icons.favorite_rounded), label: 'Favourite')
                   ],

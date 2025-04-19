@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
-import 'package:android_download_manager/android_download_manager.dart';
+// import 'package:android_download_manager/android_download_manager.dart';
 
 class WallActionProvider extends ChangeNotifier {
   bool isDownloading = false;
@@ -23,13 +23,13 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Downloading wallpaper");
     setIsDownloading = true;
     try {
-      final String downloadDir = await AndroidPathProvider.downloadsPath;
+      // final String downloadDir = await AndroidPathProvider.downloadsPath;
       final Directory? appStorageDir = await getExternalStorageDirectory();
-      await AndroidDownloadManager.enqueue(
-        downloadUrl: url,
-        downloadPath: appStorageDir != null ? appStorageDir.path.replaceFirst("data", "media") : downloadDir,
-        fileName: "$name.png",
-      );
+      // await AndroidDownloadManager.enqueue(
+      //   downloadUrl: url,
+      //   downloadPath: appStorageDir != null ? appStorageDir.path.replaceFirst("data", "media") : downloadDir,
+      //   fileName: "$name.png",
+      // );
       ToastWidget.showToast("Wallpaper Downloaded successfully");
     } catch (error) {
       logger.e(error);
