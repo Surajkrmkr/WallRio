@@ -26,26 +26,26 @@ class ApplyWallDialogWidget extends StatelessWidget {
         PrimaryBtnWidget(
           btnText: "Homescreen",
           onTap: () => applyWall(context,
-              url: imgUrl, wallLocation: AsyncWallpaper.HOME_SCREEN),
+              url: imgUrl, wallLocation: WallpaperManagerFlutter.homeScreen),
         ),
         const SizedBox(height: 10),
         PrimaryBtnWidget(
           btnText: "Lockscreen",
           onTap: () => applyWall(context,
-              url: imgUrl, wallLocation: AsyncWallpaper.LOCK_SCREEN),
+              url: imgUrl, wallLocation: WallpaperManagerFlutter.lockScreen),
         ),
         const SizedBox(height: 10),
         PrimaryBtnWidget(
           btnText: "Both",
           onTap: () => applyWall(context,
-              url: imgUrl, wallLocation: AsyncWallpaper.BOTH_SCREENS),
+              url: imgUrl, wallLocation: WallpaperManagerFlutter.bothScreens),
         ),
         const SizedBox(height: 10),
         PrimaryBtnWidget(
             btnText: "Native",
             onTap: () => applyWall(context,
                 url: imgUrl,
-                wallLocation: AsyncWallpaper.BOTH_SCREENS,
+                wallLocation: WallpaperManagerFlutter.bothScreens,
                 isNative: true))
       ],
     );

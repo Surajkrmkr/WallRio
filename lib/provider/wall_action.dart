@@ -44,14 +44,6 @@ class WallActionProvider extends ChangeNotifier {
       barrierDismissible: false,
       builder: (context) => ApplyWallDialogWidget(imgUrl: url));
 
-  ToastDetails _getToast(String msg) => ToastDetails(
-      message: msg,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0);
-
   void applyWall(context,
       {required String url,
       required int wallLocation,
@@ -62,20 +54,15 @@ class WallActionProvider extends ChangeNotifier {
     var file = await DefaultCacheManager().getSingleFile(url);
     try {
       isNative
-          ? await AsyncWallpaper.setWallpaperNative(
-              url: url,
-              goToHome: true,
-              errorToastDetails: _getToast("Failed to apply wallpaper"),
-              toastDetails: _getToast("Wallpaper applied successfully"),
-            )
-          : await AsyncWallpaper.setWallpaperFromFile(
-              filePath: file.path,
-              wallpaperLocation: wallLocation,
-              goToHome: true,
-              errorToastDetails: _getToast("Failed to apply wallpaper"),
-              toastDetails: _getToast("Wallpaper applied successfully"),
+          ? await WallpaperManagerFlutter()
+              .setWallpaper(file.path, wallLocation)
+          : await WallpaperManagerFlutter().setWallpaper(
+              file.path,
+              wallLocation,
             );
+      ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {
+      ToastWidget.showToast("Failed to apply wallpaper");
       logger.e(error);
     } finally {
       setIsApplying = false;

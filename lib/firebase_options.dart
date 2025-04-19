@@ -69,7 +69,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'wallrio-e551b.appspot.com',
     androidClientId: '340316492418-ha4d9psbogodbb11e20aeune03ghf4sl.apps.googleusercontent.com',
     iosClientId: '340316492418-nnc7j4iul3o7nj74m35d7866amvmlm32.apps.googleusercontent.com',
-    iosBundleId: 'com.example.wallrio',
+    iosBundleId: 'com.shadowteam.wallrio',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -80,6 +80,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'wallrio-e551b.appspot.com',
     androidClientId: '340316492418-ha4d9psbogodbb11e20aeune03ghf4sl.apps.googleusercontent.com',
     iosClientId: '340316492418-nnc7j4iul3o7nj74m35d7866amvmlm32.apps.googleusercontent.com',
-    iosBundleId: 'com.example.wallrio',
+    iosBundleId: 'com.shadowteam.wallrio',
   );
 }
