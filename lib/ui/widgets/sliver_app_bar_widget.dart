@@ -62,20 +62,29 @@ class SliverAppBarWidget extends StatelessWidget {
         children: [
           Consumer<DarkThemeProvider>(
             builder: (context, provider, _) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    text,
-                    style: Theme.of(context).textTheme.displayLarge,
-                  ),
-                  Text(
-                    secondaryText,
-                    style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                        color: gradientColorMap[provider.gradType]!.first),
-                  )
-                ],
-              );
+              return secondaryText.isEmpty
+                  ? Text(
+                      text,
+                      style: Theme.of(context).textTheme.displayLarge,
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          text,
+                          style: Theme.of(context).textTheme.displayLarge,
+                        ),
+                        Text(
+                          secondaryText,
+                          style: Theme.of(context)
+                              .textTheme
+                              .displayLarge!
+                              .copyWith(
+                                  color: gradientColorMap[provider.gradType]!
+                                      .first),
+                        )
+                      ],
+                    );
             },
           ),
         ],

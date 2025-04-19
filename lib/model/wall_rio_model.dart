@@ -4,7 +4,7 @@ import 'package:wallrio/services/export.dart';
 
 class WallRioModel {
   final List<Banners> banners;
-  final List<TagBanners> tagBanners;
+  final Search search;
   final List<Walls> walls;
   WallRioCollection collection;
   String error = "";
@@ -13,16 +13,14 @@ class WallRioModel {
       {this.banners = const [],
       this.walls = const [],
       this.collection = const WallRioCollection(),
-      this.tagBanners = const []});
+      this.search = const Search()});
 
   set setCollection(WallRioCollection value) => collection = value;
 
   factory WallRioModel.fromJson(Map<String, dynamic> json) => WallRioModel(
-      tagBanners: json['tagBanners'] == null
-          ? []
-          : (json['tagBanners'] as List<dynamic>)
-              .map((v) => TagBanners.fromJson(v))
-              .toList(),
+      search: json['search'] == null
+          ? const Search()
+          : Search.fromJson(json["search"]),
       banners: json['banners'] == null
           ? []
           : (json['banners'] as List<dynamic>)
@@ -41,11 +39,7 @@ class Banners {
   final String category;
   final String link;
 
-  Banners(
-      {required this.id,
-      required this.url,
-      required this.category,
-      required this.link});
+  const Banners({this.id = 0, this.url = "", this.category = "", this.link = ""});
 
   factory Banners.fromJson(Map<String, dynamic> json) => Banners(
         id: json['id'] ?? 0,
@@ -55,17 +49,26 @@ class Banners {
       );
 }
 
-class TagBanners {
-  final int id;
-  final String url;
-  final String tag;
+class Search {
+  final Banners banner;
+  final List<String> categories;
+  final List<String> tags;
+  final List<String> hotTags;
 
-  TagBanners({required this.id, required this.url, required this.tag});
+  const Search(
+      {this.banner = const Banners(),
+      this.categories = const [],
+      this.tags = const [],
+      this.hotTags = const []});
 
-  factory TagBanners.fromJson(Map<String, dynamic> json) => TagBanners(
-        id: json['id'] ?? 0,
-        url: json['url'] ?? "",
-        tag: json['tag'] ?? "",
+  factory Search.fromJson(Map<String, dynamic> json) => Search(
+        banner: json['banner'] != null
+            ? Banners.fromJson(json["banner"])
+            : const Banners(),
+        categories:
+            json['categories'] != null ? json['categories'].cast<String>() : [],
+        tags: json['tags'] != null ? json['tags'].cast<String>() : [],
+        hotTags: json['hotTags'] != null ? json['hotTags'].cast<String>() : [],
       );
 }
 

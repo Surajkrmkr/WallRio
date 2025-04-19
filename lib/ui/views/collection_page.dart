@@ -53,7 +53,6 @@ class CollectionPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
           const AdsWidget()
         ],
       ),

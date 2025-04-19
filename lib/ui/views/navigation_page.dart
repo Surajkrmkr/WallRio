@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'package:wallrio/model/export.dart';
@@ -69,30 +70,51 @@ class _NavigationPageState extends State<NavigationPage> {
             child: pages[provider.index],
           ),
         ),
-        bottomNavigationBar: AnimatedContainer(
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOutCubic,
-          height: provider.visible ? 80 : 0.0,
-          child: Wrap(
-            children: [
-              NavigationBar(
-                  destinations: const [
+        bottomNavigationBar: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+            child: Wrap(
+              children: [
+                NavigationBar(
+                  backgroundColor:
+                      Colors.white.withOpacity(0.0), // Adjust opacity
+                  destinations: [
                     NavigationDestination(
-                        icon: Icon(Icons.trending_up_rounded),
-                        label: 'Trending'),
+                        icon: _getSvgIcon(
+                            'Explore', context, provider.index == 0),
+                        label: 'Explore'),
                     NavigationDestination(
-                        icon: Icon(Icons.grid_view_rounded), label: 'Category'),
+                        icon: _getSvgIcon(
+                            'Categories', context, provider.index == 1),
+                        label: 'Categories'),
                     NavigationDestination(
-                        icon: Icon(Icons.diamond_rounded), label: 'Collection'),
+                        icon: _getSvgIcon(
+                            'Collections', context, provider.index == 2),
+                        label: 'Collections'),
                     NavigationDestination(
-                        icon: Icon(Icons.favorite_rounded), label: 'Favourite')
+                        icon: _getSvgIcon(
+                            'Favorites', context, provider.index == 3),
+                        label: 'Favorites'),
                   ],
                   selectedIndex: provider.index,
-                  onDestinationSelected: (value) => provider.setIndex = value),
-            ],
+                  onDestinationSelected: (value) => provider.setIndex = value,
+                ),
+              ],
+            ),
           ),
         ),
       );
     });
+  }
+
+  Widget _getSvgIcon(String name, BuildContext context, bool isSelected) {
+    return SvgPicture.asset(
+      'assets/icons/$name.svg',
+      semanticsLabel: 'Explore',
+      height: 18,
+      colorFilter: ColorFilter.mode(
+          isSelected ? Colors.white : Theme.of(context).primaryColorLight,
+          BlendMode.srcIn),
+    );
   }
 }

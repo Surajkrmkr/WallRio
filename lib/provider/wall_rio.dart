@@ -9,8 +9,11 @@ import '../model/collection_model.dart';
 class WallRio extends ChangeNotifier {
   List<Walls> originalWallList = [];
   List<Walls> actionWallList = [];
+  List<Walls> queryWallList = [];
   List<Banners> bannerList = [];
   List<Collections> collections = [];
+  Search search = const Search();
+  List<Color> colors = [];
 
   Map<String, List<Walls?>>? categories = <String, List<Walls?>>{};
   Tag tag = Tag(selectedTags: [], unSelectedTags: []);
@@ -55,7 +58,25 @@ class WallRio extends ChangeNotifier {
     actionWallList
       ..clear()
       ..addAll(list);
-    actionWallList.shuffle();
+    // actionWallList.shuffle();
+    notifyListeners();
+  }
+
+  set setQueryWallList(List<Walls> list) {
+    queryWallList
+      ..clear()
+      ..addAll(list);
+    // actionWallList.shuffle();
+    notifyListeners();
+  }
+
+  set setSearchData(Search data) {
+    search = data;
+    notifyListeners();
+  }
+
+  set setColorData(List<Color> data) {
+    colors = data;
     notifyListeners();
   }
 
@@ -85,12 +106,16 @@ class WallRio extends ChangeNotifier {
     setActionWallList = [];
     setBannerList = [];
     setCollections = [];
+    setSearchData = const Search();
     WallRioModel model = await ApiServices.getData();
     if (model.error.isEmpty) {
       setWallList = model.walls;
-      setActionWallList = model.walls;
       setBannerList = model.banners;
       setCollections = model.collection.collections;
+      setSearchData = model.search;
+      setActionWallList =
+          getFilteredWallList(model.walls, search.tags, search.categories);
+      setQueryWallList = model.walls;
       _buildCategoryAndTags();
     } else {
       setError = model.error;
@@ -103,6 +128,7 @@ class WallRio extends ChangeNotifier {
     categories!.clear();
     tag.selectedTags.clear();
     tag.unSelectedTags.clear();
+    colors.clear();
     for (Walls? wall in originalWallList) {
       if (!categories!.containsKey(wall!.category)) {
         categories![wall.category] =
@@ -111,6 +137,11 @@ class WallRio extends ChangeNotifier {
       for (String? eachTag in wall.tags) {
         if (!tag.unSelectedTags.contains(eachTag)) {
           tag.unSelectedTags.add(eachTag!); // Adding a tag to TagList
+        }
+      }
+      for (Color? color in wall.colorList) {
+        if (!colors.contains(color)) {
+          colors.add(color!); // Adding a color to colors
         }
       }
       categories![wall.category]!.add(wall); // Adding a Wall to CategoryList
@@ -122,45 +153,57 @@ class WallRio extends ChangeNotifier {
     return tag.unSelectedTags.contains(tagName) ? false : true;
   }
 
-  void onSelectedTag(String selectedTag) {
-    if (tag.unSelectedTags.contains(selectedTag)) {
-      tag.unSelectedTags.remove(selectedTag);
-      tag.selectedTags.add(selectedTag);
-    } else {
-      tag.selectedTags.remove(selectedTag);
-      tag.unSelectedTags.insert(0, selectedTag);
-    }
+  // void onSelectedTag(String selectedTag) {
+  //   if (tag.unSelectedTags.contains(selectedTag)) {
+  //     tag.unSelectedTags.remove(selectedTag);
+  //     tag.selectedTags.add(selectedTag);
+  //   } else {
+  //     tag.selectedTags.remove(selectedTag);
+  //     tag.unSelectedTags.insert(0, selectedTag);
+  //   }
 
-    setActionWallList = getFilteredWallList();
-    notifyListeners();
+  //   setActionWallList = getFilteredWallList();
+  //   notifyListeners();
+  // }
+
+  List<Walls> getWallsByColor(Color color) {
+    List<Walls> filteredWall =
+        originalWallList.where((wa) => wa.colorList.contains(color)).toList();
+    return filteredWall;
   }
 
-  List<Walls> getFilteredWallList() {
-    List<Walls> wall = [];
-    if (tag.selectedTags.isEmpty) {
-      return originalWallList;
-    }
-    for (String tag in tag.selectedTags) {
+  List<Walls> getFilteredWallList(
+      List<Walls> orgWalls, List<String> tags, List<String> categories) {
+    List<Walls> filteredWall = [];
+    for (String tag in tags) {
       final eachTagwall =
-          originalWallList.where((wall) => wall.tags.contains(tag)).toList();
-      wall.insertAll(0, eachTagwall);
+          orgWalls.where((wall) => wall.tags.contains(tag)).toList();
+      filteredWall.insertAll(0, eachTagwall);
     }
-    return wall;
+    if (tags.isNotEmpty) return filteredWall;
+    for (String category in categories) {
+      final eachWall =
+          orgWalls.where((wall) => wall.category == category).toList();
+      filteredWall.insertAll(0, eachWall);
+    }
+
+    return filteredWall;
   }
 
   void onSearchTap(String query) {
     if (query.isNotEmpty) {
-      setActionWallList = originalWallList
-          .where(
-              (wall) => wall.name.toLowerCase().contains(query.toLowerCase()))
+      setQueryWallList = originalWallList
+          .where((wall) =>
+          wall.name.toLowerCase().contains(query.toLowerCase()) ||
+          wall.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase())))
           .toList();
     } else {
-      setActionWallList = originalWallList;
+      setQueryWallList = originalWallList;
     }
   }
 
   void resetToDefault() {
-    setActionWallList = originalWallList;
+    setQueryWallList = originalWallList;
     clearSelectedTags();
   }
 }

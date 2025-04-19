@@ -81,6 +81,7 @@ flutter:
     - assets/
     - assets/lottie/
     - assets/app_icon/
+    - assets/icons/
 
   fonts:
     - family: POCOTech

@@ -102,7 +102,7 @@ class TrendingWallGridWidget extends StatelessWidget {
               splashColor: blackColor.withOpacity(0.3),
             ),
           ),
-          _buildImgDetailsUI(context, wall),
+          // _buildImgDetailsUI(context, wall),
           VerifyIconWidget(visibility: !wall.isPremium)
         ]),
       ),

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/services/export.dart';
 
+import '../../services/packages/export.dart';
+
 class VerifyIconWidget extends StatelessWidget {
   final double padding;
   final Alignment alignment;
   final bool visibility;
   const VerifyIconWidget(
       {super.key,
-      this.padding = 10,
+      this.padding = 15,
       this.alignment = Alignment.topRight,
       this.visibility = false});
 
@@ -20,10 +22,10 @@ class VerifyIconWidget extends StatelessWidget {
           alignment: alignment,
           child: Padding(
             padding: EdgeInsets.all(padding),
-            child: const Icon(
-              Icons.verified_rounded,
-              color: whiteColor,
-              shadows: [BoxShadow(blurRadius: 20, color: Colors.black45)],
+            child: SvgPicture.asset(
+              "assets/icons/Prowalls.svg",
+              semanticsLabel: 'Pro',
+              height: 16,
             ),
           ),
         ),

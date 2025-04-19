@@ -52,7 +52,6 @@ class CategoryPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
           const AdsWidget()
         ],
       ),
@@ -139,7 +138,7 @@ class CategoryPage extends StatelessWidget {
                         splashColor: blackColor.withOpacity(0.3),
                       ),
                     ),
-                    buildImgBottomUI(categoryWalls[i]!),
+                    // buildImgBottomUI(categoryWalls[i]!),
                     VerifyIconWidget(visibility: !categoryWalls[i]!.isPremium)
                   ]),
                 ),

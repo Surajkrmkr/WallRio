@@ -119,7 +119,7 @@ class _AdsWidgetState extends State<AdsWidget> {
         : Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              margin: EdgeInsets.only(bottom: widget.bottomPadding),
+              margin: EdgeInsets.only(bottom: widget.bottomPadding, top: 10),
               width: bannerAd!.size.width.toDouble(),
               height: bannerAd!.size.height.toDouble(),
               child: AdWidget(ad: bannerAd!),

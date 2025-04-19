@@ -5,10 +5,29 @@ import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
-class GridPage extends StatelessWidget {
+class GridPage extends StatefulWidget {
   final String categoryName;
   final List<Walls?> walls;
-  const GridPage({super.key, required this.categoryName, required this.walls});
+  final bool isSearchMode;
+  const GridPage(
+      {super.key,
+      required this.categoryName,
+      required this.walls,
+      this.isSearchMode = false});
+
+  @override
+  State<GridPage> createState() => _GridPageState();
+}
+
+class _GridPageState extends State<GridPage> {
+  final TextEditingController textEditingController = TextEditingController();
+  final ScrollController scrollController = ScrollController();
+
+  @override
+  void initState() {
+    textEditingController.text = widget.categoryName;
+    super.initState();
+  }
 
   void _onLongPressHandler(context, model) {
     showModalBottomSheet(
@@ -34,6 +53,11 @@ class GridPage extends StatelessWidget {
             builder: (context) => ImageViewPage(wallModel: model)));
   }
 
+  void _cancelSearchBar(BuildContext context) {
+    textEditingController.clear();
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,11 +66,13 @@ class GridPage extends StatelessWidget {
           children: [
             CustomScrollView(
               slivers: [
-                SliverAppBarWidget(
-                    showLogo: false,
-                    showSearchBtn: false,
-                    text: categoryName,
-                    showBackBtn: true),
+                widget.isSearchMode
+                    ? _buildSearchBarUI()
+                    : SliverAppBarWidget(
+                        showLogo: false,
+                        showSearchBtn: false,
+                        text: widget.categoryName,
+                        showBackBtn: true),
                 _buildListUI(context)
               ],
             ),
@@ -60,33 +86,40 @@ class GridPage extends StatelessWidget {
   Widget _buildListUI(context) {
     return SliverPadding(
         padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
-        sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                childAspectRatio: 0.6),
-            delegate: SliverChildBuilderDelegate(
-                childCount: walls.length,
-                (context, index) => Hero(
-                      tag: walls[index]!.url,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: Stack(fit: StackFit.expand, children: [
-                          CNImage(imageUrl: walls[index]!.thumbnail),
-                          Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                  onTap: () =>
-                                      _onTapHandler(context, walls[index]),
-                                  onLongPress: () => _onLongPressHandler(
-                                      context, walls[index]),
-                                  splashColor: blackColor.withOpacity(0.3))),
-                          _buildImgDetailsUI(context, walls[index]!),
-                          VerifyIconWidget(visibility: !walls[index]!.isPremium)
-                        ]),
-                      ),
-                    ))));
+        sliver: Consumer<WallRio>(builder: (context, provider, _) {
+          return SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 15,
+                  crossAxisSpacing: 15,
+                  childAspectRatio: 0.6),
+              delegate: SliverChildBuilderDelegate(
+                  childCount: widget.isSearchMode
+                      ? provider.queryWallList.length
+                      : widget.walls.length, (context, index) {
+                final wall = widget.isSearchMode
+                    ? provider.queryWallList[index]
+                    : widget.walls[index];
+                return Hero(
+                  tag: wall!.url,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: Stack(fit: StackFit.expand, children: [
+                      CNImage(imageUrl: wall.thumbnail),
+                      Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                              onTap: () => _onTapHandler(context, wall),
+                              onLongPress: () =>
+                                  _onLongPressHandler(context, wall),
+                              splashColor: blackColor.withOpacity(0.3))),
+                      // _buildImgDetailsUI(context, wall),
+                      VerifyIconWidget(visibility: !wall.isPremium)
+                    ]),
+                  ),
+                );
+              }));
+        }));
   }
 
   Align _buildImgDetailsUI(BuildContext context, Walls wall) {
@@ -163,5 +196,50 @@ class GridPage extends StatelessWidget {
       required IconData iconData,
       required Color color}) {
     return IconButton(onPressed: onTap, icon: Icon(iconData, color: color));
+  }
+
+  Widget _buildSearchBarUI() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20),
+        child: Consumer<WallRio>(builder: (context, provider, _) {
+          return TextFormField(
+            controller: textEditingController,
+            cursorColor: Theme.of(context).primaryColorLight,
+            cursorWidth: 3,
+            cursorRadius: const Radius.circular(10),
+            onTap: () {
+              provider.clearSelectedTags();
+              scrollController.animateTo(0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut);
+            },
+            onChanged: (query) => provider.onSearchTap(query),
+            autofocus: true,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Theme.of(context).primaryColorLight.withOpacity(0.05),
+              hintText: 'Search by wall name, tags, etc',
+              hintStyle: const TextStyle(fontSize: 14),
+              suffixIcon: IconButton(
+                  onPressed: textEditingController.text.isNotEmpty
+                      ? () {
+                          provider.resetToDefault();
+                          _cancelSearchBar(context);
+                        }
+                      : null,
+                  icon: Icon(textEditingController.text.isNotEmpty
+                      ? Icons.cancel
+                      : Icons.search_rounded)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+              hoverColor: blackColor.withOpacity(0.05),
+              border: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(100))),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }

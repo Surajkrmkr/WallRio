@@ -13,7 +13,17 @@ class WallRioThemeData {
               surfaceTintColor: isDarkTheme ? bgDarkColor : whiteColor),
           navigationBarTheme: NavigationBarThemeData(
             backgroundColor: isDarkTheme ? bgDark2Color : whiteColor,
-            indicatorColor: isDarkTheme ? bgDarkAccentColor : blackColor,
+            indicatorColor:
+                isDarkTheme ? whiteColor.withOpacity(0.19) : blackColor,
+            labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+              (states) {
+                if (states.contains(WidgetState.selected)) {
+                  return TextStyle(color: bgDarkAccentColor, fontSize: 12);
+                }
+                return TextStyle(
+                    color: isDarkTheme ? whiteColor : blackColor, fontSize: 12);
+              },
+            ),
             // labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
             iconTheme: WidgetStateProperty.resolveWith(
               (states) {
@@ -73,7 +83,7 @@ class WallRioThemeData {
                   : blackColor.withOpacity(0.05),
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+                  borderRadius: BorderRadius.circular(100)),
               selectedColor: isDarkTheme ? whiteColor : blackColor,
               surfaceTintColor: isDarkTheme ? blackColor : whiteColor,
               showCheckmark: false),
