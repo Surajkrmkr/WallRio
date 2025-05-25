@@ -13,7 +13,7 @@ class ImageBottomSheet extends StatelessWidget {
     Navigator.of(context)
       ..pop()
       ..push(MaterialPageRoute(
-          builder: (context) => ImageViewPage(wallModel: model)));
+          builder: (context) => FullImage(wallModel: model)));
   }
 
   void _showPlusDialog(context) {

@@ -57,6 +57,10 @@ Future<void> initializationHandler() async {
   await FirebaseAppCheck.instance.activate();
   await NotificationService().init();
   await MobileAds.instance.initialize();
+  await FlutterDownloader.initialize(
+      debug:
+          true, // optional: set to false to disable printing logs to console (default: true)
+      ignoreSsl: false);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

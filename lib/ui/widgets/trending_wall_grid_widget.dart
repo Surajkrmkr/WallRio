@@ -34,7 +34,7 @@ class TrendingWallGridWidget extends StatelessWidget {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => ImageViewPage(wallModel: model)));
+            builder: (context) => FullImage(wallModel: model)));
   }
 
   @override

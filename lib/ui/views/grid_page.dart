@@ -50,7 +50,7 @@ class _GridPageState extends State<GridPage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => ImageViewPage(wallModel: model)));
+            builder: (context) => FullImage(wallModel: model)));
   }
 
   void _cancelSearchBar(BuildContext context) {
@@ -231,6 +231,8 @@ class _GridPageState extends State<GridPage> {
                   icon: Icon(textEditingController.text.isNotEmpty
                       ? Icons.cancel
                       : Icons.search_rounded)),
+              prefixIcon:
+                  BackBtnWidget(color: Theme.of(context).primaryColorLight),
               contentPadding: const EdgeInsets.symmetric(horizontal: 25),
               hoverColor: blackColor.withOpacity(0.05),
               border: const OutlineInputBorder(

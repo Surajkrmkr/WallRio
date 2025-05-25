@@ -67,6 +67,9 @@ class WallRioThemeData {
                   foregroundColor: WidgetStateProperty.all(whiteColor))),
           outlinedButtonTheme: OutlinedButtonThemeData(
               style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(isDarkTheme
+                      ? whiteColor.withOpacity(0.1)
+                      : blackColor.withOpacity(0.1)),
                   foregroundColor: WidgetStateProperty.all(
                       isDarkTheme ? whiteColor : blackColor),
                   overlayColor: WidgetStateProperty.all(isDarkTheme
@@ -88,18 +91,11 @@ class WallRioThemeData {
               surfaceTintColor: isDarkTheme ? blackColor : whiteColor,
               showCheckmark: false),
           textTheme: TextTheme(
-              displayLarge: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
-              displayMedium: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
-              bodyLarge:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              bodyMedium:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              displayLarge:
+                  TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
+              displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
+              bodyLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              bodyMedium: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           colorScheme: isDarkTheme ? const ColorScheme.dark() : const ColorScheme.light());
 
   static getDarkThemeData() =>

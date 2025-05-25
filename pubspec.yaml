@@ -67,6 +67,11 @@ dependencies:
   carousel_slider: ^5.0.0
   smooth_page_indicator: ^1.2.0+3
   wallpaper_manager_flutter: ^1.0.1
+  downloadsfolder: ^1.2.0
+  flutter_downloader: ^1.12.0
+  flutter_file_downloader: ^2.1.0
+  flutter_animated_button: ^2.0.4
+  progressive_button_flutter: ^1.2.0
 
 dev_dependencies:
   flutter_test:

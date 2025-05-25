@@ -1,12 +1,13 @@
 import 'dart:io';
 
+import 'package:downloadsfolder/downloadsfolder.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
-// import 'package:android_download_manager/android_download_manager.dart';
 
 class WallActionProvider extends ChangeNotifier {
   bool isDownloading = false;
+  double progress = 0.0;
   bool isApplying = false;
 
   set setIsDownloading(bool val) {
@@ -19,19 +20,41 @@ class WallActionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  set setProgress(double data) {
+    progress = data;
+    notifyListeners();
+  }
+
   void downloadImg(url, name) async {
     ToastWidget.showToast("Downloading wallpaper");
     setIsDownloading = true;
+    setProgress = 0.0;
     try {
-      // final String downloadDir = await AndroidPathProvider.downloadsPath;
-      final Directory? appStorageDir = await getExternalStorageDirectory();
-      // await AndroidDownloadManager.enqueue(
-      //   downloadUrl: url,
-      //   downloadPath: appStorageDir != null ? appStorageDir.path.replaceFirst("data", "media") : downloadDir,
-      //   fileName: "$name.png",
-      // );
+      Directory downloadDirectory = await getDownloadDirectory();
+      await FileDownloader.downloadFile(
+          notificationType: NotificationType.completionOnly,
+          downloadService: DownloadService.httpConnection,
+          downloadDestination: DownloadDestinations.publicDownloads,
+          url: url,
+          onProgress: (String? fileName, double pros) {
+            if (fileName != null) {
+              final pro = pros / 100;
+              setProgress = pro;
+
+              print(pro);
+              print(fileName);
+            }
+          },
+          onDownloadCompleted: (String path) {
+            print('FILE DOWNLOADED TO PATH: $path');
+          },
+          onDownloadError: (String error) {
+            print('DOWNLOAD ERROR: $error');
+          });
+      await Future.delayed(Duration(milliseconds: 500));
       ToastWidget.showToast("Wallpaper Downloaded successfully");
     } catch (error) {
+      setProgress = 0.0;
       logger.e(error);
       ToastWidget.showToast("Failed to download wallpaper");
     }

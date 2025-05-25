@@ -27,10 +27,8 @@ class CollectionPage extends StatelessWidget {
   }
 
   void _onTapHandler(context, model) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => ImageViewPage(wallModel: model)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   @override

@@ -1,4 +1,4 @@
-// export 'package:android_path_provider/android_path_provider.dart';
+export 'package:flutter_file_downloader/flutter_file_downloader.dart';
 export 'package:animations/animations.dart';
 export 'package:cached_network_image/cached_network_image.dart';
 export 'package:dio/dio.dart';
@@ -18,6 +18,7 @@ export 'package:palette_generator/palette_generator.dart';
 export 'package:permission_handler/permission_handler.dart';
 export 'package:rxdart/rxdart.dart';
 export 'package:shared_preferences/shared_preferences.dart';
+export 'package:flutter_downloader/flutter_downloader.dart';
 export 'package:flutter_svg/flutter_svg.dart';
 export 'package:simple_gradient_text/simple_gradient_text.dart';
 export 'package:url_launcher/url_launcher.dart';
