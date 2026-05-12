@@ -54,7 +54,7 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
           printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s\n' \
-            "$SIGNING_KEY_ALIAS" "$SIGNING_KEY_PASSWORD" "$SIGNING_KEY_STORE_PATH" "$SIGNING_STORE_PASSWORD" \
+            "$SIGNING_KEY_ALIAS" "$SIGNING_KEY_PASSWORD" "$GITHUB_WORKSPACE/$SIGNING_KEY_STORE_PATH" "$SIGNING_STORE_PASSWORD" \
             > android/key.properties
           flutter build apk --release --split-per-abi
           flutter build appbundle --release
