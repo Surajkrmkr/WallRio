@@ -21,10 +21,8 @@ class FavouritePage extends StatelessWidget {
   }
 
   void _onTapHandler(context, model) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => FullImage(wallModel: model)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   @override
@@ -55,10 +53,10 @@ class FavouritePage extends StatelessWidget {
         return SliverPadding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 15),
             sliver: SliverGrid.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 15,
-                mainAxisSpacing: 15,
-                childAspectRatio: 0.6,
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 0.5,
                 children: List.generate(
                     8,
                     (index) => const ShimmerWidget(
@@ -81,16 +79,16 @@ class FavouritePage extends StatelessWidget {
           padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
           sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 0.6),
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.5),
               delegate: SliverChildBuilderDelegate(
                   childCount: walls.length,
                   (context, index) => Hero(
                         tag: walls[index].url,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(15),
                           child: Stack(fit: StackFit.expand, children: [
                             CNImage(imageUrl: walls[index].thumbnail),
                             Material(

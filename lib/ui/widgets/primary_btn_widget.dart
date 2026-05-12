@@ -8,6 +8,8 @@ class PrimaryBtnWidget extends StatelessWidget {
   final Widget? icon;
   final bool isLoading;
   final double? progress;
+  // null = adaptive (uses primaryColorLight: white in dark mode, black in light mode)
+  final Color? textColor;
 
   const PrimaryBtnWidget({
     super.key,
@@ -16,10 +18,12 @@ class PrimaryBtnWidget extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.progress,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final resolvedColor = textColor ?? Theme.of(context).primaryColorLight;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -37,7 +41,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color: Colors.transparent,
-                          border: Border.all(color: whiteColor)),
+                          border: Border.all(color: resolvedColor)),
                       child: LinearProgressIndicator(
                         borderRadius: BorderRadius.circular(20),
                         minHeight: 50,
@@ -53,7 +57,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium!
-                            .copyWith(color: whiteColor, fontSize: 14),
+                            .copyWith(color: resolvedColor, fontSize: 14),
                       ),
                     ),
                   ],
@@ -73,7 +77,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium!
-                          .copyWith(color: whiteColor, fontSize: 14),
+                          .copyWith(color: resolvedColor, fontSize: 14),
                     ),
                   )
                 : OutlinedButton(
@@ -84,7 +88,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium!
-                            .copyWith(color: whiteColor, fontSize: 14),
+                            .copyWith(color: resolvedColor, fontSize: 14),
                       ),
                     ),
                   ),

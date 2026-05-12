@@ -2,20 +2,92 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  void _showAnimation(SubscriptionProvider provider) {
-    provider.setIsSubcriptionAnimating = true;
-    Future.delayed(const Duration(seconds: 5), () {
-      provider.setIsSubcriptionAnimating = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final sections = [
+      _plusBanner(context),
+      _sectionCard(
+        context,
+        label: 'Appearance',
+        children: [_darkModeTile(context)],
+      ),
+      _sectionCard(
+        context,
+        label: 'Advanced',
+        children: [
+          _tile(context,
+              icon: Icons.cleaning_services_rounded,
+              title: 'Clear Cache',
+              subtitle: 'Remove locally cached data',
+              onTap: () => showDialog(
+                  context: context,
+                  builder: (_) => const ClearCacheWidget())),
+        ],
+      ),
+      _sectionCard(
+        context,
+        label: 'Social',
+        children: [
+          _tile(context,
+              icon: Icons.photo_camera_rounded,
+              title: 'Instagram',
+              subtitle: 'Follow us @studio.teamshadow',
+              onTap: () =>
+                  launch('https://instagram.com/studio.teamshadow')),
+          _tile(context,
+              icon: Icons.alternate_email_rounded,
+              title: 'Twitter',
+              subtitle: 'Follow us @TeamShadowST',
+              onTap: () => launch('https://twitter.com/4XDesigns')),
+          _tile(context,
+              icon: Icons.send_rounded,
+              title: 'Telegram',
+              subtitle: 'Join our community',
+              onTap: () => launch('https://t.me/TeamShadow_Studio')),
+        ],
+      ),
+      _sectionCard(
+        context,
+        label: 'Our Team',
+        children: [
+          _tile(context,
+              icon: Icons.person_rounded,
+              title: 'Suraj Karmakar',
+              subtitle: 'Android Developer',
+              onTap: () => launch('http://t.me/surajkrmkr')),
+          _tile(context,
+              icon: Icons.person_rounded,
+              title: 'Piyush KPV',
+              subtitle: 'UX/UI Designer',
+              onTap: () => launch('http://t.me/piyuskpv')),
+          _tile(context,
+              icon: Icons.person_rounded,
+              title: 'Sumit',
+              subtitle: 'Graphic Designer',
+              onTap: () => launch('http://t.me/sumi7t')),
+        ],
+      ),
+      _sectionCard(
+        context,
+        label: 'Legal',
+        children: [
+          _tile(context,
+              icon: Icons.privacy_tip_rounded,
+              title: 'Privacy Policy',
+              subtitle: 'Read our privacy policy',
+              onTap: () => launch(
+                  'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy')),
+        ],
+      ),
+      _appInfoSection(context),
+    ];
+
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -25,39 +97,24 @@ class SettingsPage extends StatelessWidget {
                 showSearchBtn: false,
                 centeredTitle: true,
                 showBackBtn: true,
-                text: "Settings"),
-            SliverToBoxAdapter(
-              child: Material(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Stack(
-                    children: [
-                      Column(
-                        children: [
-                          _plusBanner(context),
-                          _appearanceSection(context),
-                          _advancedSection(context),
-                          _socialSection(context),
-                          _ourTeamSection(context),
-                          _legalSection(context),
-                          _appInfoSection(context),
-                        ],
+                text: 'Settings'),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  childCount: sections.length,
+                  (context, i) => TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: Duration(milliseconds: 350 + i * 60),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) => Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 24 * (1 - value)),
+                        child: child,
                       ),
-                      Consumer<SubscriptionProvider>(
-                          builder: (context, provider, _) {
-                        return Center(
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 500),
-                            opacity: provider.isSubcriptionAnimating ? 1 : 0,
-                            child: IgnorePointer(
-                              child: Lottie.network(
-                                  'https://assets6.lottiefiles.com/packages/lf20_5ki7ru7q.json',
-                                  width: MediaQuery.of(context).size.width),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
+                    ),
+                    child: sections[i],
                   ),
                 ),
               ),
@@ -68,91 +125,44 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Padding _plusBanner(BuildContext context) {
+  // ─── Plus Banner ──────────────────────────────────────────────
+
+  Widget _plusBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Consumer<SubscriptionProvider>(
         builder: (context, provider, _) {
-          final bool hasSubscription = provider.subscriptionDaysLeft.isNotEmpty;
-          return InkWell(
-            onTap: () async {
-              if (hasSubscription) {
-                if (provider.isSubcriptionAnimating) return;
-                _showAnimation(provider);
-              } else {
-                final val = await showDialog(
-                    context: context,
-                    builder: (context) => const PlusSubscription());
-                if (val != null) {
-                  if (val) _showAnimation(provider);
-                }
-              }
-            },
-            borderRadius: BorderRadius.circular(30),
-            child: Ink(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  color: Theme.of(context).navigationBarTheme.indicatorColor),
-              child: Column(children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!hasSubscription)
-                      Text(
-                        "Upgrade to",
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .copyWith(color: whiteColor),
+          final bool hasSub = provider.subscriptionDaysLeft.isNotEmpty;
+          return GestureDetector(
+            onTap: hasSub
+                ? null
+                : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OnboardingScreen4(
+                            onComplete: () => Navigator.pop(context)),
                       ),
-                    Consumer<DarkThemeProvider>(
-                        builder: (context, provider, _) {
-                      return GradientText(
-                        " WallRio ",
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        colors: gradientColorMap[provider.gradType]!,
-                      );
-                    }),
-                    Text(
-                      "Plus",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium!
-                          .copyWith(color: whiteColor),
                     ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: Image.asset(
-                        "assets/plus_icon.png",
-                        height: 18,
-                      ),
-                    )
-                  ],
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2ABFAA), Color(0xFF178A76)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 15),
-                Text(
-                  !hasSubscription
-                      ? "Unleash creativity with our exclusive subscription for stunning wallpapers. Ad-free, high-quality downloads. Elevate your screen's style."
-                      : "Now You’re a Plus Member\nEnjoy Plus Collection & Ad-free Experience",
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall!
-                      .copyWith(color: whiteColor),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 15),
-                if (hasSubscription)
-                  Text(
-                    "${provider.subscriptionDaysLeft} Days Left",
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelMedium!
-                        .copyWith(color: whiteColor),
-                    textAlign: TextAlign.center,
-                  )
-              ]),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2ABFAA).withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: hasSub
+                  ? _subscribedContent(context, provider)
+                  : _upgradeContent(context),
             ),
           );
         },
@@ -160,200 +170,263 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Column _appearanceSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _upgradeContent(BuildContext context) {
+    return Row(
       children: [
-        Text(
-          "Appearance",
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        _darkModeTile(),
-        ListTile(
-          title: const Text('Customise your App'),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-          subtitle: Text(
-            "Choose Gradient",
-            style: Theme.of(context).textTheme.labelSmall,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'WallRio Pro',
+                style: TextStyle(
+                  color: whiteColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Ad-free  •  Exclusive walls  •  Pro access',
+                style: TextStyle(
+                  color: whiteColor.withValues(alpha: 0.85),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 9),
+                decoration: BoxDecoration(
+                  color: whiteColor,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Text(
+                  'Upgrade Now',
+                  style: TextStyle(
+                    color: Color(0xFF178A76),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        _buildGradientUI(context),
+        const SizedBox(width: 12),
+        const Icon(Icons.workspace_premium_rounded,
+            color: whiteColor, size: 64),
       ],
     );
   }
 
-  Consumer<DarkThemeProvider> _darkModeTile() {
+  Widget _subscribedContent(
+      BuildContext context, SubscriptionProvider provider) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: whiteColor, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'WallRio Pro',
+                    style: TextStyle(
+                      color: whiteColor,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "You're a Pro Member — full access unlocked",
+                style: TextStyle(
+                  color: whiteColor.withValues(alpha: 0.85),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: whiteColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  '${provider.subscriptionDaysLeft} days remaining',
+                  style: const TextStyle(
+                    color: whiteColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Icon(Icons.workspace_premium_rounded,
+            color: whiteColor, size: 64),
+      ],
+    );
+  }
+
+  // ─── Section Card ─────────────────────────────────────────────
+
+  Widget _sectionCard(BuildContext context,
+      {required String label, required List<Widget> children}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel(context, label),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? bgDark2Color
+                  : const Color(0xFFF2F2F7),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              children: [
+                for (int i = 0; i < children.length; i++) ...[
+                  children[i],
+                  if (i < children.length - 1)
+                    Divider(
+                      height: 1,
+                      indent: 56,
+                      endIndent: 16,
+                      color: Theme.of(context)
+                          .primaryColorLight
+                          .withValues(alpha: 0.08),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: bgDarkAccentColor,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Tiles ────────────────────────────────────────────────────
+
+  Widget _darkModeTile(BuildContext context) {
     return Consumer<DarkThemeProvider>(
       builder: (context, provider, _) {
         return SwitchListTile(
           value: provider.darkTheme,
-          onChanged: (bool val) {
-            provider.darkTheme = val;
-          },
+          onChanged: (val) => provider.darkTheme = val,
+          secondary: _tileIcon(Icons.dark_mode_rounded),
           title: const Text('Dark Mode'),
           subtitle: Text(
-            "Welcome to the Dark Mode",
+            'Switch to dark theme',
             style: Theme.of(context).textTheme.labelSmall,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18)),
         );
       },
     );
   }
 
-  Consumer _buildGradientUI(BuildContext context) {
-    return Consumer<DarkThemeProvider>(
-      builder: (context, provider, _) {
-        return Container(
-          height: 150,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: GridView(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5, mainAxisSpacing: 10, crossAxisSpacing: 10),
-              children: gradientColorMap.entries
-                  .map((e) => InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: provider.gradType == e.key
-                            ? () {}
-                            : () => provider.gradType = e.key,
-                        child: Ink(
-                          height: 60,
-                          width: 60,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              gradient: LinearGradient(colors: e.value),
-                              border: Border.all(
-                                  strokeAlign: BorderSide.strokeAlignOutside,
-                                  width: 3,
-                                  color: provider.gradType == e.key
-                                      ? Theme.of(context).primaryColorLight
-                                      : Colors.transparent)),
-                        ),
-                      ))
-                  .toList()),
-        );
-      },
-    );
-  }
-
-  Column _advancedSection(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 10),
-      Text(
-        "Advanced",
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
-      _getListTile(context,
-          title: 'Clear Cache',
-          subtitle: "Clear Out Cache",
-          onTap: () => showDialog(
-              context: context, builder: (context) => const ClearCacheWidget()))
-    ]);
-  }
-
-  Column _socialSection(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 10),
-      Text(
-        "Social",
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
-      _getListTile(context,
-          title: 'Instagram',
-          subtitle: "Follow us on Instagram",
-          onTap: () => launch("https://instagram.com/studio.teamshadow")),
-      _getListTile(context,
-          title: 'Twitter',
-          subtitle: "Follow us on Twitter",
-          onTap: () => launch(("https://twitter.com/TeamShadowST"))),
-      _getListTile(context,
-          title: 'Telegram',
-          subtitle: "Join our community",
-          onTap: () => launch(("https://t.me/TeamShadow_Studio"))),
-    ]);
-  }
-
-  Column _ourTeamSection(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 10),
-      Text(
-        "Our Team",
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
-      _getListTile(context,
-          title: 'Suraj Karmakar',
-          subtitle: "Android Developer",
-          onTap: () => launch(("http://t.me/surajkrmkr"))),
-      _getListTile(context,
-          title: 'Piyush KPV',
-          subtitle: "UX/UI Designer",
-          onTap: () => launch(("http://t.me/piyuskpv"))),
-      _getListTile(context,
-          title: 'Sumit',
-          subtitle: "Graphic Designer",
-          onTap: () => launch(("http://t.me/sumi7t"))),
-    ]);
-  }
-
-  Padding _appInfoSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20.0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        Consumer<WallRio>(builder: (context, provider, _) {
-          return provider.isLoading
-              ? const ShimmerWidget(height: 12, width: 60)
-              : Text(
-                  "Version ${provider.currentVersion}",
-                  style: Theme.of(context).textTheme.bodySmall,
-                );
-        }),
-        Text(
-          "Made With Love ❤️ In India",
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ]),
-    );
-  }
-
-  Widget _getListTile(context,
-      {required String title,
-      required String subtitle,
-      required Function() onTap}) {
+  Widget _tile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Function() onTap,
+  }) {
     return ListTile(
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-      dense: true,
-      subtitle: Text(
-        subtitle,
-        style: Theme.of(context).textTheme.labelSmall,
-      ),
       onTap: onTap,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: _tileIcon(icon),
+      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      subtitle:
+          Text(subtitle, style: Theme.of(context).textTheme.labelSmall),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 13,
+        color:
+            Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+      ),
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     );
   }
 
-  Widget _legalSection(context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        Text(
-          "Legal",
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        _getListTile(context,
-            onTap: () => launch(
-                "https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy"),
-            title: "Privacy Policy",
-            subtitle: "more info"),
-      ],
+  Widget _tileIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: bgDarkAccentColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, color: bgDarkAccentColor, size: 20),
     );
   }
 
-  static void launch(String url) =>
-      launchUrl(Uri.parse(url), mode: LaunchMode.externalNonBrowserApplication);
+  // ─── App Info ─────────────────────────────────────────────────
+
+  Widget _appInfoSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Column(
+        children: [
+          Consumer<WallRio>(builder: (context, provider, _) {
+            return provider.isLoading
+                ? const ShimmerWidget(height: 12, width: 60)
+                : Text(
+                    'Version ${provider.currentVersion}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+          }),
+          const SizedBox(height: 6),
+          Text(
+            'Made with ❤️ in India',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static void launch(String url) => launchUrl(Uri.parse(url),
+      mode: LaunchMode.externalApplication);
 }

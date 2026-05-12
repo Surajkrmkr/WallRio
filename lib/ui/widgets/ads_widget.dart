@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/packages/export.dart';
-import 'package:wallrio/ui/views/export.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class AdsWidget extends StatefulWidget {
@@ -47,11 +47,11 @@ class AdsWidget extends StatefulWidget {
           replacement: OutlinedButton.icon(
               icon: const Icon(Icons.verified),
               onPressed: () => _onPlusClick(context),
-              label: const Text("Go Plus")),
+              label: const Text("Go Pro")),
           child: FilledButton.icon(
               onPressed: () => _onPlusClick(context),
               icon: const Icon(Icons.verified),
-              label: const Text("Go Plus")),
+              label: const Text("Go Pro")),
         )
       ],
     );
@@ -67,7 +67,8 @@ class AdsWidget extends StatefulWidget {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const SettingsPage(),
+          builder: (context) =>
+              OnboardingScreen4(onComplete: () => Navigator.pop(context)),
         ));
   }
 }

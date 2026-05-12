@@ -12,6 +12,7 @@ class WallRio extends ChangeNotifier {
   List<Walls> queryWallList = [];
   List<Banners> bannerList = [];
   List<Collections> collections = [];
+  List<SubscriptionPlan> subscriptionPlans = [];
   Search search = const Search();
   List<Color> colors = [];
 
@@ -46,6 +47,11 @@ class WallRio extends ChangeNotifier {
 
   set setBannerList(List<Banners> list) {
     bannerList = list;
+    notifyListeners();
+  }
+
+  set setSubscriptionPlans(List<SubscriptionPlan> plans) {
+    subscriptionPlans = plans;
     notifyListeners();
   }
 
@@ -113,6 +119,7 @@ class WallRio extends ChangeNotifier {
       setBannerList = model.banners;
       setCollections = model.collection.collections;
       setSearchData = model.search;
+      setSubscriptionPlans = model.subscriptionPlans;
       setActionWallList =
           getFilteredWallList(model.walls, search.tags, search.categories);
       setQueryWallList = model.walls;
@@ -199,6 +206,15 @@ class WallRio extends ChangeNotifier {
           .toList();
     } else {
       setQueryWallList = originalWallList;
+    }
+  }
+
+  void applyVibesFilter(List<String> vibes) {
+    if (vibes.isEmpty) {
+      setActionWallList =
+          getFilteredWallList(originalWallList, search.tags, search.categories);
+    } else {
+      setActionWallList = getFilteredWallList(originalWallList, [], vibes);
     }
   }
 

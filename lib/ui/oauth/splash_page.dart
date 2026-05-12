@@ -4,6 +4,7 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/oauth/export.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -15,6 +16,8 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  bool _onboardingLoaded = false;
+
   @override
   void initState() {
     _checkInAppUpdate();
@@ -26,12 +29,18 @@ class _SplashPageState extends State<SplashPage> {
       }
     });
 
-    Future.delayed(Duration.zero, () {
-      Provider.of<SubscriptionProvider>(context, listen: false)
-          .checkSupportForIAP();
-      firebaseAuth.currentUser != null
-          ? _checkSubscription(firebaseAuth.currentUser!.email!)
-          : {};
+    final subProvider =
+        Provider.of<SubscriptionProvider>(context, listen: false);
+    final onboardingProvider =
+        Provider.of<OnboardingProvider>(context, listen: false);
+
+    Future.delayed(Duration.zero, () async {
+      subProvider.checkSupportForIAP();
+      if (firebaseAuth.currentUser != null) {
+        _checkSubscription(firebaseAuth.currentUser!.email!);
+      }
+      await onboardingProvider.loadState();
+      if (mounted) setState(() => _onboardingLoaded = true);
     });
     FlutterNativeSplash.remove();
     super.initState();
@@ -60,27 +69,44 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          final Size size = MediaQuery.of(context).size;
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _getShimmer(size);
-          } else if (snapshot.hasData) {
-            UserProfile.setUserData(snapshot.data!);
-            return Consumer<SubscriptionProvider>(
+    final Size size = MediaQuery.of(context).size;
+
+    if (!_onboardingLoaded) return _getShimmer(size);
+
+    return Consumer<OnboardingProvider>(
+      builder: (context, onboarding, _) {
+        return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _getShimmer(size);
+            }
+
+            final isLoggedIn = snapshot.hasData && !snapshot.hasError;
+
+            // Route to onboarding if not yet completed
+            if (!onboarding.isCompleted) {
+              return const OnboardingPage();
+            }
+
+            // Onboarding done — normal login/home flow
+            if (isLoggedIn) {
+              UserProfile.setUserData(snapshot.data!);
+              return Consumer<SubscriptionProvider>(
                 builder: (context, provider, _) {
-              return provider.isSubscriptionLoading
-                  ? _getShimmer(size)
-                  : const NavigationPage();
-            });
-          } else if (snapshot.hasError) {
-            logger.e(snapshot.error);
+                  return provider.isSubscriptionLoading
+                      ? _getShimmer(size)
+                      : const NavigationPage();
+                },
+              );
+            }
+
+            if (snapshot.hasError) logger.e(snapshot.error);
             return const LoginPage();
-          } else {
-            return const LoginPage();
-          }
-        });
+          },
+        );
+      },
+    );
   }
 
   Widget _getShimmer(Size size) => Scaffold(

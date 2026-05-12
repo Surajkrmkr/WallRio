@@ -104,8 +104,8 @@ class WallRioThemeData {
 
 const Color whiteColor = Colors.white;
 const Color blackColor = Colors.black;
-const Color bgDarkColor = Color(0xFF1B1F28);
-const Color bgDark2Color = Color(0xFF2D3340);
+const Color bgDarkColor = Colors.black;
+const Color bgDark2Color = Color.fromARGB(255, 23, 25, 32);
 const Color bgDarkAccentColor = Color(0xFF37C3A3);
 
 const Map<GradientAccentType, List<Color>> gradientColorMap = {

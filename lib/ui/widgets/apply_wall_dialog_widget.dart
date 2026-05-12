@@ -7,12 +7,9 @@ class ApplyWallDialogWidget extends StatelessWidget {
   final String imgUrl;
   const ApplyWallDialogWidget({super.key, required this.imgUrl});
 
-  void applyWall(context,
-          {required String url,
-          required int wallLocation,
-          bool isNative = false}) =>
-      Provider.of<WallActionProvider>(context, listen: false).applyWall(context,
-          url: url, wallLocation: wallLocation, isNative: isNative);
+  void applyWall(context, {required String url, required int wallLocation}) =>
+      Provider.of<WallActionProvider>(context, listen: false)
+          .applyWall(context, url: url, wallLocation: wallLocation);
 
   @override
   Widget build(BuildContext context) {
@@ -40,13 +37,12 @@ class ApplyWallDialogWidget extends StatelessWidget {
           onTap: () => applyWall(context,
               url: imgUrl, wallLocation: WallpaperManagerFlutter.bothScreens),
         ),
-        const SizedBox(height: 10),
-        PrimaryBtnWidget(
-            btnText: "Native",
-            onTap: () => applyWall(context,
-                url: imgUrl,
-                wallLocation: WallpaperManagerFlutter.bothScreens,
-                isNative: true))
+        // const SizedBox(height: 10),
+        // PrimaryBtnWidget(
+        //     btnText: "Native",
+        //     onTap: () => applyWall(context,
+        //         url: imgUrl,
+        //         wallLocation: WallpaperManagerFlutter.bothScreens))
       ],
     );
   }

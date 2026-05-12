@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(flutter analyze *)",
+      "Bash(dart analyze *)"
+    ]
+  }
+}

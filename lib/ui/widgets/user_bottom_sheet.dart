@@ -17,7 +17,7 @@ class UserBottomSheet extends StatelessWidget {
   }
 
   void launch(String url) =>
-      launchUrl(Uri.parse(url), mode: LaunchMode.externalNonBrowserApplication);
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
   @override
   Widget build(BuildContext context) {

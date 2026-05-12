@@ -2,7 +2,8 @@ name: WallRio Build Generation For Android
 
 on:
   push:
-    tags: "v*.*.*"
+    branches:
+      - wallrio-prod
 
 permissions:
   contents: write
@@ -21,10 +22,17 @@ jobs:
         run: |
           echo $ENCODED_STRING > keystore-b64.txt
           base64 -d keystore-b64.txt > $SIGNING_KEY_STORE_PATH
-      - name: Setup Java to compile the project
-        uses: actions/setup-java@v1
+      - name: Read App version from Pubspec YAML
+        id: app-version
+        uses: jbutcher5/read-yaml@main
         with:
-          java-version: "12.x"
+          file: "pubspec.yaml"
+          key-path: '["version"]'
+      - name: Setup Java to compile the project
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
       - name: Install and setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -51,15 +59,14 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: "zip"
-          filename: WallRio-${{github.ref_name}}.zip
+          filename: WallRio-${{steps.app-version.outputs.data}}.zip
           directory: build/app/outputs/flutter-apk/
       - name: Android Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/app/outputs/flutter-apk/WallRio-${{github.ref_name}}.zip
+          files: build/app/outputs/flutter-apk/WallRio-${{steps.app-version.outputs.data}}.zip
       - name: Configure Service Account JSON
         run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
       - name: Upload Release to Play store
@@ -69,9 +76,8 @@ jobs:
           packageName: com.shadowteam.wallrio
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           mappingFile: build/app/outputs/mapping/release/mapping.txt
-          debugSymbols: build/app/intermediates/merged_native_libs/release/out/lib
           whatsNewDirectory: distribution/whatsnew
-          releaseName: ${{github.ref_name}}
+          releaseName: ${{steps.app-version.outputs.data}}
           track: production
           status: completed
           inAppUpdatePriority: 2

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -39,18 +40,9 @@ class _GridPageState extends State<GridPage> {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _showPlusDialog(context) {
-    showDialog(
-        context: context,
-        builder: (context) =>
-            AdsWidget.getPlusDialog(context, isExplorePlus: true));
-  }
-
   void _onTapHandler(context, model) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => FullImage(wallModel: model)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   void _cancelSearchBar(BuildContext context) {
@@ -83,120 +75,97 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
+  List<dynamic> _buildItemList(List<Walls?> walls) {
+    final items = <dynamic>[];
+    int wallIndex = 0;
+    int rowCount = 0;
+    while (wallIndex < walls.length) {
+      final end = (wallIndex + 3).clamp(0, walls.length);
+      items.add(walls.sublist(wallIndex, end));
+      wallIndex += 3;
+      rowCount++;
+      if (rowCount % 3 == 0 && wallIndex < walls.length) {
+        items.add(true);
+      }
+    }
+    return items;
+  }
+
   Widget _buildListUI(context) {
     return SliverPadding(
-        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
-        sliver: Consumer<WallRio>(builder: (context, provider, _) {
-          return SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 0.6),
-              delegate: SliverChildBuilderDelegate(
-                  childCount: widget.isSearchMode
-                      ? provider.queryWallList.length
-                      : widget.walls.length, (context, index) {
-                final wall = widget.isSearchMode
-                    ? provider.queryWallList[index]
-                    : widget.walls[index];
-                return Hero(
-                  tag: wall!.url,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(25),
-                    child: Stack(fit: StackFit.expand, children: [
-                      CNImage(imageUrl: wall.thumbnail),
-                      Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                              onTap: () => _onTapHandler(context, wall),
-                              onLongPress: () =>
-                                  _onLongPressHandler(context, wall),
-                              splashColor: blackColor.withOpacity(0.3))),
-                      // _buildImgDetailsUI(context, wall),
-                      VerifyIconWidget(visibility: !wall.isPremium)
-                    ]),
-                  ),
-                );
-              }));
-        }));
-  }
-
-  Align _buildImgDetailsUI(BuildContext context, Walls wall) {
-    return Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Colors.transparent, Colors.black54],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter)),
-          padding: const EdgeInsets.only(left: 15, right: 5),
-          height: 65,
-          alignment: Alignment.bottomCenter,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      wall.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.fade,
-                      softWrap: false,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium!
-                          .copyWith(color: whiteColor, fontSize: 12),
-                    ),
-                    Text(
-                      "Designed by ${wall.author}",
-                      maxLines: 1,
-                      overflow: TextOverflow.clip,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium!
-                          .copyWith(color: whiteColor, fontSize: 10),
-                    ),
-                  ],
-                ),
-              ),
-              _buildFavIcon(wall)
-            ],
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+      sliver: Consumer<WallRio>(builder: (context, provider, _) {
+        final walls = widget.isSearchMode
+            ? List<Walls?>.from(provider.queryWallList)
+            : widget.walls;
+        final items = _buildItemList(walls);
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: items.length,
+            (context, index) {
+              final item = items[index];
+              if (item is bool) return _buildAdRow();
+              return _buildWallRow(item as List<Walls?>, context);
+            },
           ),
-        ));
+        );
+      }),
+    );
   }
 
-  Consumer<FavouriteProvider> _buildFavIcon(Walls wall) {
-    return Consumer<FavouriteProvider>(builder: (context, provider, _) {
-      final bool isFav = provider.isSelectedAsFav(wall.url);
-      if (provider.isLoading) {
-        return _buildFavBtn(
-            color: Colors.white,
-            iconData: Icons.favorite_border_rounded,
-            onTap: () {});
-      }
-      return _buildFavBtn(
-          color: isFav ? Colors.redAccent : Colors.white,
-          iconData:
-              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          onTap: () => UserProfile.plusMember
-              ? isFav
-                  ? provider.removeFromFav(id: wall.id)
-                  : provider.addToFav(wall: wall)
-              : _showPlusDialog(context));
-    });
+  Widget _buildWallRow(List<Walls?> rowWalls, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < 3; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(
+              child: i < rowWalls.length && rowWalls[i] != null
+                  ? AspectRatio(
+                      aspectRatio: 0.5,
+                      child: _buildCard(rowWalls[i]!, context),
+                    )
+                  : const SizedBox(),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
-  IconButton _buildFavBtn(
-      {required Function() onTap,
-      required IconData iconData,
-      required Color color}) {
-    return IconButton(onPressed: onTap, icon: Icon(iconData, color: color));
+  Widget _buildAdRow() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: AdsWidget(size: AdSize.mediumRectangle),
+      ),
+    );
   }
+
+  Widget _buildCard(Walls wall, BuildContext context) {
+    return Hero(
+      tag: wall.url,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(fit: StackFit.expand, children: [
+          CNImage(imageUrl: wall.thumbnail),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _onTapHandler(context, wall),
+              onLongPress: () => _onLongPressHandler(context, wall),
+              splashColor: blackColor.withValues(alpha: 0.3),
+            ),
+          ),
+          VerifyIconWidget(visibility: !wall.isPremium),
+        ]),
+      ),
+    );
+  }
+
+
 
   Widget _buildSearchBarUI() {
     return SliverToBoxAdapter(
@@ -218,7 +187,7 @@ class _GridPageState extends State<GridPage> {
             autofocus: true,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Theme.of(context).primaryColorLight.withOpacity(0.05),
+              fillColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
               hintText: 'Search by wall name, tags, etc',
               hintStyle: const TextStyle(fontSize: 14),
               suffixIcon: IconButton(
@@ -234,7 +203,7 @@ class _GridPageState extends State<GridPage> {
               prefixIcon:
                   BackBtnWidget(color: Theme.of(context).primaryColorLight),
               contentPadding: const EdgeInsets.symmetric(horizontal: 25),
-              hoverColor: blackColor.withOpacity(0.05),
+              hoverColor: blackColor.withValues(alpha: 0.05),
               border: const OutlineInputBorder(
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.all(Radius.circular(100))),

@@ -3,6 +3,7 @@ import 'package:provider/single_child_widget.dart';
 import 'package:wallrio/provider/export.dart';
 
 List<SingleChildWidget> providers(BuildContext context) => [
+      ChangeNotifierProvider(create: (context) => OnboardingProvider()),
       ChangeNotifierProvider(create: (context) => AuthProvider()),
       ChangeNotifierProvider(create: (context) => SubscriptionProvider()),
       ChangeNotifierProvider(create: (context) => AdsProvider()),

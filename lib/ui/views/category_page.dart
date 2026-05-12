@@ -11,25 +11,17 @@ class CategoryPage extends StatelessWidget {
   void _onLongPressHandler(context, model) {
     showModalBottomSheet(
         context: context,
-        isScrollControlled: true,
         enableDrag: true,
+        isScrollControlled: true,
+        isDismissible: true,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _showPlusDialog(context) {
-    showDialog(
-        context: context,
-        builder: (context) =>
-            AdsWidget.getPlusDialog(context, isExplorePlus: true));
-  }
-
   void _onTapHandler(context, model) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => FullImage(wallModel: model)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   @override
@@ -48,11 +40,11 @@ class CategoryPage extends StatelessWidget {
                     secondaryText: "Rio",
                     userProfileIconRight: false,
                     showUserProfileIcon: true),
-                _buildCategoryUI()
+                _buildCategoryUI(),
               ],
             ),
           ),
-          const AdsWidget()
+          const AdsWidget(),
         ],
       ),
     );
@@ -60,170 +52,248 @@ class CategoryPage extends StatelessWidget {
 
   Widget _buildCategoryUI() {
     return Consumer<WallRio>(builder: (context, provider, _) {
-      return provider.isLoading
-          ? SliverPadding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 15),
-              sliver: _buildShimmerUI(),
-            )
-          : provider.error.isEmpty
-              ? SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                      childCount: provider.categories!.length,
-                      (context, index) {
-                  final categoryName =
-                      provider.categories!.keys.elementAt(index);
-                  final categoryWalls =
-                      provider.categories!.values.elementAt(index);
-                  return Column(children: [
-                    _buildCategoryHeaderUI(
-                        categoryName, categoryWalls, context),
-                    _buildListViewUI(categoryWalls),
-                    if (index == provider.categories!.length - 1)
-                      const SizedBox(height: 20)
-                  ]);
-                }))
-              : SliverFillRemaining(child: Center(child: Text(provider.error)));
+      if (provider.isLoading) {
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: _buildShimmerUI(),
+        );
+      }
+      if (provider.error.isNotEmpty) {
+        return SliverFillRemaining(child: Center(child: Text(provider.error)));
+      }
+      return SliverPadding(
+        padding: const EdgeInsets.only(bottom: 80),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: provider.categories!.length,
+            (context, index) {
+              final categoryName =
+                  provider.categories!.keys.elementAt(index);
+              final categoryWalls =
+                  provider.categories!.values.elementAt(index);
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: Duration(milliseconds: 350 + index * 60),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) => Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, 28 * (1 - value)),
+                    child: child,
+                  ),
+                ),
+                child: _buildCategorySection(
+                    categoryName, categoryWalls, context),
+              );
+            },
+          ),
+        ),
+      );
     });
   }
 
-  SliverList _buildShimmerUI() {
-    return SliverList(
-        delegate: SliverChildBuilderDelegate(childCount: 4, (context, index) {
-      return Column(
+  Widget _buildCategorySection(
+      String name, List<Walls?> walls, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ShimmerWidget(height: 40, width: double.infinity),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 230,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: List.generate(
-                  6,
-                  (index) => const Padding(
-                        padding: EdgeInsets.only(right: 10.0),
-                        child:
-                            ShimmerWidget(height: 200, width: 120, radius: 25),
-                      )),
-            ),
-          ),
-          const SizedBox(height: 20)
+          _buildSectionHeader(name, walls, context),
+          const SizedBox(height: 14),
+          _buildHorizontalScroll(walls, context),
         ],
-      );
-    }));
-  }
-
-  SizedBox _buildListViewUI(List<Walls?> categoryWalls) {
-    return SizedBox(
-      height: 230,
-      child: ListView.separated(
-          separatorBuilder: (context, index) => const SizedBox(width: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: categoryWalls.length < 8 ? categoryWalls.length : 8,
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (context, i) {
-            return Hero(
-              tag: categoryWalls[i]!.url,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: SizedBox(
-                  width: 120,
-                  child: Stack(fit: StackFit.expand, children: [
-                    CNImage(imageUrl: categoryWalls[i]!.thumbnail),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _onTapHandler(context, categoryWalls[i]),
-                        onLongPress: () =>
-                            _onLongPressHandler(context, categoryWalls[i]),
-                        splashColor: blackColor.withOpacity(0.3),
-                      ),
-                    ),
-                    // buildImgBottomUI(categoryWalls[i]!),
-                    VerifyIconWidget(visibility: !categoryWalls[i]!.isPremium)
-                  ]),
-                ),
-              ),
-            );
-          }),
-    );
-  }
-
-  Widget buildImgBottomUI(Walls wall) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.black54],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter)),
-        height: 65,
-        padding: const EdgeInsets.only(right: 5, bottom: 5),
-        alignment: Alignment.bottomRight,
-        child: _buildFavIcon(wall),
       ),
     );
   }
 
-  Consumer<FavouriteProvider> _buildFavIcon(Walls wall) {
-    return Consumer<FavouriteProvider>(builder: (context, provider, _) {
-      final bool isFav = provider.isSelectedAsFav(wall.url);
-      if (provider.isLoading) {
-        return _buildFavBtn(
-            color: whiteColor,
-            iconData: Icons.favorite_border_rounded,
-            onTap: () {});
-      }
-      return _buildFavBtn(
-          color: isFav ? Colors.redAccent : whiteColor,
-          iconData:
-              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          onTap: () => UserProfile.plusMember
-              ? isFav
-                  ? provider.removeFromFav(id: wall.id)
-                  : provider.addToFav(wall: wall)
-              : _showPlusDialog(context));
-    });
-  }
-
-  IconButton _buildFavBtn(
-      {required Function() onTap,
-      required IconData iconData,
-      required Color color}) {
-    return IconButton(onPressed: onTap, icon: Icon(iconData, color: color));
-  }
-
-  Widget _buildCategoryHeaderUI(
-      String categoryName, List<Walls?> walls, BuildContext context) {
+  Widget _buildSectionHeader(
+      String name, List<Walls?> walls, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
-      child: ListTile(
-          title: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 4,
+            height: 22,
+            decoration: BoxDecoration(
+              color: bgDarkAccentColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            name,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: bgDarkAccentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${walls.length}',
+              style: const TextStyle(
+                color: bgDarkAccentColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    GridPage(categoryName: name, walls: walls),
+              ),
+            ),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: bgDarkAccentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: bgDarkAccentColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'View all',
+                    style: TextStyle(
+                      color: bgDarkAccentColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 13,
+                    color: bgDarkAccentColor,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalScroll(List<Walls?> walls, BuildContext context) {
+    final count = walls.length < 8 ? walls.length : 8;
+    return SizedBox(
+      height: 210,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: count,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, i) =>
+            _buildCard(walls[i]!, context, i),
+      ),
+    );
+  }
+
+  Widget _buildCard(Walls wall, BuildContext context, int cardIndex) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 280 + cardIndex * 45),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(24 * (1 - value), 0),
+          child: child,
+        ),
+      ),
+      child: Hero(
+        tag: wall.url,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: 120,
+            child: Stack(fit: StackFit.expand, children: [
+              CNImage(imageUrl: wall.thumbnail),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 70,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.transparent, Colors.black87],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _onTapHandler(context, wall),
+                  onLongPress: () => _onLongPressHandler(context, wall),
+                  splashColor: blackColor.withValues(alpha: 0.3),
+                ),
+              ),
+              VerifyIconWidget(visibility: !wall.isPremium),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  SliverList _buildShimmerUI() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        childCount: 4,
+        (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(categoryName, style: Theme.of(context).textTheme.bodyMedium),
-              Container(
-                decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColorLight.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(100)),
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                margin: EdgeInsets.only(left: 10),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 3),
-                  child: Text(walls.length.toString(),
-                      style: Theme.of(context).textTheme.labelSmall),
+              Row(
+                children: const [
+                  ShimmerWidget(height: 22, width: 4, radius: 4),
+                  SizedBox(width: 10),
+                  ShimmerWidget(height: 18, width: 110, radius: 8),
+                  SizedBox(width: 8),
+                  ShimmerWidget(height: 24, width: 34, radius: 20),
+                  Spacer(),
+                  ShimmerWidget(height: 28, width: 85, radius: 20),
+                ],
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 5,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (_, __) => const ShimmerWidget(
+                      height: 210, width: 120, radius: 16),
                 ),
               ),
             ],
           ),
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => GridPage(
-                        categoryName: categoryName,
-                        walls: walls,
-                      ))),
-          trailing:
-              Text("View all", style: Theme.of(context).textTheme.labelLarge)),
+        ),
+      ),
     );
   }
 }

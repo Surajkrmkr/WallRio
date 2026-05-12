@@ -25,7 +25,7 @@ class VerifyIconWidget extends StatelessWidget {
             child: SvgPicture.asset(
               "assets/icons/Prowalls.svg",
               semanticsLabel: 'Pro',
-              height: 16,
+              height: 12,
             ),
           ),
         ),

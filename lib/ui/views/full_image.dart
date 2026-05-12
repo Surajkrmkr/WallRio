@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -151,16 +153,18 @@ class _FullImageState extends State<FullImage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTagsUI(),
-                    SizedBox(height: 10),
-                    _buildDetailsUI(),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTagsUI(),
+                      SizedBox(height: 10),
+                      _buildDetailsUI(),
+                    ],
+                  ),
                 ),
                 _buildUtilsUI(),
               ],
@@ -174,7 +178,6 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildTagsUI() {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
       padding: const EdgeInsets.only(left: 20.0),
       child: Wrap(
         spacing: 10,
@@ -263,7 +266,15 @@ class _FullImageState extends State<FullImage> {
   }
 
   Widget _buildShareBtn() {
-    return _buildBtn(color: whiteColor, iconData: Icons.share, onTap: () {});
+    return _buildBtn(
+        color: whiteColor, iconData: Icons.share, onTap: _launchPlayStore);
+  }
+
+  Future<void> _launchPlayStore() async {
+    final String playStoreUrl =
+        'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
+
+    await SharePlus.instance.share(ShareParams(text: playStoreUrl));
   }
 
   Consumer<FavouriteProvider> _buildFavUI() {
@@ -335,6 +346,7 @@ class _FullImageState extends State<FullImage> {
         Expanded(
             child: PrimaryBtnWidget(
                 btnText: "Download",
+                textColor: whiteColor,
                 isLoading:
                     Provider.of<WallActionProvider>(context, listen: true)
                         .isDownloading,
@@ -348,6 +360,7 @@ class _FullImageState extends State<FullImage> {
         Expanded(
             child: PrimaryBtnWidget(
                 btnText: "Apply",
+                textColor: whiteColor,
                 onTap: () =>
                     UserProfile.plusMember || !widget.wallModel.isPremium
                         ? _applyImgHandler(context)

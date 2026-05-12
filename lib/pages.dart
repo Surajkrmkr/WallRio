@@ -4,6 +4,6 @@ import 'package:wallrio/ui/views/export.dart';
 List<Widget> pages = [
   const HomePage(),
   const CategoryPage(),
-  const CollectionPage(),
+  // const CollectionPage(),
   const FavouritePage()
 ];

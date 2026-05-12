@@ -5,6 +5,7 @@ export 'auth.dart';
 export 'dark_theme.dart';
 export 'favourite.dart';
 export 'navigation.dart';
+export 'onboarding_provider.dart';
 export 'subscription.dart';
 export 'wall_action.dart';
 export 'wall_details.dart';

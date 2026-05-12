@@ -68,21 +68,13 @@ class WallActionProvider extends ChangeNotifier {
       builder: (context) => ApplyWallDialogWidget(imgUrl: url));
 
   void applyWall(context,
-      {required String url,
-      required int wallLocation,
-      required bool isNative}) async {
+      {required String url, required int wallLocation}) async {
     setIsApplying = true;
     Navigator.pop(context);
     ToastWidget.showToast("Applying wallpaper");
     var file = await DefaultCacheManager().getSingleFile(url);
     try {
-      isNative
-          ? await WallpaperManagerFlutter()
-              .setWallpaper(file.path, wallLocation)
-          : await WallpaperManagerFlutter().setWallpaper(
-              file.path,
-              wallLocation,
-            );
+      await WallpaperManagerFlutter().setWallpaper(file, wallLocation);
       ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {
       ToastWidget.showToast("Failed to apply wallpaper");

@@ -87,10 +87,10 @@ class _NavigationPageState extends State<NavigationPage> {
                         icon: _getSvgIcon(
                             'Categories', context, provider.index == 1),
                         label: 'Categories'),
-                    NavigationDestination(
-                        icon: _getSvgIcon(
-                            'Collections', context, provider.index == 2),
-                        label: 'Collections'),
+                    // NavigationDestination(
+                    //     icon: _getSvgIcon(
+                    //         'Collections', context, provider.index == 2),
+                    //     label: 'Collections'),
                     NavigationDestination(
                         icon: _getSvgIcon(
                             'Favorites', context, provider.index == 3),

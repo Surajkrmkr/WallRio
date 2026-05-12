@@ -2,10 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/model/collection_model.dart';
 import 'package:wallrio/services/export.dart';
 
+class SubscriptionPlan {
+  final String id;
+  final int actualPrice;
+
+  const SubscriptionPlan({required this.id, required this.actualPrice});
+
+  factory SubscriptionPlan.fromJson(Map<String, dynamic> json) =>
+      SubscriptionPlan(
+        id: json['id'] ?? '',
+        actualPrice: json['actual price'] != null
+            ? int.parse(json['actual price'].toString())
+            : 0,
+      );
+}
+
 class WallRioModel {
   final List<Banners> banners;
   final Search search;
   final List<Walls> walls;
+  final List<SubscriptionPlan> subscriptionPlans;
   WallRioCollection collection;
   String error = "";
 
@@ -13,7 +29,8 @@ class WallRioModel {
       {this.banners = const [],
       this.walls = const [],
       this.collection = const WallRioCollection(),
-      this.search = const Search()});
+      this.search = const Search(),
+      this.subscriptionPlans = const []});
 
   set setCollection(WallRioCollection value) => collection = value;
 
@@ -30,6 +47,11 @@ class WallRioModel {
           ? []
           : (json['walls'] as List<dynamic>)
               .map((v) => Walls.fromJson(v))
+              .toList(),
+      subscriptionPlans: json['subscription'] == null
+          ? []
+          : (json['subscription'] as List<dynamic>)
+              .map((v) => SubscriptionPlan.fromJson(v))
               .toList());
 }
 

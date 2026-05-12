@@ -22,8 +22,11 @@ class SubscriptionProvider extends ChangeNotifier {
   late StreamSubscription subscription;
 
   final InAppPurchase inAppPurchase = InAppPurchase.instance;
+  static const String lifetimeProductId = 'com.wallrio.lifetime_pro';
+
   final Set<String> productIDs = {
     //   "com.wallrio.test",
+    lifetimeProductId,
     "com.wallrio.monthly_28",
     "com.wallrio.quaterly_84",
     "com.wallrio.yearly_365"
@@ -107,8 +110,12 @@ class SubscriptionProvider extends ChangeNotifier {
   void buyProduct(ProductDetails prod) async {
     try {
       final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
-      await inAppPurchase.buyConsumable(
-          purchaseParam: purchaseParam, autoConsume: true);
+      if (prod.id == lifetimeProductId) {
+        await inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+      } else {
+        await inAppPurchase.buyConsumable(
+            purchaseParam: purchaseParam, autoConsume: true);
+      }
     } on Exception catch (e) {
       logger.e(e);
     }
@@ -120,8 +127,9 @@ class SubscriptionProvider extends ChangeNotifier {
       await inAppPurchase.completePurchase(purchase);
       final CollectionReference purchases =
           FirebaseFirestore.instance.collection(subscriptionFirebasePath);
-      final int subscriptionDays =
-          int.parse(purchase.productID.split("_").last);
+      final int subscriptionDays = purchase.productID == lifetimeProductId
+          ? 36135 // ~99 years
+          : int.parse(purchase.productID.split("_").last);
       final now = DateTime.now();
       final endDate = now.add(Duration(days: subscriptionDays));
       await purchases.add({
