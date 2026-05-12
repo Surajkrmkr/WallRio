@@ -69,6 +69,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: v${{steps.app-version.outputs.data}}
+          name: WallRio v${{steps.app-version.outputs.data}}
           files: build/app/outputs/flutter-apk/WallRio-${{steps.app-version.outputs.data}}.zip
       - name: Configure Service Account JSON
         run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
