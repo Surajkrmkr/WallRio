@@ -41,7 +41,7 @@ class WallRioThemeData {
                   isDarkTheme ? whiteColor : blackColor),
               trackColor: WidgetStateProperty.all(
                   isDarkTheme ? bgDarkAccentColor : whiteColor)),
-          dialogTheme: DialogTheme(
+          dialogTheme: DialogThemeData(
               backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
               surfaceTintColor: Colors.transparent),
           listTileTheme: ListTileThemeData(

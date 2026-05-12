@@ -1,4 +1,3 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -61,7 +60,7 @@ class CollectionPage extends StatelessWidget {
     return Consumer<WallRio>(builder: (context, provider, _) {
       return provider.isLoading
           ? SliverPadding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: _buildShimmerUI(),
             )
           : provider.error.isEmpty
@@ -69,93 +68,191 @@ class CollectionPage extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                       childCount: provider.collections.length,
                       (context, index) {
-                  final collectionName = provider.collections[index].name;
-                  final collectionsWalls = provider.collections[index].walls!;
-                  return Column(children: [
-                    _buildCollectionHeaderUI(
-                        collectionName, collectionsWalls, context),
-                    _buildListViewUI(collectionsWalls),
-                    if (index == provider.collections.length - 1)
-                      const SizedBox(height: 20)
-                  ]);
-                }))
-              : SliverFillRemaining(child: Center(child: Text(provider.error)));
+                    final collectionName = provider.collections[index].name;
+                    final collectionsWalls = provider.collections[index].walls!;
+                    return _buildCollectionItemUI(
+                        collectionName,
+                        collectionsWalls,
+                        context,
+                        index,
+                        provider.collections.length);
+                  }))
+              : SliverFillRemaining(
+                  child: Center(child: Text(provider.error)));
     });
+  }
+
+  Widget _buildCollectionItemUI(String collectionName, List<Walls?> walls,
+      BuildContext context, int index, int totalLength) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => GridPage(
+                        categoryName: collectionName,
+                        walls: walls,
+                      ))),
+          child: Padding(
+            padding:
+                const EdgeInsets.only(right: 20, left: 20, top: 16, bottom: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(collectionName,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .primaryColorLight
+                        .withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  child: Text(walls.length.toString(),
+                      style: Theme.of(context).textTheme.labelSmall),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _CollectionRow(
+          walls: walls,
+          onTap: (wall) => _onTapHandler(context, wall),
+          onLongPress: (wall) => _onLongPressHandler(context, wall),
+          onFavTap: (wall, isFav, favProvider) => UserProfile.plusMember
+              ? isFav
+                  ? favProvider.removeFromFav(id: wall.id)
+                  : favProvider.addToFav(wall: wall)
+              : _showPlusDialog(context),
+        ),
+        if (index == totalLength - 1) const SizedBox(height: 20),
+      ],
+    );
   }
 
   SliverList _buildShimmerUI() {
     return SliverList(
         delegate: SliverChildBuilderDelegate(childCount: 4, (context, index) {
-      return Column(
-        children: [
-          const ShimmerWidget(height: 40, width: double.infinity),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 230,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: List.generate(
-                  6,
-                  (index) => const Padding(
-                        padding: EdgeInsets.only(right: 10.0),
-                        child:
-                            ShimmerWidget(height: 200, width: 120, radius: 25),
-                      )),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            const ShimmerWidget(height: 24, width: 150, radius: 8),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 230,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(left: 16),
+                children: const [
+                  ShimmerWidget(height: 230, width: 160, radius: 20),
+                  SizedBox(width: 10),
+                  ShimmerWidget(height: 230, width: 130, radius: 20),
+                  SizedBox(width: 10),
+                  ShimmerWidget(height: 230, width: 130, radius: 20),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20)
-        ],
+          ],
+        ),
       );
     }));
   }
+}
 
-  SizedBox _buildListViewUI(List<Walls?> categoryWalls) {
+class _CollectionRow extends StatefulWidget {
+  final List<Walls?> walls;
+  final void Function(Walls) onTap;
+  final void Function(Walls) onLongPress;
+  final void Function(Walls, bool, FavouriteProvider) onFavTap;
+
+  const _CollectionRow({
+    required this.walls,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onFavTap,
+  });
+
+  @override
+  State<_CollectionRow> createState() => _CollectionRowState();
+}
+
+class _CollectionRowState extends State<_CollectionRow> {
+  late final PageController _controller;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(viewportFraction: 0.62);
+    _controller.addListener(() {
+      setState(() => _currentPage = _controller.page ?? 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      height: 220,
-      child: CarouselSlider.builder(
-        itemCount: categoryWalls.length < 8 ? categoryWalls.length : 8,
-        options: CarouselOptions(
-            height: 220.0,
-            viewportFraction: 0.35,
-            padEnds: true,
-            autoPlay: true,
-            aspectRatio: 1080 / 2600,
-            enlargeCenterPage: true,
-            enlargeFactor: 0.4,
-            pageSnapping: true,
-            enableInfiniteScroll: true,
-            enlargeStrategy: CenterPageEnlargeStrategy.height),
-        itemBuilder: (BuildContext context, int i, int index) => Hero(
-          tag: categoryWalls[i]!.url,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 20.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(25),
-              child: SizedBox(
-                width: 120,
-                child: Stack(fit: StackFit.expand, children: [
-                  CNImage(imageUrl: categoryWalls[i]!.thumbnail),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _onTapHandler(context, categoryWalls[i]),
-                      onLongPress: () =>
-                          _onLongPressHandler(context, categoryWalls[i]),
-                      splashColor: blackColor.withOpacity(0.3),
+      height: 240,
+      child: PageView.builder(
+        controller: _controller,
+        itemCount: widget.walls.length,
+        itemBuilder: (context, index) {
+          final distance = (_currentPage - index).abs();
+          final scale = (1 - distance * 0.12).clamp(0.82, 1.0);
+          final wall = widget.walls[index];
+          if (wall == null) return const SizedBox.shrink();
+
+          return Transform.scale(
+            scale: scale,
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: () => widget.onTap(wall),
+              onLongPress: () => widget.onLongPress(wall),
+              child: Container(
+                margin: const EdgeInsets.only(right: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(4, 8),
                     ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CNImage(imageUrl: wall.url),
+                      _buildImgBottomUI(wall),
+                    ],
                   ),
-                  buildImgBottomUI(categoryWalls[i]!),
-                  VerifyIconWidget(visibility: !categoryWalls[i]!.isPremium)
-                ]),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget buildImgBottomUI(Walls wall) {
+  Widget _buildImgBottomUI(Walls wall) {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -167,70 +264,19 @@ class CollectionPage extends StatelessWidget {
         height: 65,
         padding: const EdgeInsets.only(right: 5, bottom: 5),
         alignment: Alignment.bottomRight,
-        child: _buildFavIcon(wall),
-      ),
-    );
-  }
-
-  Consumer<FavouriteProvider> _buildFavIcon(Walls wall) {
-    return Consumer<FavouriteProvider>(builder: (context, provider, _) {
-      final bool isFav = provider.isSelectedAsFav(wall.url);
-      if (provider.isLoading) {
-        return _buildFavBtn(
-            color: whiteColor,
-            iconData: Icons.favorite_border_rounded,
-            onTap: () {});
-      }
-      return _buildFavBtn(
-          color: isFav ? Colors.redAccent : whiteColor,
-          iconData:
+        child: Consumer<FavouriteProvider>(builder: (context, favProvider, _) {
+          final bool isFav = favProvider.isSelectedAsFav(wall.url);
+          return IconButton(
+            onPressed: favProvider.isLoading
+                ? null
+                : () => widget.onFavTap(wall, isFav, favProvider),
+            icon: Icon(
               isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          onTap: () => UserProfile.plusMember
-              ? isFav
-                  ? provider.removeFromFav(id: wall.id)
-                  : provider.addToFav(wall: wall)
-              : _showPlusDialog(context));
-    });
-  }
-
-  IconButton _buildFavBtn(
-      {required Function() onTap,
-      required IconData iconData,
-      required Color color}) {
-    return IconButton(onPressed: onTap, icon: Icon(iconData, color: color));
-  }
-
-  Widget _buildCollectionHeaderUI(
-      String categoryName, List<Walls?> walls, BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
-      child: ListTile(
-          title: Row(
-            children: [
-              Text(categoryName, style: Theme.of(context).textTheme.bodyMedium),
-              Container(
-                decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColorLight.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(100)),
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                margin: EdgeInsets.only(left: 10),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 3),
-                  child: Text(walls.length.toString(),
-                      style: Theme.of(context).textTheme.labelSmall),
-                ),
-              ),
-            ],
-          ),
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => GridPage(
-                        categoryName: categoryName,
-                        walls: walls,
-                      ))),
-          trailing:
-              Text("View all", style: Theme.of(context).textTheme.labelLarge)),
+              color: isFav ? Colors.redAccent : whiteColor,
+            ),
+          );
+        }),
+      ),
     );
   }
 }

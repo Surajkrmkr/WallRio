@@ -5,8 +5,9 @@ import 'package:wallrio/ui/widgets/export.dart';
 
 class AuthProvider with ChangeNotifier {
   bool isLoading = false;
+  bool _googleSignInInitialized = false;
 
-  final GoogleSignIn googleSignIn = GoogleSignIn();
+  final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
   User? _user;
 
@@ -30,13 +31,18 @@ class AuthProvider with ChangeNotifier {
   Future<void> signIn() async {
     setIsLoading = true;
     try {
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return;
+      if (!_googleSignInInitialized) {
+        await googleSignIn.initialize(
+          serverClientId:
+              '340316492418-fcakfi05k8p05sa1c3jjui61ngjpc9jd.apps.googleusercontent.com',
+        );
+        _googleSignInInitialized = true;
+      }
 
-      final googleAuth = await googleUser.authentication;
+      final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
 
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       final firebaseAuth = FirebaseAuth.instance;

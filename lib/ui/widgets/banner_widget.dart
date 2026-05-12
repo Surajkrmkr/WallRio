@@ -26,7 +26,7 @@ class BannerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<WallRio>(builder: (context, provider, _) {
-      if (provider.isLoading) {
+      if (provider.isLoading || provider.bannerList.isEmpty) {
         return Padding(
           padding: EdgeInsets.only(bottom: 20),
           child: const Padding(
