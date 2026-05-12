@@ -80,7 +80,6 @@ jobs:
           serviceAccountJson: service_account.json
           packageName: com.shadowteam.wallrio
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          mappingFile: build/app/outputs/mapping/release/mapping.txt
           whatsNewDirectory: distribution/whatsnew
           releaseName: ${{steps.app-version.outputs.data}}
           track: production
