@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 // import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -147,7 +146,9 @@ class _FullImageState extends State<FullImage> {
   Widget _buildBottomUI() {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Padding(
+      child: SafeArea(
+        top: false,
+        child: Padding(
         padding: const EdgeInsets.only(bottom: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -171,6 +172,7 @@ class _FullImageState extends State<FullImage> {
             ),
             _buildActionBtnUI(),
           ],
+        ),
         ),
       ),
     );

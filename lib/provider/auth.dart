@@ -49,6 +49,8 @@ class AuthProvider with ChangeNotifier {
       await firebaseAuth.signInWithCredential(credential);
       if (firebaseAuth.currentUser != null) {
         setSignedInUser = firebaseAuth.currentUser!;
+        await FirebaseAnalytics.instance
+            .logLogin(loginMethod: 'google');
       }
       ToastWidget.showToast("Logged in as ${firebaseAuth.currentUser!.email}");
     } on Exception catch (exception) {
@@ -68,6 +70,7 @@ class AuthProvider with ChangeNotifier {
     try {
       await FirebaseAuth.instance.signOut();
       await googleSignIn.disconnect();
+      FirebaseAnalytics.instance.logEvent(name: 'user_sign_out');
       ToastWidget.showToast("Logged Out");
     } on Exception catch (exception) {
       debugPrint(exception.toString());

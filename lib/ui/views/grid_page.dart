@@ -27,6 +27,12 @@ class _GridPageState extends State<GridPage> {
   @override
   void initState() {
     textEditingController.text = widget.categoryName;
+    if (widget.isSearchMode && widget.categoryName.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<WallRio>(context, listen: false)
+            .onSearchTap(widget.categoryName);
+      });
+    }
     super.initState();
   }
 

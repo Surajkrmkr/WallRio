@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
@@ -16,6 +17,8 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   late PageController _pageController;
   late StreamSubscription<bool> _purchaseSuccessSub;
+  late SubscriptionProvider _subProvider;
+  bool _completing = false;
 
   @override
   void initState() {
@@ -32,25 +35,48 @@ class _OnboardingPageState extends State<OnboardingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<WallRio>(context, listen: false).getListFromAPI(context);
 
-      _purchaseSuccessSub = Provider.of<SubscriptionProvider>(context, listen: false)
-          .successPurchasedStream
-          .listen((success) {
+      _subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+
+      _purchaseSuccessSub =
+          _subProvider.successPurchasedStream.listen((success) {
         if (success && mounted) _completeOnboarding();
       });
+
+      _subProvider.addListener(_onSubscriptionChanged);
+      // Catch the case where subscription was already resolved before this
+      // listener was registered (e.g. Firestore returned before first frame).
+      _onSubscriptionChanged();
     });
+  }
+
+  void _onSubscriptionChanged() {
+    if (!_subProvider.isSubscriptionLoading &&
+        UserProfile.plusMember &&
+        mounted &&
+        _pageController.hasClients &&
+        (_pageController.page ?? 0).round() >= 3) {
+      _completeOnboarding();
+    }
   }
 
   @override
   void dispose() {
+    _subProvider.removeListener(_onSubscriptionChanged);
     _pageController.dispose();
     _purchaseSuccessSub.cancel();
     super.dispose();
   }
 
   void _goToNextPage() async {
+    final provider = Provider.of<OnboardingProvider>(context, listen: false);
     final nextStep = (_pageController.page ?? 0).round() + 1;
-    await Provider.of<OnboardingProvider>(context, listen: false)
-        .saveStep(nextStep);
+    await provider.saveStep(nextStep);
+
+    if (nextStep == 3 && UserProfile.plusMember) {
+      if (mounted) _completeOnboarding();
+      return;
+    }
+
     if (mounted) {
       _pageController.animateToPage(
         nextStep.clamp(0, 3),
@@ -61,10 +87,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _completeOnboarding() async {
-    await Provider.of<OnboardingProvider>(context, listen: false)
-        .completeOnboarding();
+    if (_completing) return;
+    _completing = true;
+    FirebaseAnalytics.instance.logTutorialComplete();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) UserProfile.setUserData(currentUser);
+    final provider = Provider.of<OnboardingProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+    await provider.completeOnboarding();
     if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
+      navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const NavigationPage()),
         (_) => false,
       );

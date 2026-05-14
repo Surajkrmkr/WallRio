@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python3 -c ' *)",
       "Bash(flutter analyze *)",
-      "Bash(dart analyze *)"
+      "Bash(dart analyze *)",
+      "Bash(sort -t: -k2 -rn)"
     ]
   }
 }

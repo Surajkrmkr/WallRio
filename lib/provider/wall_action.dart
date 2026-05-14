@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:downloadsfolder/downloadsfolder.dart';
 import 'package:flutter/material.dart';
+import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -26,6 +27,8 @@ class WallActionProvider extends ChangeNotifier {
   }
 
   void downloadImg(url, name) async {
+    FirebaseAnalytics.instance
+        .logEvent(name: 'wallpaper_download', parameters: {'name': name});
     ToastWidget.showToast("Downloading wallpaper");
     setIsDownloading = true;
     setProgress = 0.0;
@@ -69,6 +72,9 @@ class WallActionProvider extends ChangeNotifier {
 
   void applyWall(context,
       {required String url, required int wallLocation}) async {
+    FirebaseAnalytics.instance.logEvent(
+        name: 'wallpaper_applied',
+        parameters: {'location': wallLocation == 1 ? 'homescreen' : wallLocation == 2 ? 'lockscreen' : 'both'});
     setIsApplying = true;
     Navigator.pop(context);
     ToastWidget.showToast("Applying wallpaper");

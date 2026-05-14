@@ -39,6 +39,10 @@ class MyApp extends StatelessWidget {
                   context: context, isDarkTheme: true),
               themeMode: provider.darkTheme ? ThemeMode.dark : ThemeMode.light,
               debugShowCheckedModeBanner: false,
+              navigatorObservers: [
+                FirebaseAnalyticsObserver(
+                    analytics: FirebaseAnalytics.instance),
+              ],
               home: const SplashPage());
         },
       ),

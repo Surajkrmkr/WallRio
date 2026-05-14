@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 
 import '../model/collection_model.dart';
@@ -22,6 +23,7 @@ class WallRio extends ChangeNotifier {
   String error = "";
   String currentVersion = "1.0.0";
   bool isLoading = false;
+  String _activeQuery = '';
 
   int bannerIndex = 0;
 
@@ -122,7 +124,7 @@ class WallRio extends ChangeNotifier {
       setSubscriptionPlans = model.subscriptionPlans;
       setActionWallList =
           getFilteredWallList(model.walls, search.tags, search.categories);
-      setQueryWallList = model.walls;
+      onSearchTap(_activeQuery);
       _buildCategoryAndTags();
     } else {
       setError = model.error;
@@ -199,10 +201,16 @@ class WallRio extends ChangeNotifier {
 
   void onSearchTap(String query) {
     if (query.isNotEmpty) {
+      FirebaseAnalytics.instance
+          .logSearch(searchTerm: query);
+    }
+    _activeQuery = query;
+    if (query.isNotEmpty) {
       setQueryWallList = originalWallList
           .where((wall) =>
-          wall.name.toLowerCase().contains(query.toLowerCase()) ||
-          wall.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase())))
+              wall.name.toLowerCase().contains(query.toLowerCase()) ||
+              wall.tags.any(
+                  (tag) => tag.toLowerCase().contains(query.toLowerCase())))
           .toList();
     } else {
       setQueryWallList = originalWallList;
@@ -219,6 +227,7 @@ class WallRio extends ChangeNotifier {
   }
 
   void resetToDefault() {
+    _activeQuery = '';
     setQueryWallList = originalWallList;
     clearSelectedTags();
   }

@@ -143,6 +143,13 @@ class SubscriptionProvider extends ChangeNotifier {
       });
       setSubscriptionDaysLeft = endDate.difference(now).inDays.toString();
       UserProfile.setPlusMemberInfo(true);
+      FirebaseAnalytics.instance.logPurchase(
+          currency: 'USD',
+          value: null,
+          parameters: {
+            'product_id': purchase.productID,
+            'subscription_days': subscriptionDays,
+          });
       _successPurchased.sink.add(true);
     } catch (error) {
       logger.e(error);

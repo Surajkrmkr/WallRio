@@ -35,6 +35,9 @@ class FavouriteProvider extends ChangeNotifier {
   void addToFav({required Walls wall}) async {
     final bool isAdded = await saveToFirebase(wall: wall);
     if (isAdded) {
+      FirebaseAnalytics.instance.logEvent(
+          name: 'wallpaper_added_to_favourite',
+          parameters: {'wall_id': wall.id});
       addWallToList = wall;
       ToastWidget.showToast("Added to Favourite");
     } else {
@@ -45,6 +48,9 @@ class FavouriteProvider extends ChangeNotifier {
   void removeFromFav({required int id}) async {
     final bool isRemoved = await removeFromFirebase(id: id);
     if (isRemoved) {
+      FirebaseAnalytics.instance.logEvent(
+          name: 'wallpaper_removed_from_favourite',
+          parameters: {'wall_id': id});
       removeWallFromList = id;
       ToastWidget.showToast("Removed from Favourite");
     } else {
@@ -62,11 +68,15 @@ class FavouriteProvider extends ChangeNotifier {
 
   void getFavouritesFromFirebase() async {
     if (UserProfile.plusMember) {
+      final email = UserProfile.email.isNotEmpty
+          ? UserProfile.email
+          : FirebaseAuth.instance.currentUser?.email ?? '';
+      if (email.isEmpty) return;
       setIsLoading = true;
       final DocumentReference<Map<String, dynamic>> favourite =
           FirebaseFirestore.instance
               .collection(favouriteFirebasePath)
-              .doc(UserProfile.email);
+              .doc(email);
       final QuerySnapshot<Map<String, dynamic>> querySnapshot = await favourite
           .collection(favouriteItemsFirebasePath)
           .orderBy('createdAt', descending: false)
