@@ -4,7 +4,13 @@
       "Bash(python3 -c ' *)",
       "Bash(flutter analyze *)",
       "Bash(dart analyze *)",
-      "Bash(sort -t: -k2 -rn)"
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(flutter pub *)",
+      "Bash(curl -s \"https://gitlab.com/teamshadowsupp/wallriojson/-/raw/main/live_wall.json\")",
+      "WebFetch(domain:pub.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch"
     ]
   }
 }

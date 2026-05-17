@@ -15,7 +15,9 @@ class AdsWidget extends StatefulWidget {
   State<AdsWidget> createState() => _AdsWidgetState();
 
   static Widget getPlusDialog(BuildContext context,
-      {void Function()? onWatchAdClick, bool isExplorePlus = false}) {
+      {void Function()? onWatchAdClick,
+      bool isExplorePlus = false,
+      bool showAdButton = true}) {
     return AlertDialog(
       title: Row(
         children: [
@@ -34,7 +36,7 @@ class AdsWidget extends StatefulWidget {
       ),
       actions: [
         Offstage(
-          offstage: isExplorePlus,
+          offstage: isExplorePlus || !showAdButton,
           child: Consumer<AdsProvider>(builder: (context, provider, _) {
             return provider.isRewardedAdLoading
                 ? ShimmerWidget.withWidget(
@@ -43,7 +45,7 @@ class AdsWidget extends StatefulWidget {
           }),
         ),
         Visibility(
-          visible: isExplorePlus,
+          visible: isExplorePlus || !showAdButton,
           replacement: OutlinedButton.icon(
               icon: const Icon(Icons.verified),
               onPressed: () => _onPlusClick(context),

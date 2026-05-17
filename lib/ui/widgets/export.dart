@@ -1,4 +1,6 @@
 export 'ads_widget.dart';
+export 'live_wall_card_widget.dart';
+export 'live_walls_grid_sliver.dart';
 export 'apply_wall_dialog_widget.dart';
 export 'back_btn_widget.dart';
 export 'banner_widget.dart';

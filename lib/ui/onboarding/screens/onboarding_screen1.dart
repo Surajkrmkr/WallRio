@@ -44,7 +44,7 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
     return Consumer<WallRio>(builder: (context, wallRio, _) {
       final walls = wallRio.originalWallList.isEmpty
           ? <Walls>[]
-          : wallRio.originalWallList.reversed.take(6).toList();
+          : wallRio.originalWallList.take(6).toList();
 
       return Container(
         color: Colors.black,

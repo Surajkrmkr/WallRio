@@ -23,6 +23,8 @@ class _NavigationPageState extends State<NavigationPage> {
     Future.delayed(Duration.zero, () {
       _checkUserIsDisable(_timer);
       Provider.of<WallRio>(context, listen: false).getListFromAPI(context);
+      Provider.of<LiveWallpaperProvider>(context, listen: false)
+          .getListFromAPI();
       if (UserProfile.plusMember) {
         Provider.of<FavouriteProvider>(context, listen: false)
             .getFavouritesFromFirebase();
@@ -84,13 +86,12 @@ class _NavigationPageState extends State<NavigationPage> {
                             'Explore', context, provider.index == 0),
                         label: 'Explore'),
                     NavigationDestination(
+                        icon: _getSvgIcon('Live', context, provider.index == 1),
+                        label: 'Dynamic'),
+                    NavigationDestination(
                         icon: _getSvgIcon(
-                            'Categories', context, provider.index == 1),
+                            'Categories', context, provider.index == 2),
                         label: 'Categories'),
-                    // NavigationDestination(
-                    //     icon: _getSvgIcon(
-                    //         'Collections', context, provider.index == 2),
-                    //     label: 'Collections'),
                     NavigationDestination(
                         icon: _getSvgIcon(
                             'Favorites', context, provider.index == 3),

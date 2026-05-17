@@ -13,4 +13,5 @@ List<SingleChildWidget> providers(BuildContext context) => [
       ChangeNotifierProvider(create: (context) => WallDetails()),
       ChangeNotifierProvider(create: (context) => WallActionProvider()),
       ChangeNotifierProvider(create: (context) => FavouriteProvider()),
+      ChangeNotifierProvider(create: (context) => LiveWallpaperProvider()),
     ];

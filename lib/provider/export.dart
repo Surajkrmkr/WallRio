@@ -4,6 +4,7 @@ export 'ads.dart';
 export 'auth.dart';
 export 'dark_theme.dart';
 export 'favourite.dart';
+export 'live_wallpaper_provider.dart';
 export 'navigation.dart';
 export 'onboarding_provider.dart';
 export 'subscription.dart';

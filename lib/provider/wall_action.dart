@@ -70,6 +70,21 @@ class WallActionProvider extends ChangeNotifier {
       barrierDismissible: false,
       builder: (context) => ApplyWallDialogWidget(imgUrl: url));
 
+  Future<void> applyLiveWall(String url) async {
+    setIsApplying = true;
+    ToastWidget.showToast("Applying live wallpaper…");
+    try {
+      final file = await DefaultCacheManager().getSingleFile(url);
+      await WallpaperManagerPlus().setLiveWallpaper(file);
+      ToastWidget.showToast("Live wallpaper applied");
+    } catch (error) {
+      ToastWidget.showToast("Failed to apply live wallpaper");
+      logger.e(error);
+    } finally {
+      setIsApplying = false;
+    }
+  }
+
   void applyWall(context,
       {required String url, required int wallLocation}) async {
     FirebaseAnalytics.instance.logEvent(
@@ -80,7 +95,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Applying wallpaper");
     var file = await DefaultCacheManager().getSingleFile(url);
     try {
-      await WallpaperManagerFlutter().setWallpaper(file, wallLocation);
+      await WallpaperManagerPlus().setWallpaper(file, wallLocation);
       ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {
       ToastWidget.showToast("Failed to apply wallpaper");

@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _filterIndex = 0;
 
-  static const _filters = ['All', 'Free', 'Pro'];
+  static const _filters = ['All', 'Free', 'Pro', 'Live'];
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,10 @@ class _HomePageState extends State<HomePage> {
                     showSaleChip: true),
                 SliverToBoxAdapter(child: BannerWidget()),
                 SliverToBoxAdapter(child: _buildFilterRow()),
-                TrendingWallGridWidget(filterIndex: _filterIndex),
+                if (_filterIndex == 3)
+                  const LiveWallsGridSliver()
+                else
+                  TrendingWallGridWidget(filterIndex: _filterIndex),
               ],
             ),
           ),
