@@ -74,6 +74,8 @@ dependencies:
   share_plus: ^12.0.2
   video_player: ^2.9.1
   wallpaper_manager_plus: ^2.0.3
+  liquid_bottom_nav_bar: ^0.1.0
+  workmanager: ^0.9.0-3
 
 dev_dependencies:
   flutter_test:

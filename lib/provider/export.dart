@@ -11,3 +11,4 @@ export 'subscription.dart';
 export 'wall_action.dart';
 export 'wall_details.dart';
 export 'wall_rio.dart';
+export 'auto_wallpaper.dart';

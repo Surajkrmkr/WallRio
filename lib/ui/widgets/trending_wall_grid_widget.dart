@@ -103,12 +103,62 @@ class TrendingWallGridWidget extends StatelessWidget {
             (context, index) {
               final item = items[index];
               if (item is bool) return _buildAdRow();
+              
+              // Only apply featured layout for the first row of "All" filter in main grid
+              if (index == 0 && !isActionGrid && filterIndex == 0 && (item as List<Walls>).length == 3) {
+                return _buildFeaturedRow(item, context);
+              }
+              
               return _buildWallRow(item as List<Walls>, context);
             },
           ),
         ),
       );
     });
+  }
+
+  Widget _buildFeaturedRow(List<Walls> rowWalls, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left: Large Featured
+              Expanded(
+                flex: 2,
+                child: _buildImgUI(rowWalls[0], context, isFeatured: true, rank: 1),
+              ),
+              const SizedBox(width: 10),
+              // Right: Two Small Featured (Matching standard grid items)
+              Expanded(
+                flex: 1,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 0.55,
+                        child: _buildImgUI(rowWalls[1], context, isSmallFeatured: true, rank: 2),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 0.55,
+                        child: _buildImgUI(rowWalls[2], context, isSmallFeatured: true, rank: 3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   Widget _buildWallRow(List<Walls> rowWalls, BuildContext context) {
@@ -122,7 +172,7 @@ class TrendingWallGridWidget extends StatelessWidget {
             Expanded(
               child: i < rowWalls.length
                   ? AspectRatio(
-                      aspectRatio: 0.5,
+                      aspectRatio: 0.55,
                       child: _buildImgUI(rowWalls[i], context),
                     )
                   : const SizedBox(),
@@ -142,24 +192,126 @@ class TrendingWallGridWidget extends StatelessWidget {
     );
   }
 
-  Hero _buildImgUI(Walls wall, BuildContext context) {
+  Hero _buildImgUI(Walls wall, BuildContext context,
+      {bool isFeatured = false, bool isSmallFeatured = false, int? rank}) {
     return Hero(
       tag: wall.url,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(fit: StackFit.expand, children: [
-          CNImage(imageUrl: wall.thumbnail),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _onTapHandler(context, wall),
-              onLongPress: () => _onLongPressHandler(context, wall),
-              splashColor: blackColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CNImage(imageUrl: wall.thumbnail),
+            // Name Overlay ONLY for top 3 featured items
+            if (isFeatured || isSmallFeatured)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.all(isFeatured ? 16 : 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: Text(
+                    wall.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isFeatured ? 16 : 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            // Rank Chip
+            if (rank != null)
+              Positioned(
+                top: isFeatured ? 16 : 10,
+                left: isFeatured ? 16 : 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: _getRankGradient(rank),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getRankIcon(rank),
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        rank.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _onTapHandler(context, wall),
+                onLongPress: () => _onLongPressHandler(context, wall),
+                splashColor: blackColor.withValues(alpha: 0.3),
+              ),
             ),
-          ),
-          VerifyIconWidget(visibility: !wall.isPremium)
-        ]),
+            if (!isFeatured && !isSmallFeatured)
+              VerifyIconWidget(visibility: !wall.isPremium)
+          ],
+        ),
       ),
     );
+  }
+
+  IconData _getRankIcon(int rank) {
+    if (rank == 1) return Icons.emoji_events_rounded; // Trophy
+    if (rank == 2) return Icons.workspace_premium_rounded; // Medal with star
+    return Icons.military_tech_rounded; // Medal/Ribbon
+  }
+
+  Gradient _getRankGradient(int rank) {
+    if (rank == 1) {
+      return const LinearGradient(
+        colors: [Color(0xFFFFD700), Color(0xFFFFA500)], // Gold
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else if (rank == 2) {
+      return const LinearGradient(
+        colors: [Color(0xFFC0C0C0), Color(0xFF808080)], // Silver
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else {
+      return const LinearGradient(
+        colors: [Color(0xFFCD7F32), Color(0xFF8B4513)], // Bronze
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    }
   }
 }

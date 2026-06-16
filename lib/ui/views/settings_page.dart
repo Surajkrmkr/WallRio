@@ -3,6 +3,7 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
+import 'package:wallrio/ui/views/auto_wallpaper_settings_page.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -21,6 +22,14 @@ class SettingsPage extends StatelessWidget {
         context,
         label: 'Advanced',
         children: [
+          _tile(context,
+              icon: Icons.auto_mode_rounded,
+              title: 'Auto Wallpaper',
+              subtitle: 'Automatically change your wallpaper',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AutoWallpaperSettingsPage()))),
           _tile(context,
               icon: Icons.cleaning_services_rounded,
               title: 'Clear Cache',

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -61,6 +62,10 @@ Future<void> initializationHandler() async {
   await FirebaseAppCheck.instance.activate();
   await NotificationService().init();
   await MobileAds.instance.initialize();
+  await Workmanager().initialize(
+    AutoWallpaperProvider.callbackDispatcher,
+    isInDebugMode: kDebugMode,
+  );
   await FlutterDownloader.initialize(
       debug:
           true, // optional: set to false to disable printing logs to console (default: true)

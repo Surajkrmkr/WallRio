@@ -9,4 +9,5 @@ export 'live_page.dart';
 export 'navigation_page.dart';
 export 'search_page.dart';
 export 'settings_page.dart';
+export 'auto_wallpaper_settings_page.dart';
 export 'collection_page.dart';
