@@ -3,8 +3,7 @@ import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class CNImage extends StatelessWidget {
-  const CNImage({Key? key, @required this.imageUrl, this.isOriginalImg = false})
-      : super(key: key);
+  const CNImage({super.key, required this.imageUrl, this.isOriginalImg = false});
   final String? imageUrl;
   final bool isOriginalImg;
 

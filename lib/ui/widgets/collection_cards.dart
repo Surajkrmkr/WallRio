@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
-import 'package:wallrio/services/theme_data.dart';
 
 enum CollectionCardType { landscapeCinematic, mediumSquare, tallVertical, wideEditorial }
 
@@ -61,14 +59,14 @@ class _CollectionCardState extends State<CollectionCard> {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: isDarkMode ? Colors.black.withOpacity(0.8) : Colors.black.withOpacity(0.12),
+              color: isDarkMode ? Colors.black.withValues(alpha: 0.8) : Colors.black.withValues(alpha: 0.12),
               blurRadius: isDarkMode ? 40 : 30,
               spreadRadius: isDarkMode ? -10 : 0,
               offset: Offset(0, isDarkMode ? 20 : 10),
             ),
             // Ambient Glow Halo (Subtle in light mode)
             BoxShadow(
-              color: const Color(0xFF37C3A3).withOpacity(isDarkMode ? 0.08 : 0.04),
+              color: const Color(0xFF37C3A3).withValues(alpha: isDarkMode ? 0.08 : 0.04),
               blurRadius: 60,
               spreadRadius: 2,
             ),
@@ -84,7 +82,7 @@ class _CollectionCardState extends State<CollectionCard> {
                 // Static Preview
                 Positioned.fill(
                   child: walls.isNotEmpty
-                      ? CNImage(imageUrl: walls[0]!.url)
+                      ? CNImage(imageUrl: walls[0].url)
                       : Container(color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.grey[200]),
                 ),
 
@@ -97,10 +95,10 @@ class _CollectionCardState extends State<CollectionCard> {
                         end: Alignment.bottomRight,
                         stops: const [0.0, 0.3, 0.7, 1.0],
                         colors: [
-                          Colors.white.withOpacity(isDarkMode ? 0.05 : 0.1),
+                          Colors.white.withValues(alpha: isDarkMode ? 0.05 : 0.1),
                           Colors.transparent,
                           Colors.transparent,
-                          isDarkMode ? Colors.black.withOpacity(0.9) : Colors.black.withOpacity(0.7),
+                          isDarkMode ? Colors.black.withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -132,9 +130,9 @@ class _CollectionCardState extends State<CollectionCard> {
         child: Container(
           padding: EdgeInsets.all(isGrid ? 14 : 16),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(isGrid ? 32 : 36),
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 0.5),
           ),
           child: Row(
             children: [
@@ -166,7 +164,7 @@ class _CollectionCardState extends State<CollectionCard> {
                     Text(
                       '${widget.collection.walls?.length ?? 0} PREMIUM WALLPAPERS',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: isGrid ? 8 : 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
@@ -234,10 +232,10 @@ class CategoryChips extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.white.withOpacity(0.05),
+                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.1),
+                    color: isSelected ? Colors.transparent : Colors.white.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),

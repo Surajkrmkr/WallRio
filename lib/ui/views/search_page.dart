@@ -10,7 +10,7 @@ class SearchPage extends StatelessWidget {
 
   final ScrollController scrollController = ScrollController();
 
-  void _onTapHandler(context, Banners banner) => banner.category.isEmpty
+  void _onTapHandler(BuildContext context, Banners banner) => banner.category.isEmpty
       ? LaunchUrlWidget.launch(banner.link)
       : Navigator.push(context, MaterialPageRoute(builder: (context) {
           final categoryWalls =
@@ -24,10 +24,10 @@ class SearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: WillPopScope(
-        onWillPop: () async {
+      body: PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
           Provider.of<WallRio>(context, listen: false).resetToDefault();
-          return true;
         },
         child: SafeArea(
           child: Stack(
@@ -133,13 +133,13 @@ class SearchPage extends StatelessWidget {
                         ))),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Theme.of(context).primaryColorLight.withOpacity(0.05),
+              fillColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
               hintText: 'Search by wall name, tags, etc',
               hintStyle: const TextStyle(fontSize: 14),
               prefixIcon:
                   IconButton(onPressed: null, icon: Icon(Icons.search_rounded)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 25),
-              hoverColor: blackColor.withOpacity(0.05),
+              hoverColor: blackColor.withValues(alpha: 0.05),
               border: const OutlineInputBorder(
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.all(Radius.circular(100))),
@@ -165,7 +165,7 @@ class SearchPage extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => _onTapHandler(context, banner),
-                  splashColor: blackColor.withOpacity(0.3),
+                  splashColor: blackColor.withValues(alpha: 0.3),
                 ),
               ),
             ]);

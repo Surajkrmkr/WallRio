@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
-import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -31,7 +29,7 @@ class SliverAppBarWidget extends StatelessWidget {
       this.userProfileIconRight = true,
       this.showSaleChip = false});
 
-  void _onLongPressHandler(context) {
+  void _onLongPressHandler(BuildContext context) {
     showModalBottomSheet(
         context: context,
         enableDrag: true,
@@ -39,6 +37,9 @@ class SliverAppBarWidget extends StatelessWidget {
         isDismissible: true,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+            ? bgDark2Color 
+            : const Color(0xFFF2F2F7),
         builder: (context) => const UserBottomSheet());
   }
 
@@ -77,19 +78,24 @@ class SliverAppBarWidget extends StatelessWidget {
                     ),
                   ],
                 );
-          if (!showSaleChip) return titleWidget;
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              titleWidget,
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: _buildSaleChip(context),
-              ),
-            ],
-          );
+          Widget content;
+          if (!showSaleChip) {
+            content = titleWidget;
+          } else {
+            content = Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                titleWidget,
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: _buildSaleChip(context),
+                ),
+              ],
+            );
+          }
+          return FittedBox(fit: BoxFit.scaleDown, child: content);
         },
       ),
       actions: [
@@ -101,31 +107,8 @@ class SliverAppBarWidget extends StatelessWidget {
   Widget _buildSaleChip(BuildContext context) {
     return Consumer2<WallRio, SubscriptionProvider>(
       builder: (context, wallRio, subProvider, _) {
-        SubscriptionPlan? plan;
-        for (final p in wallRio.subscriptionPlans) {
-          if (p.id == SubscriptionProvider.lifetimeProductId) {
-            plan = p;
-            break;
-          }
-        }
-        ProductDetails? product;
-        for (final p in subProvider.products) {
-          if (p.id == SubscriptionProvider.lifetimeProductId) {
-            product = p;
-            break;
-          }
-        }
-
         if (subProvider.subscriptionDaysLeft.isNotEmpty) {
           return const SizedBox.shrink();
-        }
-
-        int discount = 0;
-        if (plan != null && product != null && plan.actualPrice > 0) {
-          discount =
-              ((plan.actualPrice - product.rawPrice) / plan.actualPrice * 100)
-                  .round()
-                  .abs();
         }
 
         return GestureDetector(
@@ -161,7 +144,7 @@ class SliverAppBarWidget extends StatelessWidget {
                     color: whiteColor, size: 13),
                 const SizedBox(width: 4),
                 Text(
-                  discount > 0 ? '$discount% OFF' : 'SALE',
+                  'Get PRO',
                   style: const TextStyle(
                     color: whiteColor,
                     fontWeight: FontWeight.w800,
@@ -199,14 +182,11 @@ class SliverAppBarWidget extends StatelessWidget {
                   iconSize: 30,
                   icon: Consumer<AuthProvider>(
                     builder: (context, provider, _) {
-                      return provider.user.photoURL!.isEmpty
-                          ? const Icon(Icons.account_circle_rounded)
-                          : CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Theme.of(context).primaryColor,
-                              backgroundImage:
-                                  NetworkImage(provider.user.photoURL!),
-                            );
+                      return PremiumAvatar(
+                        imageUrl: provider.user.photoURL ?? '',
+                        radius: 18,
+                        onTap: () => _onLongPressHandler(context),
+                      );
                     },
                   ),
                   onPressed: () => _onLongPressHandler(context)))),

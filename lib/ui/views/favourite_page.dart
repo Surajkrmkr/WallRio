@@ -9,7 +9,7 @@ import 'package:wallrio/ui/widgets/export.dart';
 class FavouritePage extends StatelessWidget {
   const FavouritePage({super.key});
 
-  void _onLongPressHandler(context, model) {
+  void _onLongPressHandler(BuildContext context, dynamic model) {
     showModalBottomSheet(
         context: context,
         enableDrag: true,
@@ -20,7 +20,7 @@ class FavouritePage extends StatelessWidget {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _onTapHandler(context, model) {
+  void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
@@ -47,7 +47,7 @@ class FavouritePage extends StatelessWidget {
     );
   }
 
-  Widget _buildListUI(context) {
+  Widget _buildListUI(BuildContext context) {
     return Consumer<FavouriteProvider>(builder: (context, provider, _) {
       if (provider.isLoading) {
         return SliverPadding(
@@ -98,7 +98,7 @@ class FavouritePage extends StatelessWidget {
                                         _onTapHandler(context, walls[index]),
                                     onLongPress: () => _onLongPressHandler(
                                         context, walls[index]),
-                                    splashColor: blackColor.withOpacity(0.3))),
+                                    splashColor: blackColor.withValues(alpha: 0.3))),
                             _buildImgDetailsUI(context, walls[index]),
                           ]),
                         ),

@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/views/auto_wallpaper_settings_page.dart';
+import 'package:wallrio/ui/views/personalization_hub_page.dart';
+import 'package:wallrio/ui/views/rewards_hub_page.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -11,25 +14,47 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasSub = Provider.of<SubscriptionProvider>(context).subscriptionDaysLeft.isNotEmpty;
+
     final sections = [
       _plusBanner(context),
       _sectionCard(
         context,
         label: 'Appearance',
-        children: [_darkModeTile(context)],
+        children: [
+          _darkModeTile(context),
+          _tile(context,
+              icon: Icons.palette_rounded,
+              title: 'Personalization Hub',
+              subtitle: 'Customize your profile (Pro)',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PersonalizationHubPage()))),
+          if (!hasSub)
+            _tile(context,
+                icon: Icons.diamond_rounded,
+                title: 'Rewards Hub',
+                subtitle: 'Earn diamonds & track progress',
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const RewardsHubPage()))),
+        ],
       ),
       _sectionCard(
         context,
         label: 'Advanced',
         children: [
-          _tile(context,
-              icon: Icons.auto_mode_rounded,
-              title: 'Auto Wallpaper',
-              subtitle: 'Automatically change your wallpaper',
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AutoWallpaperSettingsPage()))),
+          if (Platform.isAndroid)
+            _tile(context,
+                icon: Icons.auto_mode_rounded,
+                title: 'Auto Wallpaper',
+                subtitle: 'Automatically change your wallpaper',
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AutoWallpaperSettingsPage()))),
           _tile(context,
               icon: Icons.cleaning_services_rounded,
               title: 'Clear Cache',
@@ -59,27 +84,6 @@ class SettingsPage extends StatelessWidget {
               title: 'Telegram',
               subtitle: 'Join our community',
               onTap: () => launch('https://t.me/TeamShadow_Studio')),
-        ],
-      ),
-      _sectionCard(
-        context,
-        label: 'Our Team',
-        children: [
-          _tile(context,
-              icon: Icons.person_rounded,
-              title: 'Suraj Karmakar',
-              subtitle: 'Android Developer',
-              onTap: () => launch('http://t.me/surajkrmkr')),
-          _tile(context,
-              icon: Icons.person_rounded,
-              title: 'Piyush KPV',
-              subtitle: 'UX/UI Designer',
-              onTap: () => launch('http://t.me/piyuskpv')),
-          _tile(context,
-              icon: Icons.person_rounded,
-              title: 'Sumit',
-              subtitle: 'Graphic Designer',
-              onTap: () => launch('http://t.me/sumi7t')),
         ],
       ),
       _sectionCard(
@@ -149,7 +153,7 @@ class SettingsPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => OnboardingScreen4(
-                            onComplete: () => Navigator.pop(context)),
+                            onComplete: () => Navigator.popUntil(context, (route) => route.isFirst)),
                       ),
                     ),
             child: Container(

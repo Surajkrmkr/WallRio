@@ -9,14 +9,14 @@ class ImageBottomSheet extends StatelessWidget {
   final Walls wallModel;
   const ImageBottomSheet({super.key, required this.wallModel});
 
-  void _onTapHandler(context, model) {
+  void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.of(context)
       ..pop()
       ..push(MaterialPageRoute(
           builder: (context) => FullImage(wallModel: model)));
   }
 
-  void _showPlusDialog(context) {
+  void _showPlusDialog(BuildContext context) {
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -28,7 +28,7 @@ class ImageBottomSheet extends StatelessWidget {
             }));
   }
 
-  void _applyImgHandler(context) =>
+  void _applyImgHandler(BuildContext context) =>
       Provider.of<WallActionProvider>(context, listen: false)
           .setWall(wallModel.url, context);
 
@@ -70,7 +70,7 @@ class ImageBottomSheet extends StatelessWidget {
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: () => _onTapHandler(context, wallModel),
-                            splashColor: blackColor.withOpacity(0.3),
+                            splashColor: blackColor.withValues(alpha: 0.3),
                           ),
                         ),
                         VerifyIconWidget(visibility: !wallModel.isPremium)

@@ -11,3 +11,5 @@ export 'search_page.dart';
 export 'settings_page.dart';
 export 'auto_wallpaper_settings_page.dart';
 export 'collection_page.dart';
+export 'rewards_hub_page.dart';
+export 'personalization_hub_page.dart';

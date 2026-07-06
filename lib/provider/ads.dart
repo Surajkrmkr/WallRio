@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wallrio/provider/progression_provider.dart';
 import 'package:wallrio/services/packages/export.dart';
 
 class AdsProvider extends ChangeNotifier {
@@ -8,7 +10,7 @@ class AdsProvider extends ChangeNotifier {
 
   bool isRewardedAdLoading = false;
 
-  set setIsRewardedAdLoading(val) {
+  set setIsRewardedAdLoading(bool val) {
     isRewardedAdLoading = val;
     notifyListeners();
   }
@@ -29,6 +31,8 @@ class AdsProvider extends ChangeNotifier {
             );
             ad.show(onUserEarnedReward: (ad, reward) {
               logger.i(reward.amount);
+              // Track rewarded ad progression
+              Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.rewardedAd);
               setIsRewardedAdLoading = false;
             });
           },

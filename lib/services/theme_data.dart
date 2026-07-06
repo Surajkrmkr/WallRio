@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WallRioThemeData {
-  static getLightThemeData(
+  static ThemeData getLightThemeData(
           {required bool isDarkTheme, required BuildContext context}) =>
       ThemeData(
           useMaterial3: true,
@@ -9,12 +9,12 @@ class WallRioThemeData {
           fontFamily: 'POCOTech',
           canvasColor: Colors.transparent,
           appBarTheme: AppBarTheme(
-              color: isDarkTheme ? bgDarkColor : whiteColor,
+              backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
               surfaceTintColor: isDarkTheme ? bgDarkColor : whiteColor),
           navigationBarTheme: NavigationBarThemeData(
             backgroundColor: isDarkTheme ? bgDark2Color : whiteColor,
             indicatorColor:
-                isDarkTheme ? whiteColor.withOpacity(0.19) : blackColor,
+                isDarkTheme ? whiteColor.withValues(alpha: 0.19) : blackColor,
             labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
               (states) {
                 if (states.contains(WidgetState.selected)) {
@@ -37,10 +37,20 @@ class WallRioThemeData {
             elevation: 0,
           ),
           switchTheme: SwitchThemeData(
-              thumbColor: WidgetStateProperty.all(
-                  isDarkTheme ? whiteColor : blackColor),
-              trackColor: WidgetStateProperty.all(
-                  isDarkTheme ? bgDarkAccentColor : whiteColor)),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return whiteColor;
+              }
+              return isDarkTheme ? Colors.grey.shade400 : Colors.grey.shade600;
+            }),
+            trackColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return bgDarkAccentColor;
+              }
+              return isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade300;
+            }),
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+          ),
           dialogTheme: DialogThemeData(
               backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
               surfaceTintColor: Colors.transparent),
@@ -68,13 +78,13 @@ class WallRioThemeData {
           outlinedButtonTheme: OutlinedButtonThemeData(
               style: ButtonStyle(
                   backgroundColor: WidgetStateProperty.all(isDarkTheme
-                      ? whiteColor.withOpacity(0.1)
-                      : blackColor.withOpacity(0.1)),
+                      ? whiteColor.withValues(alpha: 0.1)
+                      : blackColor.withValues(alpha: 0.1)),
                   foregroundColor: WidgetStateProperty.all(
                       isDarkTheme ? whiteColor : blackColor),
                   overlayColor: WidgetStateProperty.all(isDarkTheme
-                      ? blackColor.withOpacity(0.1)
-                      : whiteColor.withOpacity(0.4)))),
+                      ? blackColor.withValues(alpha: 0.1)
+                      : whiteColor.withValues(alpha: 0.4)))),
           textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
             foregroundColor:
@@ -82,8 +92,8 @@ class WallRioThemeData {
           )),
           chipTheme: ChipThemeData(
               backgroundColor: isDarkTheme
-                  ? whiteColor.withOpacity(0.05)
-                  : blackColor.withOpacity(0.05),
+                  ? whiteColor.withValues(alpha: 0.05)
+                  : blackColor.withValues(alpha: 0.05),
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100)),
@@ -98,7 +108,7 @@ class WallRioThemeData {
               bodyMedium: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           colorScheme: isDarkTheme ? const ColorScheme.dark() : const ColorScheme.light());
 
-  static getDarkThemeData() =>
+  static ThemeData getDarkThemeData() =>
       ThemeData(brightness: Brightness.dark, useMaterial3: true);
 }
 

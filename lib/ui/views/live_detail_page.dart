@@ -63,6 +63,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
 
   void _downloadHandler() {
     Provider.of<WallActionProvider>(context, listen: false).downloadImg(
+      context,
       widget.wall.videoUrl,
       '${widget.wall.name}_${widget.wall.id}',
     );
@@ -70,7 +71,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
 
   void _applyHandler() {
     Provider.of<WallActionProvider>(context, listen: false)
-        .applyLiveWall(widget.wall.videoUrl);
+        .applyLiveWall(context, widget.wall.videoUrl);
   }
 
   void _showPlusDialog(bool isForDownload) {

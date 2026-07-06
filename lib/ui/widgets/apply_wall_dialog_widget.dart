@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/packages/export.dart';
@@ -7,7 +8,7 @@ class ApplyWallDialogWidget extends StatelessWidget {
   final String imgUrl;
   const ApplyWallDialogWidget({super.key, required this.imgUrl});
 
-  void applyWall(context, {required String url, required int wallLocation}) =>
+  void applyWall(BuildContext context, {required String url, required int wallLocation}) =>
       Provider.of<WallActionProvider>(context, listen: false)
           .applyWall(context, url: url, wallLocation: wallLocation);
 
@@ -19,7 +20,7 @@ class ApplyWallDialogWidget extends StatelessWidget {
         children: [Text("Set Wallpaper"), CloseButton()],
       ),
       contentPadding: const EdgeInsets.all(20),
-      children: [
+      children: Platform.isAndroid ? [
         PrimaryBtnWidget(
           btnText: "Homescreen",
           onTap: () => applyWall(context,
@@ -37,12 +38,12 @@ class ApplyWallDialogWidget extends StatelessWidget {
           onTap: () => applyWall(context,
               url: imgUrl, wallLocation: WallpaperManagerPlus.bothScreens),
         ),
-        // const SizedBox(height: 10),
-        // PrimaryBtnWidget(
-        //     btnText: "Native",
-        //     onTap: () => applyWall(context,
-        //         url: imgUrl,
-        //         wallLocation: WallpaperManagerPlus.bothScreens))
+      ] : [
+        PrimaryBtnWidget(
+          btnText: "Set via Share Sheet",
+          onTap: () => applyWall(context,
+              url: imgUrl, wallLocation: 1), // location is ignored on iOS
+        ),
       ],
     );
   }

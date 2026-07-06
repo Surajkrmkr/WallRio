@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:wallrio/provider/export.dart';
 
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 
-import '../model/collection_model.dart';
 
 class WallRio extends ChangeNotifier {
   List<Walls> originalWallList = [];
@@ -24,6 +24,31 @@ class WallRio extends ChangeNotifier {
   String currentVersion = "1.0.0";
   bool isLoading = false;
   String _activeQuery = '';
+
+  int visibleCount = 21;
+  bool _isLoadingMore = false;
+
+  void resetPagination() {
+    visibleCount = 21;
+    notifyListeners();
+  }
+
+  void loadMore() async {
+    if (_isLoadingMore) return;
+    
+    // Safety check - we check originalWallList length, but actual length depends on current filter
+    // We will just increase it always, sublist will handle the overflow gracefully.
+    
+    _isLoadingMore = true;
+    notifyListeners();
+    
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    visibleCount += 21;
+    _isLoadingMore = false;
+    notifyListeners();
+  }
+
 
   int bannerIndex = 0;
 
@@ -107,7 +132,8 @@ class WallRio extends ChangeNotifier {
     setCurrentVersion = version;
   }
 
-  void getListFromAPI(context) async {
+  void getListFromAPI(BuildContext context) async {
+    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
     setIsLoading = true;
     await getCurrentVersion();
     setWallList = [];
@@ -120,10 +146,14 @@ class WallRio extends ChangeNotifier {
       setWallList = model.walls;
       setBannerList = model.banners;
       setCollections = model.collection.collections;
+      
+      subProvider.addCollectionProductIds(model.collection.collections.map((c) => c.productId).toList());
+      
       setSearchData = model.search;
       setSubscriptionPlans = model.subscriptionPlans;
       setActionWallList =
           getFilteredWallList(model.walls, search.tags, search.categories);
+      resetPagination();
       onSearchTap(_activeQuery);
       _buildCategoryAndTags();
     } else {
@@ -228,6 +258,7 @@ class WallRio extends ChangeNotifier {
 
   void resetToDefault() {
     _activeQuery = '';
+    resetPagination();
     setQueryWallList = originalWallList;
     clearSelectedTags();
   }

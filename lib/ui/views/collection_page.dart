@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
-import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -162,6 +161,26 @@ class CollectionPage extends StatelessWidget {
   }
 
   void _navigateToGrid(BuildContext context, Collections collection) {
+    if (UserProfile.plusMember) {
+      _openGrid(context, collection);
+      return;
+    }
+
+    final progression = Provider.of<ProgressionProvider>(context, listen: false);
+    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+    
+    final isRedeemed = progression.isCollectionUnlocked(collection.productId);
+    final isPurchased = subProvider.purchasedCollections.contains(collection.productId);
+    
+    if (isRedeemed || isPurchased) {
+      _openGrid(context, collection);
+      return;
+    }
+
+    _showUnlockBottomSheet(context, collection);
+  }
+
+  void _openGrid(BuildContext context, Collections collection) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -171,5 +190,21 @@ class CollectionPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showUnlockBottomSheet(BuildContext context, Collections collection) async {
+    final unlocked = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => CollectionUnlockSheet(
+        collection: collection,
+      ),
+    );
+
+    if (unlocked == true) {
+      if (!context.mounted) return;
+      _openGrid(context, collection);
+    }
   }
 }

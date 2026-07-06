@@ -13,7 +13,7 @@ class AuthProvider with ChangeNotifier {
 
   User get user => _user!;
 
-  set setIsLoading(val) {
+  set setIsLoading(bool val) {
     isLoading = val;
     notifyListeners();
   }

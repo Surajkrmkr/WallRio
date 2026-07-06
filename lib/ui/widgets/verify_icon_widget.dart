@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:wallrio/services/export.dart';
 
 import '../../services/packages/export.dart';
 
@@ -9,8 +8,8 @@ class VerifyIconWidget extends StatelessWidget {
   final bool visibility;
   const VerifyIconWidget(
       {super.key,
-      this.padding = 15,
-      this.alignment = Alignment.topRight,
+      this.padding = 12,
+      this.alignment = Alignment.topLeft,
       this.visibility = false});
 
   @override

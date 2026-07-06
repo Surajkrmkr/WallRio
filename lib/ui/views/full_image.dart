@@ -18,7 +18,7 @@ class FullImage extends StatefulWidget {
 }
 
 class _FullImageState extends State<FullImage> {
-  _secureScreen() => {};
+  Map<dynamic, dynamic> _secureScreen() => {};
   bool _showPalette = false;
 
   // FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
@@ -27,6 +27,7 @@ class _FullImageState extends State<FullImage> {
   void initState() {
     _secureScreen();
     Future.delayed(Duration.zero, () {
+      if (!mounted) return;
       Provider.of<WallDetails>(context, listen: false)
         ..getColorPalette(widget.wallModel.thumbnail)
         ..getWallDetails(widget.wallModel.url);
@@ -40,36 +41,52 @@ class _FullImageState extends State<FullImage> {
     // await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
   }
 
-  void _downloadHandler(context) {
+  void _downloadHandler(BuildContext context) {
     Provider.of<WallActionProvider>(context, listen: false).downloadImg(
+        context,
         widget.wallModel.url,
         "${widget.wallModel.name}_${widget.wallModel.id}");
   }
 
-  void _applyImgHandler(context) {
+  void _applyImgHandler(BuildContext context) {
     Provider.of<WallActionProvider>(context, listen: false)
         .setWall(widget.wallModel.url, context);
   }
 
-  void _showExplorePlusDialog(context) {
+  void _showExplorePlusDialog(BuildContext context) {
     showDialog(
         context: context,
         builder: (context) =>
             AdsWidget.getPlusDialog(context, isExplorePlus: true));
   }
 
-  void _showPlusDialog(context, isForDownload) {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) =>
-            AdsWidget.getPlusDialog(context, onWatchAdClick: () {
-              Provider.of<AdsProvider>(context, listen: false).loadRewardedAd(
-                  context,
-                  onRewarded: () => isForDownload
-                      ? _downloadHandler(context)
-                      : _applyImgHandler(context));
-            }));
+  void _showPlusDialog(BuildContext context, bool isForDownload) {
+    if (UserProfile.plusMember) {
+       isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
+       return;
+    }
+
+    final progression = Provider.of<ProgressionProvider>(context, listen: false);
+    final isUnlocked = progression.isWallpaperUnlocked(widget.wallModel.id.toString());
+    
+    if (isUnlocked) {
+      isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _UnlockWallpaperSheet(
+        wall: widget.wallModel,
+        cost: 25, // Fixed cost for individual walls
+        progression: progression,
+        onUnlocked: () {
+          Navigator.pop(context);
+          isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
+        },
+      ),
+    );
   }
 
   void _copyColor(Color color) async {
@@ -110,7 +127,7 @@ class _FullImageState extends State<FullImage> {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withOpacity(0.9),
+            Colors.black.withValues(alpha: 0.9),
           ],
         )),
       ),
@@ -122,7 +139,7 @@ class _FullImageState extends State<FullImage> {
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: CircleAvatar(
-          backgroundColor: blackColor.withOpacity(0.1),
+          backgroundColor: blackColor.withValues(alpha: 0.1),
           maxRadius: 30,
           child: const BackBtnWidget(color: whiteColor),
         ),
@@ -189,7 +206,7 @@ class _FullImageState extends State<FullImage> {
                     tag,
                     style: TextStyle(color: whiteColor),
                   ),
-                  backgroundColor: whiteColor.withOpacity(0.3),
+                  backgroundColor: whiteColor.withValues(alpha: 0.3),
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -295,7 +312,7 @@ class _FullImageState extends State<FullImage> {
           onTap: () => UserProfile.plusMember
               ? isFav
                   ? provider.removeFromFav(id: widget.wallModel.id)
-                  : provider.addToFav(wall: widget.wallModel)
+                  : provider.addToFav(context, wall: widget.wallModel)
               : _showExplorePlusDialog(context));
     });
   }
@@ -368,6 +385,134 @@ class _FullImageState extends State<FullImage> {
                         ? _applyImgHandler(context)
                         : _showPlusDialog(context, false)))
       ]),
+    );
+  }
+}
+
+class _UnlockWallpaperSheet extends StatefulWidget {
+  final Walls wall;
+  final int cost;
+  final ProgressionProvider progression;
+  final VoidCallback onUnlocked;
+
+  const _UnlockWallpaperSheet({
+    required this.wall,
+    required this.cost,
+    required this.progression,
+    required this.onUnlocked,
+  });
+
+  @override
+  State<_UnlockWallpaperSheet> createState() => _UnlockWallpaperSheetState();
+}
+
+class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
+  bool _isRedeeming = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final balance = widget.progression.progression?.diamondsBalance ?? 0;
+    final canAfford = balance >= widget.cost;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 24),
+            const Text('Unlock Premium Wallpaper', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+              ),
+              child: Row(
+                children: [
+                  const Text('💎', style: TextStyle(fontSize: 32)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$balance / ${widget.cost} Diamonds', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Text(canAfford ? 'You have enough diamonds!' : 'Watch ads to earn more diamonds', 
+                          style: TextStyle(fontSize: 12, color: canAfford ? const Color(0xFF37C3A3) : Colors.orangeAccent)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (canAfford)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isRedeeming ? null : () async {
+                    setState(() => _isRedeeming = true);
+                    final success = await widget.progression.redeemWallpaper(widget.wall.id.toString(), widget.cost);
+                    if (success) {
+                      ToastWidget.showToast("Wallpaper Unlocked! 💎");
+                      widget.onUnlocked();
+                    } else {
+                      setState(() => _isRedeeming = false);
+                      ToastWidget.showToast("Redemption failed.");
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37C3A3),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: _isRedeeming 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('REDEEM 25 DIAMONDS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsHubPage()));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
+                    foregroundColor: isDarkMode ? Colors.white : Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                  ),
+                  child: const Text('GET DIAMONDS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ),
+              ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  AdsWidget.getPlusDialog(context, isExplorePlus: true);
+                },
+                child: const Text('Unlock ALL with Pro', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

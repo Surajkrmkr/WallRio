@@ -12,7 +12,7 @@ class BannerWidget extends StatelessWidget {
       CarouselSliderController();
   BannerWidget({super.key});
 
-  void _onTapHandler(context, Banners banner) => banner.category.isEmpty
+  void _onTapHandler(BuildContext context, Banners banner) => banner.category.isEmpty
       ? LaunchUrlWidget.launch(banner.link)
       : Navigator.push(context, MaterialPageRoute(builder: (context) {
           final categoryWalls =
@@ -62,7 +62,7 @@ class BannerWidget extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () => _onTapHandler(context, banner),
-                          splashColor: blackColor.withOpacity(0.3),
+                          splashColor: blackColor.withValues(alpha: 0.3),
                         ),
                       ),
                     ]),
@@ -75,7 +75,7 @@ class BannerWidget extends StatelessWidget {
               margin: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(200),
-                  color: Theme.of(context).primaryColorLight.withOpacity(0.1)),
+                  color: Theme.of(context).primaryColorLight.withValues(alpha: 0.1)),
               child: AnimatedSmoothIndicator(
                   activeIndex: provider.bannerIndex,
                   count: provider.bannerList.length,

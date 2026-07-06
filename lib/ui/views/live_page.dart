@@ -35,9 +35,11 @@ class _LivePageState extends State<LivePage> {
             slivers: [
               const SliverAppBarWidget(
                 showLogo: false,
-                showSearchBtn: false,
-                text: 'Wall',
-                secondaryText: 'Rio',
+                showSearchBtn: true,
+                text: 'Dynamic',
+                secondaryText: '',
+                userProfileIconRight: false,
+                showUserProfileIcon: true,
               ),
               const LiveWallsGridSliver(),
             ],

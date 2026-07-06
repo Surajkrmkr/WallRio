@@ -253,7 +253,7 @@
 //             onTap: () => UserProfile.plusMember
 //                 ? isFav
 //                     ? provider.removeFromFav(id: wallModel.id)
-//                     : provider.addToFav(wall: wallModel)
+//                     : provider.addToFav(context, wall: wallModel)
 //                 : _showExplorePlusDialog(context));
 //       })
 //     ]);

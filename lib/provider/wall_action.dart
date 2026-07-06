@@ -1,7 +1,9 @@
 import 'dart:io';
 
-import 'package:downloadsfolder/downloadsfolder.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wallrio/provider/progression_provider.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -26,14 +28,18 @@ class WallActionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void downloadImg(url, name) async {
+  void downloadImg(BuildContext context, String url, String name) async {
     FirebaseAnalytics.instance
         .logEvent(name: 'wallpaper_download', parameters: {'name': name});
+    
+    // Track progression
+    Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.download);
+    
     ToastWidget.showToast("Downloading wallpaper");
     setIsDownloading = true;
     setProgress = 0.0;
     try {
-      Directory downloadDirectory = await getDownloadDirectory();
+      
       await FileDownloader.downloadFile(
           notificationType: NotificationType.completionOnly,
           downloadService: DownloadService.httpConnection,
@@ -44,15 +50,15 @@ class WallActionProvider extends ChangeNotifier {
               final pro = pros / 100;
               setProgress = pro;
 
-              print(pro);
-              print(fileName);
+              
+              
             }
           },
           onDownloadCompleted: (String path) {
-            print('FILE DOWNLOADED TO PATH: $path');
+            
           },
           onDownloadError: (String error) {
-            print('DOWNLOAD ERROR: $error');
+            
           });
       await Future.delayed(Duration(milliseconds: 500));
       ToastWidget.showToast("Wallpaper Downloaded successfully");
@@ -65,40 +71,67 @@ class WallActionProvider extends ChangeNotifier {
     setIsDownloading = false;
   }
 
-  void setWall(url, context) => showDialog(
+  void setWall(String url, BuildContext context) => showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ApplyWallDialogWidget(imgUrl: url));
 
-  Future<void> applyLiveWall(String url) async {
+  Future<void> applyLiveWall(BuildContext context, String url) async {
     setIsApplying = true;
-    ToastWidget.showToast("Applying live wallpaper…");
+    
+    // Track progression
+    Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.apply);
+    
+    if (Platform.isAndroid) {
+      ToastWidget.showToast("Applying live wallpaper…");
+    }
+    
     try {
       final file = await DefaultCacheManager().getSingleFile(url);
-      await WallpaperManagerPlus().setLiveWallpaper(file);
-      ToastWidget.showToast("Live wallpaper applied");
+      if (Platform.isAndroid) {
+        await WallpaperManagerPlus().setLiveWallpaper(file);
+        ToastWidget.showToast("Live wallpaper applied");
+      } else {
+        await Share.shareXFiles([XFile(file.path)], text: 'Use as Wallpaper');
+      }
     } catch (error) {
-      ToastWidget.showToast("Failed to apply live wallpaper");
+      if (Platform.isAndroid) {
+        ToastWidget.showToast("Failed to apply live wallpaper");
+      }
       logger.e(error);
     } finally {
       setIsApplying = false;
     }
   }
 
-  void applyWall(context,
+  void applyWall(BuildContext context,
       {required String url, required int wallLocation}) async {
     FirebaseAnalytics.instance.logEvent(
         name: 'wallpaper_applied',
         parameters: {'location': wallLocation == 1 ? 'homescreen' : wallLocation == 2 ? 'lockscreen' : 'both'});
+    
+    // Track progression
+    Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.apply);
+    
     setIsApplying = true;
     Navigator.pop(context);
-    ToastWidget.showToast("Applying wallpaper");
+    
+    if (Platform.isAndroid) {
+      ToastWidget.showToast("Applying wallpaper");
+    }
+    
     var file = await DefaultCacheManager().getSingleFile(url);
     try {
-      await WallpaperManagerPlus().setWallpaper(file, wallLocation);
-      ToastWidget.showToast("Wallpaper applied successfully");
+      if (Platform.isAndroid) {
+        await WallpaperManagerPlus().setWallpaper(file, wallLocation);
+        ToastWidget.showToast("Wallpaper applied successfully");
+      } else {
+         await Share.shareXFiles([XFile(file.path)], text: 'Set as Wallpaper');
+      }
     } catch (error) {
-      ToastWidget.showToast("Failed to apply wallpaper");
+      if (Platform.isAndroid) {
+         ToastWidget.showToast("Failed to apply wallpaper");
+      }
       logger.e(error);
     } finally {
       setIsApplying = false;

@@ -5,10 +5,10 @@ class BackBtnWidget extends StatelessWidget {
   final Color color;
   final bool isActionReset;
   const BackBtnWidget({
-    Key? key,
+    super.key,
     required this.color,
     this.isActionReset = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

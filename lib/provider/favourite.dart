@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -32,12 +33,17 @@ class FavouriteProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addToFav({required Walls wall}) async {
+  void addToFav(BuildContext context, {required Walls wall}) async {
     final bool isAdded = await saveToFirebase(wall: wall);
     if (isAdded) {
       FirebaseAnalytics.instance.logEvent(
           name: 'wallpaper_added_to_favourite',
           parameters: {'wall_id': wall.id});
+          
+      // Track progression
+      if (!context.mounted) return;
+      Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.favorite);
+      
       addWallToList = wall;
       ToastWidget.showToast("Added to Favourite");
     } else {

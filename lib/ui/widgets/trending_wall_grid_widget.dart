@@ -17,7 +17,7 @@ class TrendingWallGridWidget extends StatelessWidget {
       this.isActionGrid = false,
       this.filterIndex = 0});
 
-  void _onLongPressHandler(context, model) {
+  void _onLongPressHandler(BuildContext context, dynamic model) {
     showModalBottomSheet(
         context: context,
         enableDrag: true,
@@ -28,21 +28,29 @@ class TrendingWallGridWidget extends StatelessWidget {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _onTapHandler(context, model) {
+  void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   List<Walls> _resolveWalls(WallRio provider) {
-    if (isActionGrid) return provider.actionWallList;
-    switch (filterIndex) {
-      case 1:
-        return provider.originalWallList.where((w) => !w.isPremium).toList();
-      case 2:
-        return provider.originalWallList.where((w) => w.isPremium).toList();
-      default:
-        return provider.originalWallList;
+    List<Walls> fullList;
+    if (isActionGrid) {
+      fullList = provider.actionWallList;
+    } else {
+      switch (filterIndex) {
+        case 1:
+          fullList = provider.originalWallList.where((w) => !w.isPremium).toList();
+          break;
+        case 2:
+          fullList = provider.originalWallList.where((w) => w.isPremium).toList();
+          break;
+        default:
+          fullList = provider.originalWallList;
+      }
     }
+    if (fullList.length <= provider.visibleCount) return fullList;
+    return fullList.sublist(0, provider.visibleCount);
   }
 
   // Returns a list where each element is either List<Walls> (a row) or true (ad marker).
@@ -216,7 +224,7 @@ class TrendingWallGridWidget extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.7),
+                        Colors.black.withValues(alpha: 0.7),
                       ],
                     ),
                   ),
@@ -244,7 +252,7 @@ class TrendingWallGridWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),

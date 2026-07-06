@@ -1,8 +1,10 @@
-import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:wallrio/firebase_options.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallpaper_manager_plus/wallpaper_manager_plus.dart';
@@ -109,6 +111,7 @@ class AutoWallpaperProvider extends ChangeNotifier {
   }
 
   void _scheduleTask() {
+    if (!Platform.isAndroid) return;
     Workmanager().registerPeriodicTask(
       "1",
       taskName,
@@ -116,11 +119,12 @@ class AutoWallpaperProvider extends ChangeNotifier {
       constraints: Constraints(
         networkType: NetworkType.connected,
       ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 
   void _cancelTask() {
+    if (!Platform.isAndroid) return;
     Workmanager().cancelByUniqueName("1");
   }
 
@@ -132,37 +136,58 @@ class AutoWallpaperProvider extends ChangeNotifier {
       final List<String> colorsStr = prefs.getStringList(keyColors) ?? [];
       final List<int> colors = colorsStr.map((e) => int.parse(e)).toList();
       final int location = prefs.getInt(keyLocation) ?? 1;
+      bool isPlusMember = prefs.getBool('user_is_plus_member') ?? false;
+
+      // Verify expiry
+      final expiryStr = prefs.getString('user_subscription_expiry');
+      if (expiryStr != null) {
+        final expiry = DateTime.parse(expiryStr);
+        if (DateTime.now().isAfter(expiry)) {
+          isPlusMember = false;
+          await prefs.setBool('user_is_plus_member', false);
+        }
+      }
 
       final model = await ApiServices.getData();
       if (model.walls.isEmpty) return;
 
       List<Walls> filteredWalls = model.walls;
 
-      if (categories.isNotEmpty) {
-        filteredWalls = filteredWalls.where((w) => categories.contains(w.category)).toList();
+      // Rule 1: Non-plus members only use free wallpapers
+      if (!isPlusMember) {
+        filteredWalls = filteredWalls.where((w) => !w.isPremium).toList();
       }
 
-      if (collections.isNotEmpty) {
-        final collectionWalls = model.collection.collections
-            .where((c) => collections.contains(c.name))
-            .expand((c) => c.walls ?? [])
-            .map((w) => w.url)
-            .toSet();
-        
-        if (collectionWalls.isNotEmpty) {
-          filteredWalls = filteredWalls.where((w) => collectionWalls.contains(w.url)).toList();
+      // Rule 2 & 3: Only plus members can use specific filters
+      if (isPlusMember) {
+        if (categories.isNotEmpty) {
+          filteredWalls = filteredWalls.where((w) => categories.contains(w.category)).toList();
+        }
+
+        if (collections.isNotEmpty) {
+          final collectionWalls = model.collection.collections
+              .where((c) => collections.contains(c.name))
+              .expand((c) => c.walls ?? [])
+              .map((w) => w.url)
+              .toSet();
+          
+          if (collectionWalls.isNotEmpty) {
+            filteredWalls = filteredWalls.where((w) => collectionWalls.contains(w.url)).toList();
+          }
+        }
+
+        if (colors.isNotEmpty) {
+          filteredWalls = filteredWalls.where((w) {
+            return w.colorList.any((c) => colors.contains(c.toARGB32()));
+          }).toList();
         }
       }
 
-      if (colors.isNotEmpty) {
-         filteredWalls = filteredWalls.where((w) {
-           return w.colorList.any((c) => colors.contains(c.value));
-         }).toList();
+      if (filteredWalls.isEmpty) {
+        filteredWalls = isPlusMember ? model.walls : model.walls.where((w) => !w.isPremium).toList();
       }
 
-      if (filteredWalls.isEmpty) {
-        filteredWalls = model.walls;
-      }
+      if (filteredWalls.isEmpty) return;
 
       final randomWall = filteredWalls[Random().nextInt(filteredWalls.length)];
       final file = await DefaultCacheManager().getSingleFile(randomWall.url);
@@ -171,35 +196,67 @@ class AutoWallpaperProvider extends ChangeNotifier {
       debugPrint("Manual wallpaper change failed: $e");
     }
   }
+}
 
-  // This function will be called by Workmanager
-  @pragma('vm:entry-point')
-  static void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final bool isEnabled = prefs.getBool(keyEnabled) ?? false;
-        if (!isEnabled) return Future.value(true);
+// This function will be called by Workmanager
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  if (!Platform.isAndroid) return;
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      debugPrint("Workmanager task started: $task");
+      WidgetsFlutterBinding.ensureInitialized();
+      
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
-        final List<String> categories = prefs.getStringList(keyCategories) ?? [];
-        final List<String> collections = prefs.getStringList(keyCollections) ?? [];
-        final List<String> colorsStr = prefs.getStringList(keyColors) ?? [];
-        final List<int> colors = colorsStr.map((e) => int.parse(e)).toList();
-        final int location = prefs.getInt(keyLocation) ?? 1;
+      final prefs = await SharedPreferences.getInstance();
+      final bool isEnabled = prefs.getBool(AutoWallpaperProvider.keyEnabled) ?? false;
+      debugPrint("Auto wallpaper enabled: $isEnabled");
+      if (!isEnabled) return Future.value(true);
 
-        final model = await ApiServices.getData();
-        if (model.walls.isEmpty) return Future.value(false);
+      final List<String> categories = prefs.getStringList(AutoWallpaperProvider.keyCategories) ?? [];
+      final List<String> collections = prefs.getStringList(AutoWallpaperProvider.keyCollections) ?? [];
+      final List<String> colorsStr = prefs.getStringList(AutoWallpaperProvider.keyColors) ?? [];
+      final List<int> colors = colorsStr.map((e) => int.parse(e)).toList();
+      final int location = prefs.getInt(AutoWallpaperProvider.keyLocation) ?? 1;
+      
+      bool isPlusMember = prefs.getBool('user_is_plus_member') ?? false;
+      
+      // Loophole fix: Verify expiry date if it exists
+      final expiryStr = prefs.getString('user_subscription_expiry');
+      if (expiryStr != null) {
+        final expiry = DateTime.parse(expiryStr);
+        if (DateTime.now().isAfter(expiry)) {
+          isPlusMember = false;
+          await prefs.setBool('user_is_plus_member', false);
+        }
+      }
 
-        List<Walls> filteredWalls = model.walls;
+      debugPrint("Fetching data from API...");
+      final model = await ApiServices.getData();
+      if (model.walls.isEmpty) {
+        debugPrint("No walls found in API response");
+        return Future.value(false);
+      }
 
+      List<Walls> filteredWalls = model.walls;
+
+      // Rule 1: Non-plus members only use free wallpapers
+      if (!isPlusMember) {
+        filteredWalls = filteredWalls.where((w) => !w.isPremium).toList();
+      }
+
+      // Rule 2 & 3: Only plus members can use specific filters
+      if (isPlusMember) {
         if (categories.isNotEmpty) {
           filteredWalls = filteredWalls.where((w) => categories.contains(w.category)).toList();
         }
 
         if (collections.isNotEmpty) {
-          // Find walls in these collections
           final collectionWalls = model.collection.collections
-              .where((c) => collections.contains(c.name)) // Use name or ID? model shows name is used as identifier in toggle
+              .where((c) => collections.contains(c.name))
               .expand((c) => c.walls ?? [])
               .map((w) => w.url)
               .toSet();
@@ -211,22 +268,27 @@ class AutoWallpaperProvider extends ChangeNotifier {
 
         if (colors.isNotEmpty) {
            filteredWalls = filteredWalls.where((w) {
-             return w.colorList.any((c) => colors.contains(c.value));
+             return w.colorList.any((c) => colors.contains(c.toARGB32()));
            }).toList();
         }
+      }
 
-        if (filteredWalls.isEmpty) {
-          filteredWalls = model.walls; // fallback to all walls if filters return nothing
-        }
+      if (filteredWalls.isEmpty) {
+        filteredWalls = isPlusMember ? model.walls : model.walls.where((w) => !w.isPremium).toList();
+      }
 
+      if (filteredWalls.isNotEmpty) {
         final randomWall = filteredWalls[Random().nextInt(filteredWalls.length)];
+        debugPrint("Selected wallpaper: ${randomWall.url}");
         final file = await DefaultCacheManager().getSingleFile(randomWall.url);
         await WallpaperManagerPlus().setWallpaper(file, location);
-        
-        return Future.value(true);
-      } catch (e) {
-        return Future.value(false);
+        debugPrint("Wallpaper set successfully");
       }
-    });
-  }
+
+      return Future.value(true);
+    } catch (e) {
+      debugPrint("Background wallpaper change failed: $e");
+      return Future.value(false);
+    }
+  });
 }

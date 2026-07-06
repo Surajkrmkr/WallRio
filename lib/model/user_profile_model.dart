@@ -16,13 +16,13 @@ class UserProfile {
   static set _setName(String val) => _name = val;
   static set _setPlusMember(bool val) => _plusMember = val;
 
-  static setUserData(User user) {
+  static void setUserData(User user) {
     _setName = user.displayName!;
     _setEmail = user.email!;
     _setAvatarUrl = user.photoURL!;
   }
 
-  static setPlusMemberInfo(bool val) {
+  static void setPlusMemberInfo(bool val) {
     _setPlusMember = val;
   }
 }

@@ -15,4 +15,6 @@ List<SingleChildWidget> providers(BuildContext context) => [
       ChangeNotifierProvider(create: (context) => FavouriteProvider()),
       ChangeNotifierProvider(create: (context) => LiveWallpaperProvider()),
       ChangeNotifierProvider(create: (context) => AutoWallpaperProvider()),
+      ChangeNotifierProvider(create: (context) => ProgressionProvider()),
+      ChangeNotifierProvider(create: (context) => PersonalizationProvider()),
     ];

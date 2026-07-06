@@ -12,3 +12,5 @@ export 'wall_action.dart';
 export 'wall_details.dart';
 export 'wall_rio.dart';
 export 'auto_wallpaper.dart';
+export 'progression_provider.dart';
+export 'personalization_provider.dart';

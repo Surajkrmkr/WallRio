@@ -85,14 +85,21 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   Widget build(BuildContext context) {
     return Consumer<WallRio>(builder: (context, wallRio, _) {
       _cacheBgWalls(wallRio.originalWallList);
-      return Material(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            _buildBackground(),
-            _buildBlurOverlay(),
-            Center(child: _buildContent(context, wallRio.subscriptionPlans)),
-          ],
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          widget.onComplete();
+        },
+        child: Material(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildBackground(),
+              _buildBlurOverlay(),
+              Center(child: _buildContent(context, wallRio.subscriptionPlans)),
+            ],
+          ),
         ),
       );
     });
@@ -127,9 +134,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withValues(alpha: 0.40),
-              Colors.black.withValues(alpha: 0.82),
-              Colors.black.withValues(alpha: 0.97),
+              Colors.black.withValues(alpha: 0.60),
+              Colors.black.withValues(alpha: 0.90),
+              Colors.black.withValues(alpha: 1.0),
             ],
             stops: const [0.0, 0.45, 1.0],
           ),
@@ -146,7 +153,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           children: [
             _buildHeader(context),
             const SizedBox(height: 22),
-            _buildFeatureRow(),
+            _buildFeatureList(),
             const SizedBox(height: 20),
             _buildLifetimeCard(context, plans),
             const SizedBox(height: 10),
@@ -213,7 +220,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         ),
         const SizedBox(height: 8),
         Text(
-          "Unlock your full collection",
+          "Unlock exclusive collections & personalize your app",
           style: TextStyle(
             color: whiteColor.withValues(alpha: 0.5),
             fontSize: 15,
@@ -224,49 +231,47 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
-  static const List<_ProFeature> _features = [
-    _ProFeature(Icons.collections_bookmark_outlined, "10K+\nWalls"),
-    _ProFeature(Icons.download_done_outlined, "Daily\nDrops"),
-    _ProFeature(Icons.play_circle_outline, "Live\nWalls"),
-    _ProFeature(Icons.block_outlined, "Zero\nAds"),
+  static const List<String> _features = [
+    "Unlock all Premium Collections",
+    "Personalize with Custom App Icons",
+    "Download Exclusive Live Wallpapers",
+    "100% Ad-free experience",
   ];
 
-  Widget _buildFeatureRow() {
-    return Row(
+  Widget _buildFeatureList() {
+    return Column(
       children: [
-        for (int i = 0; i < _features.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(child: _buildFeatureTile(_features[i])),
+        for (final feature in _features) ...[
+          _buildFeatureTile(feature),
+          const SizedBox(height: 14),
         ],
       ],
     );
   }
 
-  Widget _buildFeatureTile(_ProFeature feature) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: whiteColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(14),
-        // border: Border.all(color: whiteColor.withValues(alpha: 0.09), width: 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(feature.icon, color: bgDarkAccentColor, size: 22),
-          const SizedBox(height: 7),
-          Text(
-            feature.label,
+  Widget _buildFeatureTile(String feature) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: bgDarkAccentColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check_rounded, color: bgDarkAccentColor, size: 16),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            feature,
             style: const TextStyle(
               color: whiteColor,
               fontWeight: FontWeight.w600,
-              fontSize: 11,
-              height: 1.3,
+              fontSize: 14,
             ),
-            textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -352,10 +357,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        "Pay once. Yours forever.",
+                        "One-time payment. Yours forever.",
                         style: TextStyle(
                           color: whiteColor.withValues(alpha: 0.8),
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -541,6 +546,21 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_rounded, size: 12, color: whiteColor.withValues(alpha: 0.4)),
+                const SizedBox(width: 6),
+                Text(
+                  "Secure checkout via Google Play  •  Cancel anytime",
+                  style: TextStyle(
+                    color: whiteColor.withValues(alpha: 0.4),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
           ],
         );
       },
@@ -573,10 +593,4 @@ class _RadioDot extends StatelessWidget {
           : null,
     );
   }
-}
-
-class _ProFeature {
-  final IconData icon;
-  final String label;
-  const _ProFeature(this.icon, this.label);
 }

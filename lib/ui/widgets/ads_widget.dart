@@ -64,7 +64,7 @@ class AdsWidget extends StatefulWidget {
         onPressed: onWatchAdClick, child: const Text("Watch AD"));
   }
 
-  static void _onPlusClick(context) {
+  static void _onPlusClick(BuildContext context) {
     Navigator.pop(context);
     Navigator.push(
         context,
@@ -106,7 +106,7 @@ class _AdsWidgetState extends State<AdsWidget> {
           setBannerLoading = false;
         },
         onAdFailedToLoad: (ad, err) {
-          logger.e('BannerAd failed to load: $err');
+          logger.i('BannerAd failed to load (usually no fill): $err');
           _isBannerFailed = true;
           setBannerLoading = false;
           ad.dispose();
@@ -117,16 +117,25 @@ class _AdsWidgetState extends State<AdsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return _isBannerLoading || UserProfile.plusMember || _isBannerFailed
-        ? Container()
-        : Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              margin: EdgeInsets.only(bottom: widget.bottomPadding, top: 10),
-              width: bannerAd!.size.width.toDouble(),
-              height: bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: bannerAd!),
-            ),
-          );
+    if (_isBannerLoading || UserProfile.plusMember || _isBannerFailed) {
+      return Container();
+    }
+
+    // Increased padding to clear the custom floating navigation bar
+    // Height: 61 (bar) + 16 (bottom margin) + 16 (safe area approx)
+    final double navBarClearance = 85.0;
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        margin: EdgeInsets.only(
+          bottom: widget.bottomPadding + navBarClearance,
+          top: 10,
+        ),
+        width: bannerAd!.size.width.toDouble(),
+        height: bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: bannerAd!),
+      ),
+    );
   }
 }

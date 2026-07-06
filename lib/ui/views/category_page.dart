@@ -8,7 +8,7 @@ import 'package:wallrio/ui/widgets/export.dart';
 class CategoryPage extends StatelessWidget {
   const CategoryPage({super.key});
 
-  void _onLongPressHandler(context, model) {
+  void _onLongPressHandler(BuildContext context, dynamic model) {
     showModalBottomSheet(
         context: context,
         enableDrag: true,
@@ -19,7 +19,7 @@ class CategoryPage extends StatelessWidget {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _onTapHandler(context, model) {
+  void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
@@ -36,8 +36,8 @@ class CategoryPage extends StatelessWidget {
                 const SliverAppBarWidget(
                     showLogo: false,
                     showSearchBtn: true,
-                    text: "Wall",
-                    secondaryText: "Rio",
+                    text: "Categories",
+                    secondaryText: "",
                     userProfileIconRight: false,
                     showUserProfileIcon: true),
                 _buildCategoryUI(),

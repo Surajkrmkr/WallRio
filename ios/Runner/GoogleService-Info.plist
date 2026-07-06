@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>340316492418-nnc7j4iul3o7nj74m35d7866amvmlm32.apps.googleusercontent.com</string>
+	<string>340316492418-ro6de4ls13sqlqdos2h6h3pe1kpn49q2.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.340316492418-nnc7j4iul3o7nj74m35d7866amvmlm32</string>
+	<string>com.googleusercontent.apps.340316492418-ro6de4ls13sqlqdos2h6h3pe1kpn49q2</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>340316492418-ha4d9psbogodbb11e20aeune03ghf4sl.apps.googleusercontent.com</string>
+	<string>340316492418-1c4pqtb12kkarumbqcdrhl541bribro3.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBDESnKuihDPTL4kkZxZK7YyBqUU7se-TI</string>
 	<key>GCM_SENDER_ID</key>
@@ -19,7 +19,7 @@
 	<key>PROJECT_ID</key>
 	<string>wallrio-e551b</string>
 	<key>STORAGE_BUCKET</key>
-	<string>wallrio-e551b.appspot.com</string>
+	<string>wallrio-e551b.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:340316492418:ios:cb24e45d496e7be8e89a9b</string>
+	<string>1:340316492418:ios:ad7d9076fc24f3c8e89a9b</string>
 </dict>
 </plist>

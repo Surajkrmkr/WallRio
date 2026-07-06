@@ -33,10 +33,15 @@ class _GridPageState extends State<GridPage> {
             .onSearchTap(widget.categoryName);
       });
     }
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 500) {
+        Provider.of<WallRio>(context, listen: false).loadMore();
+      }
+    });
     super.initState();
   }
 
-  void _onLongPressHandler(context, model) {
+  void _onLongPressHandler(BuildContext context, dynamic model) {
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -46,7 +51,7 @@ class _GridPageState extends State<GridPage> {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _onTapHandler(context, model) {
+  void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }
@@ -63,6 +68,7 @@ class _GridPageState extends State<GridPage> {
         child: Stack(
           children: [
             CustomScrollView(
+              controller: scrollController,
               slivers: [
                 widget.isSearchMode
                     ? _buildSearchBarUI()
@@ -97,14 +103,19 @@ class _GridPageState extends State<GridPage> {
     return items;
   }
 
-  Widget _buildListUI(context) {
+  Widget _buildListUI(BuildContext context) {
     return SliverPadding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
       sliver: Consumer<WallRio>(builder: (context, provider, _) {
         final walls = widget.isSearchMode
             ? List<Walls?>.from(provider.queryWallList)
             : widget.walls;
-        final items = _buildItemList(walls);
+        
+        final pagedWalls = walls.length > provider.visibleCount
+            ? walls.sublist(0, provider.visibleCount)
+            : walls;
+
+        final items = _buildItemList(pagedWalls);
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: items.length,

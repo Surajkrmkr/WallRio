@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:workmanager/workmanager.dart';
 
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
@@ -55,16 +56,23 @@ Future<void> initializationHandler() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  final prefs = await SharedPreferences.getInstance();
+  UserProfile.setPlusMemberInfo(prefs.getBool('user_is_plus_member') ?? false);
+
   await ThemeService().getData();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    if (!e.toString().contains('duplicate-app')) rethrow;
+  }
   await FirebaseAppCheck.instance.activate();
   await NotificationService().init();
   await MobileAds.instance.initialize();
   await Workmanager().initialize(
-    AutoWallpaperProvider.callbackDispatcher,
-    isInDebugMode: kDebugMode,
+    callbackDispatcher,
+    
   );
   await FlutterDownloader.initialize(
       debug:

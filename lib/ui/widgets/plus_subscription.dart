@@ -61,12 +61,16 @@ class PlusSubscription extends StatelessWidget {
           return Theme(
             data: WallRioThemeData.getLightThemeData(
                 isDarkTheme: false, context: context),
-            child: Column(
-              children: provider.products
-                  .map((product) => _buildSubscriptonTile(context,
-                      product: product,
-                      activeSubscription: provider.subscriptionDaysLeft))
-                  .toList(),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                children: provider.products
+                    .where((product) => !product.id.contains('collection'))
+                    .map((product) => _buildSubscriptonTile(context,
+                        product: product,
+                        activeSubscription: provider.subscriptionDaysLeft))
+                    .toList(),
+              ),
             ),
           );
         }),

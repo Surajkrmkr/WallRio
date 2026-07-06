@@ -6,7 +6,9 @@ import FlutterMacOS
 import Foundation
 
 import audio_session
+import auto_start_flutter
 import cloud_firestore
+import cupertino_native
 import downloadsfolder
 import firebase_analytics
 import firebase_app_check
@@ -28,7 +30,9 @@ import webview_flutter_wkwebview
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AudioSessionPlugin.register(with: registry.registrar(forPlugin: "AudioSessionPlugin"))
+  AutoStartFlutterPlugin.register(with: registry.registrar(forPlugin: "AutoStartFlutterPlugin"))
   FLTFirebaseFirestorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseFirestorePlugin"))
+  CupertinoNativePlugin.register(with: registry.registrar(forPlugin: "CupertinoNativePlugin"))
   DownloadsfolderPlugin.register(with: registry.registrar(forPlugin: "DownloadsfolderPlugin"))
   FirebaseAnalyticsPlugin.register(with: registry.registrar(forPlugin: "FirebaseAnalyticsPlugin"))
   FirebaseAppCheckPlugin.register(with: registry.registrar(forPlugin: "FirebaseAppCheckPlugin"))

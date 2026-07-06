@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -26,6 +27,10 @@ class _SplashPageState extends State<SplashPage> {
       if (mounted && event != null) {
         Provider.of<SubscriptionProvider>(context, listen: false)
             .checkPastPurchases(email: event.email!);
+        Provider.of<ProgressionProvider>(context, listen: false)
+            .fetchProgression();
+        Provider.of<PersonalizationProvider>(context, listen: false)
+            .fetchPersonalization();
       }
     });
 
@@ -50,6 +55,11 @@ class _SplashPageState extends State<SplashPage> {
     final subscriptionProvider =
         Provider.of<SubscriptionProvider>(context, listen: false);
     subscriptionProvider.checkPastPurchases(email: email);
+    
+    // Also fetch progression data
+    Provider.of<ProgressionProvider>(context, listen: false).fetchProgression();
+    Provider.of<PersonalizationProvider>(context, listen: false).fetchPersonalization();
+
     subscriptionProvider.successPurchasedStream.listen((event) {
       if (mounted && event) {
         Navigator.pop(context, true);
@@ -58,6 +68,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _checkInAppUpdate() {
+    if (kDebugMode) return;
     InAppUpdate.checkForUpdate().then((updateInfo) async {
       if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
         await InAppUpdate.performImmediateUpdate();

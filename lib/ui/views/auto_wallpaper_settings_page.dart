@@ -1,6 +1,10 @@
-import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:auto_start_flutter/auto_start_flutter.dart';
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class AutoWallpaperSettingsPage extends StatefulWidget {
@@ -10,8 +14,54 @@ class AutoWallpaperSettingsPage extends StatefulWidget {
   State<AutoWallpaperSettingsPage> createState() => _AutoWallpaperSettingsPageState();
 }
 
-class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> {
-  bool _isChanging = false;
+class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> with WidgetsBindingObserver {
+  bool _isBatteryOptimizationDisabled = true;
+  bool _isAutoStartAvailable = false;
+  bool _hasClickedAutoStart = true;
+  bool _isCheckingStatus = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkSystemStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkSystemStatus();
+    }
+  }
+
+  Future<void> _checkSystemStatus() async {
+    if (!Platform.isAndroid) return;
+    final batteryDisabled = await isBatteryOptimizationDisabled ?? false;
+    final autoStartAvailable = await isAutoStartAvailable ?? false;
+    final prefs = await SharedPreferences.getInstance();
+    final autoStartClicked = prefs.getBool('has_clicked_auto_start') ?? false;
+
+    if (mounted) {
+      setState(() {
+        _isBatteryOptimizationDisabled = batteryDisabled;
+        _isAutoStartAvailable = autoStartAvailable;
+        _hasClickedAutoStart = autoStartClicked;
+        _isCheckingStatus = false;
+      });
+    }
+  }
+
+  bool get _isReliabilityHealthy {
+    if (!_isBatteryOptimizationDisabled) return false;
+    if (_isAutoStartAvailable && !_hasClickedAutoStart) return false;
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,129 +83,202 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
-                child: Consumer2<AutoWallpaperProvider, WallRio>(
-                  builder: (context, autoWall, wallRio, _) {
+                child: Consumer3<AutoWallpaperProvider, WallRio, SubscriptionProvider>(
+                  builder: (context, autoWall, wallRio, subProvider, _) {
+                    final isPlusMember = UserProfile.plusMember;
+                    
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeroAction(autoWall, isDarkMode),
-                        const SizedBox(height: 32),
+                        if (autoWall.isEnabled && !_isCheckingStatus) 
+                           _buildStatusBanner(isDarkMode),
+                        const SizedBox(height: 16),
                         
-                        _sectionTitle('Configuration'),
-                        _glassCard(
-                          isDarkMode,
+                        _sectionTitle(context, 'Configuration'),
+                        _sectionCardStyle(
+                          context,
                           child: Column(
                             children: [
                               SwitchListTile(
-                                title: const Text('Enable Auto Change', style: TextStyle(fontWeight: FontWeight.w700)),
-                                subtitle: const Text('Rotate wallpapers automatically'),
+                                title: Text('Auto Change', style: Theme.of(context).textTheme.titleMedium),
+                                subtitle: Text('Rotate automatically', style: Theme.of(context).textTheme.labelSmall),
                                 value: autoWall.isEnabled,
-                                onChanged: (val) => autoWall.setEnabled(val),
-                                activeColor: const Color(0xFF37C3A3),
+                                onChanged: (val) {
+                                  autoWall.setEnabled(val);
+                                  if (val) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => const BackgroundReliabilityDialog(),
+                                    ).then((_) => _checkSystemStatus());
+                                  }
+                                },
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                               ),
-                              _divider(),
-                              _tileHeader('Change Frequency'),
-                              _buildChipGroup(
-                                options: ['1H', '6H', '12H', '1D'],
-                                values: [60, 360, 720, 1440],
-                                selectedValue: autoWall.interval,
-                                onSelected: (val) => autoWall.setInterval(val),
-                                isDarkMode: isDarkMode,
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        _sectionTitle('Target Screens'),
-                        _glassCard(
-                          isDarkMode,
-                          child: _buildChipGroup(
-                            options: ['Home', 'Lock', 'Both'],
-                            values: [1, 2, 3],
-                            selectedValue: autoWall.wallLocation,
-                            onSelected: (val) => autoWall.setLocation(val),
-                            isDarkMode: isDarkMode,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        _sectionTitle('Curated Sources'),
-                        _glassCard(
-                          isDarkMode,
-                          child: ExpansionTile(
-                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                            title: const Text('Categories', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                            subtitle: Text('${autoWall.selectedCategories.length} selected', style: const TextStyle(fontSize: 12)),
-                            children: [
-                              _selectionList(
-                                items: wallRio.categories?.keys.toList() ?? [],
-                                selectedItems: autoWall.selectedCategories,
-                                onToggle: (item) => autoWall.toggleCategory(item),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _glassCard(
-                          isDarkMode,
-                          child: ExpansionTile(
-                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                            title: const Text('Collections', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                            subtitle: Text('${autoWall.selectedCollections.length} selected', style: const TextStyle(fontSize: 12)),
-                            children: [
-                              _selectionList(
-                                items: wallRio.collections.map((c) => c.name).toList(),
-                                selectedItems: autoWall.selectedCollections,
-                                onToggle: (item) => autoWall.toggleCollection(item),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        _sectionTitle('Color Preference'),
-                        _glassCard(
-                          isDarkMode,
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: wallRio.colors.map((color) {
-                                final isSelected = autoWall.selectedColors.contains(color.value);
-                                return GestureDetector(
-                                  onTap: () => autoWall.toggleColor(color.value),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 42,
-                                    height: 42,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isSelected ? const Color(0xFF37C3A3) : Colors.white.withOpacity(0.2),
-                                        width: isSelected ? 3 : 1,
+                              Opacity(
+                                opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                                child: AbsorbPointer(
+                                  absorbing: !autoWall.isEnabled,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _divider(context),
+                                      _tileHeader(context, 'Change Frequency'),
+                                      _buildChipGroup(
+                                        options: ['1H', '6H', '12H', '1D'],
+                                        values: [60, 360, 720, 1440],
+                                        selectedValue: autoWall.interval,
+                                        onSelected: (val) => autoWall.setInterval(val),
+                                        isDarkMode: isDarkMode,
                                       ),
-                                      boxShadow: [
-                                        if (isSelected)
-                                          BoxShadow(
-                                            color: const Color(0xFF37C3A3).withOpacity(0.4),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          )
-                                      ],
-                                    ),
-                                    child: isSelected
-                                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
-                                        : null,
+                                      const SizedBox(height: 16),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        _sectionTitle(context, 'Behavior'),
+                        Opacity(
+                          opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                          child: AbsorbPointer(
+                            absorbing: !autoWall.isEnabled,
+                            child: _sectionCardStyle(
+                              context,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _tileHeader(context, 'Target Screens'),
+                                  _buildChipGroup(
+                                    options: ['Home', 'Lock', 'Both'],
+                                    values: [1, 2, 3],
+                                    selectedValue: autoWall.wallLocation,
+                                    onSelected: (val) => autoWall.setLocation(val),
+                                    isDarkMode: isDarkMode,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 24),
+
+                        _sectionTitle(context, 'Curated Sources', isPro: !isPlusMember),
+                        Opacity(
+                          opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                          child: AbsorbPointer(
+                            absorbing: !autoWall.isEnabled,
+                            child: _sectionCardStyle(
+                              context,
+                              child: Opacity(
+                                opacity: isPlusMember ? 1.0 : 0.5,
+                                child: AbsorbPointer(
+                                  absorbing: !isPlusMember,
+                                  child: Column(
+                                    children: [
+                                      _buildSourceExpansion(
+                                        context,
+                                        title: 'Categories',
+                                        count: autoWall.selectedCategories.length,
+                                        children: [
+                                          _selectionList(
+                                            context,
+                                            items: wallRio.categories?.keys.toList() ?? [],
+                                            selectedItems: autoWall.selectedCategories,
+                                            onToggle: (item) => autoWall.toggleCategory(item),
+                                          ),
+                                        ],
+                                      ),
+                                      _divider(context),
+                                      _buildSourceExpansion(
+                                        context,
+                                        title: 'Collections',
+                                        count: autoWall.selectedCollections.length,
+                                        children: [
+                                          _selectionList(
+                                            context,
+                                            items: wallRio.collections.map((c) => c.name).toList(),
+                                            selectedItems: autoWall.selectedCollections,
+                                            onToggle: (item) => autoWall.toggleCollection(item),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (!isPlusMember)
+                          Opacity(
+                            opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                            child: _proUpgradeHint('Upgrade to Pro to filter by categories & collections'),
+                          ),
+                        const SizedBox(height: 24),
+
+                        _sectionTitle(context, 'Color Preference', isPro: !isPlusMember),
+                        Opacity(
+                          opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                          child: AbsorbPointer(
+                            absorbing: !autoWall.isEnabled,
+                            child: _sectionCardStyle(
+                              context,
+                              child: Opacity(
+                                opacity: isPlusMember ? 1.0 : 0.5,
+                                child: AbsorbPointer(
+                                  absorbing: !isPlusMember,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20.0),
+                                    child: Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: wallRio.colors.map((color) {
+                                        final isSelected = autoWall.selectedColors.contains(color.toARGB32());
+                                        return GestureDetector(
+                                          onTap: () => autoWall.toggleColor(color.toARGB32()),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: color,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isSelected ? const Color(0xFF37C3A3) : Colors.white.withValues(alpha: 0.1),
+                                                width: isSelected ? 3 : 1,
+                                              ),
+                                              boxShadow: [
+                                                if (isSelected)
+                                                  BoxShadow(
+                                                    color: const Color(0xFF37C3A3).withValues(alpha: 0.3),
+                                                    blurRadius: 8,
+                                                    spreadRadius: 1,
+                                                  )
+                                              ],
+                                            ),
+                                            child: isSelected
+                                                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                                                : null,
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (!isPlusMember)
+                          Opacity(
+                            opacity: autoWall.isEnabled ? 1.0 : 0.5,
+                            child: _proUpgradeHint('PRO members can filter by specific color vibes'),
+                          ),
                       ],
                     );
                   },
@@ -168,118 +291,148 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> {
     );
   }
 
-  Widget _buildHeroAction(AutoWallpaperProvider provider, bool isDarkMode) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDarkMode 
-              ? [const Color(0xFF1E1E1E), const Color(0xFF121212)]
-              : [Colors.white, Colors.grey[100]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.auto_awesome_motion_rounded, size: 48, color: Color(0xFF37C3A3)),
-          const SizedBox(height: 16),
-          const Text(
-            'Keep it Fresh',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Instantly rotate to a new wallpaper from your selected sources.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-          ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: _isChanging ? null : () async {
-              setState(() => _isChanging = true);
-              await provider.changeWallpaperNow();
-              if (mounted) {
-                setState(() => _isChanging = false);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Wallpaper rotated successfully!'), behavior: SnackBarBehavior.floating),
-                );
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              decoration: BoxDecoration(
-                color: _isChanging ? Colors.grey : const Color(0xFF37C3A3),
-                borderRadius: BorderRadius.circular(100),
-                boxShadow: [
-                  if (!_isChanging)
-                    BoxShadow(
-                      color: const Color(0xFF37C3A3).withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    )
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_isChanging)
-                    const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  else
-                    const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
-                  const SizedBox(width: 10),
-                  Text(
-                    _isChanging ? 'ROTATING...' : 'CHANGE NOW',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
-                  ),
-                ],
-              ),
+  Widget _buildStatusBanner(bool isDarkMode) {
+    final healthy = _isReliabilityHealthy;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => const BackgroundReliabilityDialog(),
+          ).then((_) => _checkSystemStatus());
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: healthy 
+                ? const Color(0xFF37C3A3).withValues(alpha: 0.1) 
+                : Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: healthy 
+                  ? const Color(0xFF37C3A3).withValues(alpha: 0.2) 
+                  : Colors.orange.withValues(alpha: 0.2)
             ),
           ),
+          child: Row(
+            children: [
+              Icon(
+                healthy ? Icons.verified_user_rounded : Icons.warning_amber_rounded,
+                size: 20,
+                color: healthy ? const Color(0xFF37C3A3) : Colors.orange,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    healthy 
+                        ? 'Background auto-rotation is fully optimized' 
+                        : 'Tap here to fix background rotation issues',
+                    style: TextStyle(
+                      fontSize: 13, 
+                      fontWeight: FontWeight.w700,
+                      color: healthy ? const Color(0xFF37C3A3) : Colors.orange,
+                    ),
+                  ),
+                ),
+              ),
+              if (!healthy)
+                const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.orange),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget _sectionTitle(BuildContext context, String title, {bool isPro = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 0, bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              color: bgDarkAccentColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+          ),
+          if (isPro) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.orange[400],
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'PRO',
+                style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _sectionTitle(String title) {
+  Widget _proUpgradeHint(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 12),
-      child: Text(
-        title.toUpperCase(),
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.grey),
+      padding: const EdgeInsets.only(left: 8, top: 10),
+      child: Row(
+        children: [
+          Icon(Icons.stars_rounded, size: 12, color: Colors.orange[300]),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(fontSize: 10, color: Colors.orange[300], fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _glassCard(bool isDarkMode, {required Widget child}) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
-      ),
+  Widget _sectionCardStyle(BuildContext context, {required Widget child}) {
+    return Material(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? bgDark2Color
+          : const Color(0xFFF2F2F7),
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
       child: child,
     );
   }
 
-  Widget _tileHeader(String title) {
+  Widget _tileHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+              ),
+        ),
       ),
     );
   }
@@ -291,57 +444,100 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> {
     required Function(int) onSelected,
     required bool isDarkMode,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Wrap(
-        spacing: 10,
-        children: List.generate(options.length, (index) {
+    List<Widget> rows = [];
+    for (int i = 0; i < options.length; i += 3) {
+      List<Widget> rowChildren = [];
+      for (int j = 0; j < 3; j++) {
+        if (i + j < options.length) {
+          final index = i + j;
           final isSelected = values[index] == selectedValue;
-          return ChoiceChip(
-            label: Text(options[index]),
-            selected: isSelected,
-            onSelected: (_) => onSelected(values[index]),
-            selectedColor: const Color(0xFF37C3A3),
-            backgroundColor: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
+          rowChildren.add(
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: j < 2 ? 8.0 : 0.0),
+                child: ChoiceChip(
+                  label: Center(child: Text(options[index])),
+                  selected: isSelected,
+                  onSelected: (_) => onSelected(values[index]),
+                  selectedColor: const Color(0xFF37C3A3),
+                  backgroundColor: isDarkMode ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.04),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  showCheckmark: false,
+                  side: BorderSide.none,
+                ),
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            showCheckmark: false,
           );
-        }),
+        } else {
+          rowChildren.add(const Expanded(child: SizedBox()));
+        }
+      }
+      rows.add(Row(children: rowChildren));
+      if (i + 3 < options.length) {
+        rows.add(const SizedBox(height: 8));
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        children: rows,
       ),
     );
   }
 
-  Widget _divider() {
-    return Divider(height: 1, color: Colors.white.withOpacity(0.05));
+  Widget _buildSourceExpansion(BuildContext context, {required String title, required int count, required List<Widget> children}) {
+    return ExpansionTile(
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      subtitle: Text('$count selected', style: Theme.of(context).textTheme.labelSmall),
+      childrenPadding: EdgeInsets.zero,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      children: children,
+    );
   }
 
-  Widget _selectionList({
+  Widget _divider(BuildContext context) {
+    return Divider(
+      height: 1,
+      indent: 16,
+      endIndent: 16,
+      color: Theme.of(context).primaryColorLight.withValues(alpha: 0.08),
+    );
+  }
+
+  Widget _selectionList(
+    BuildContext context, {
     required List<String> items,
     required List<String> selectedItems,
     required Function(String) onToggle,
   }) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final isSelected = selectedItems.contains(item);
-        return CheckboxListTile(
-          title: Text(item, style: const TextStyle(fontSize: 14)),
-          value: isSelected,
-          onChanged: (_) => onToggle(item),
-          activeColor: const Color(0xFF37C3A3),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          controlAffinity: ListTileControlAffinity.trailing,
-        );
-      },
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 300),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: items.length,
+        padding: const EdgeInsets.only(bottom: 12),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isSelected = selectedItems.contains(item);
+          return CheckboxListTile(
+            title: Text(item, style: Theme.of(context).textTheme.bodyMedium),
+            value: isSelected,
+            onChanged: (_) => onToggle(item),
+            activeColor: const Color(0xFF37C3A3),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+            controlAffinity: ListTileControlAffinity.trailing,
+            dense: true,
+          );
+        },
+      ),
     );
   }
 }

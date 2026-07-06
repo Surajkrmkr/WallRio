@@ -10,7 +10,7 @@ class UserBottomSheet extends StatelessWidget {
   void moreApps() =>
       launch("https://play.google.com/store/apps/dev?id=5668598285863173548");
 
-  void _settings(context) {
+  void _settings(BuildContext context) {
     Navigator.of(context).pop();
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => const SettingsPage()));
@@ -33,49 +33,35 @@ class UserBottomSheet extends StatelessWidget {
               builder: (context, provider, _) {
                 final String name = provider.user.displayName!;
                 return Row(children: [
-                  provider.user.photoURL!.isEmpty
-                      ? const Icon(Icons.account_circle_rounded)
-                      : CircleAvatar(
-                          radius: 30,
-                          backgroundImage:
-                              NetworkImage(provider.user.photoURL!),
-                          backgroundColor: Theme.of(context).primaryColorDark,
-                        ),
+                  PremiumAvatar(
+                    imageUrl: provider.user.photoURL ?? '',
+                    radius: 30,
+                  ),
                   const SizedBox(width: 20),
                   Expanded(
                     child: Consumer<SubscriptionProvider>(
                         builder: (context, provider, _) {
-                      return Row(
+                      return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displayMedium),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                      "WallRio ${provider.subscriptionDaysLeft.isNotEmpty ? "Plus" : ""} Member",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall)
-                                ]),
-                          ),
-                          Visibility(
-                            visible: provider.subscriptionDaysLeft.isNotEmpty,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 10),
-                              child: Image.asset(
-                                "assets/plus_icon.png",
-                                height: 18,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displayMedium),
                               ),
-                            ),
-                          )
+                              const SizedBox(width: 8),
+                              const PremiumBadgeWidget(),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                              "WallRio ${provider.subscriptionDaysLeft.isNotEmpty ? "Plus" : ""} Member",
+                              style: Theme.of(context).textTheme.titleSmall)
                         ],
                       );
                     }),
@@ -83,6 +69,10 @@ class UserBottomSheet extends StatelessWidget {
                 ]);
               },
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 25.0),
+            child: StreakCalendarWidget(),
           ),
           PrimaryBtnWidget(
             btnText: 'SETTINGS',

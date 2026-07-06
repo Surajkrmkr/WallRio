@@ -26,7 +26,7 @@ class ThemeService {
     await prefs.setString(gradientKey, type.name);
   }
 
-  GradientAccentType getGradType(prefs) {
+  GradientAccentType getGradType(SharedPreferences prefs) {
     final val = prefs.getString(gradientKey);
     if (val == null) {
       return GradientAccentType.defaultType;
