@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
@@ -59,9 +60,11 @@ class PersonalizationProvider extends ChangeNotifier {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance.collection(personalizationCollection).doc(email).get();
-      if (doc.exists && doc.data() != null) {
-        _personalization = PersonalizationModel.fromJson(doc.data()!);
+      final prefs = await SharedPreferences.getInstance();
+      final dataStr = prefs.getString('local_personalization_$email');
+      
+      if (dataStr != null) {
+        _personalization = PersonalizationModel.fromJson(json.decode(dataStr));
         await _calculateSubscriptionDuration();
       } else {
         _personalization = PersonalizationModel(
@@ -118,7 +121,7 @@ class PersonalizationProvider extends ChangeNotifier {
     if (_personalization == null) return;
     if (_personalization!.subscriptionStartDate == null) {
       _personalization!.subscriptionStartDate = start;
-      await _syncWithFirebase();
+      await _syncWithLocal();
       _calculateSubscriptionDuration();
       notifyListeners();
     }
@@ -132,9 +135,9 @@ class PersonalizationProvider extends ChangeNotifier {
 
     try {
       _personalization!.activeAppIcon = iconKey;
-      await _iconChannel.invokeMethod('setIcon', {'iconKey': iconKey});
-      await _syncWithFirebase();
+      await _syncWithLocal();
       notifyListeners();
+      await _iconChannel.invokeMethod('setIcon', {'iconKey': iconKey});
       ToastWidget.showToast("App Icon updated!");
       return true;
     } catch (e) {
@@ -150,7 +153,7 @@ class PersonalizationProvider extends ChangeNotifier {
       return;
     }
     _personalization!.activeProfileFrame = frameKey;
-    await _syncWithFirebase();
+    await _syncWithLocal();
     notifyListeners();
     ToastWidget.showToast("Profile Frame updated!");
   }
@@ -161,22 +164,20 @@ class PersonalizationProvider extends ChangeNotifier {
       return;
     }
     _personalization!.activeBadge = badgeKey;
-    await _syncWithFirebase();
+    await _syncWithLocal();
     notifyListeners();
     ToastWidget.showToast("Badge updated!");
   }
 
-  Future<void> _syncWithFirebase() async {
+  Future<void> _syncWithLocal() async {
     final email = UserProfile.email;
     if (email.isEmpty || _personalization == null) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection(personalizationCollection)
-          .doc(email)
-          .set(_personalization!.toJson(), SetOptions(merge: true));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('local_personalization_$email', json.encode(_personalization!.toJson()));
     } catch (e) {
-      logger.e("Error syncing personalization: $e");
+      logger.e("Error syncing personalization locally: $e");
     }
   }
 }
