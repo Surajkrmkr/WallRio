@@ -30,13 +30,13 @@ class FavouritePage extends StatelessWidget {
     return Stack(
       children: [
         CustomScrollView(
-          controller: Provider.of<Navigation>(context).controller,
+          primary: false,
           slivers: [
             const SliverAppBarWidget(
                 showLogo: false,
                 showSearchBtn: true,
-                text: "Wall",
-                secondaryText: "Rio",
+                text: "Favourites",
+                secondaryText: "",
                 userProfileIconRight: false,
                 showUserProfileIcon: true),
             _buildListUI(context)

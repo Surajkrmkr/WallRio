@@ -176,9 +176,11 @@ class SubscriptionProvider extends ChangeNotifier {
         'purchaseEndDate': endDate.toUtc(),
       });
       setSubscriptionDaysLeft = endDate.difference(now).inDays.toString();
-      UserProfile.setPlusMemberInfo(true);
+      final bool hasCollectionAccess = subscriptionDays >= 360;
+      UserProfile.setPlusMemberInfo(true, hasCollectionAccess: hasCollectionAccess);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(keyPlusMember, true);
+      await prefs.setBool('user_has_collection_access', hasCollectionAccess);
       await prefs.setString(keyExpiryDate, endDate.toIso8601String());
       await prefs.setString('user_subscription_start', now.toIso8601String());
       FirebaseAnalytics.instance.logPurchase(
@@ -204,8 +206,9 @@ class SubscriptionProvider extends ChangeNotifier {
           FirebaseFirestore.instance.collection(subscriptionFirebasePath);
       final QuerySnapshot<Object?> querySnapshot = await purchases.get();
       final now = DateTime.now();
-      UserProfile.setPlusMemberInfo(false);
+      UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
       await prefs.setBool(keyPlusMember, false);
+      await prefs.setBool('user_has_collection_access', false);
       await prefs.remove(keyExpiryDate);
       purchasedCollections.clear();
 
@@ -232,8 +235,11 @@ class SubscriptionProvider extends ChangeNotifier {
           if (isPurchaseActive) {
             setSubscriptionDaysLeft =
                 (purchaseEndDate.difference(now).inDays + 1).toString();
-            UserProfile.setPlusMemberInfo(true);
+            final int totalDays = purchaseEndDate.difference(purchaseStartDate).inDays;
+            final bool hasCollectionAccess = totalDays >= 360;
+            UserProfile.setPlusMemberInfo(true, hasCollectionAccess: hasCollectionAccess);
             await prefs.setBool(keyPlusMember, true);
+            await prefs.setBool('user_has_collection_access', hasCollectionAccess);
             await prefs.setString(keyExpiryDate, purchaseEndDate.toIso8601String());
             await prefs.setString('user_subscription_start', purchaseStartDate.toIso8601String());
             return;

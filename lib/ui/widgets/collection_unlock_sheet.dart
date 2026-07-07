@@ -5,6 +5,7 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/onboarding/screens/onboarding_screen4.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class CollectionUnlockSheet extends StatefulWidget {
   final Collections collection;
@@ -17,6 +18,7 @@ class CollectionUnlockSheet extends StatefulWidget {
 
 class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
   StreamSubscription<bool>? _purchaseSub;
+  StreamSubscription<List<PurchaseDetails>>? _inAppSub;
   bool _isProcessingPurchase = false;
 
   @override
@@ -29,12 +31,25 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           Navigator.pop(context, true);
         }
       });
+      _inAppSub = InAppPurchase.instance.purchaseStream.listen((purchaseDetailsList) {
+        for (var purchaseDetails in purchaseDetailsList) {
+          if (purchaseDetails.status == PurchaseStatus.error ||
+              purchaseDetails.status == PurchaseStatus.canceled) {
+            if (mounted && _isProcessingPurchase) {
+              setState(() {
+                _isProcessingPurchase = false;
+              });
+            }
+          }
+        }
+      });
     });
   }
 
   @override
   void dispose() {
     _purchaseSub?.cancel();
+    _inAppSub?.cancel();
     super.dispose();
   }
 
@@ -150,7 +165,7 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           _buildOptionCard(
             context: context,
             title: 'Get Pro',
-            subtitle: 'ALL collections + premium walls + no ads',
+            subtitle: 'All collections (Yearly/Lifetime) + premium walls',
             trailingText: '',
             icon: Icons.star_rounded,
             iconColor: Colors.amber,
@@ -161,13 +176,16 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
                   MaterialPageRoute(
                       builder: (navContext) => OnboardingScreen4(
                             onComplete: () {
-                              Navigator.pop(navContext); // Dismiss the paywall/onboarding
+                              Navigator.pop(navContext);
                             },
                           )));
             },
             buttonText: 'Subscribe',
             isPrimary: true,
           ),
+
+
+
 
           SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
         ],

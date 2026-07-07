@@ -31,7 +31,7 @@ class CategoryPage extends StatelessWidget {
         children: [
           Expanded(
             child: CustomScrollView(
-              controller: Provider.of<Navigation>(context).controller,
+              primary: false,
               slivers: [
                 const SliverAppBarWidget(
                     showLogo: false,

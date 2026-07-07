@@ -18,7 +18,7 @@ class CollectionPage extends StatelessWidget {
           children: [
             Expanded(
               child: CustomScrollView(
-                controller: Provider.of<Navigation>(context).controller,
+                primary: false,
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   const SliverAppBarWidget(
@@ -161,23 +161,7 @@ class CollectionPage extends StatelessWidget {
   }
 
   void _navigateToGrid(BuildContext context, Collections collection) {
-    if (UserProfile.plusMember) {
-      _openGrid(context, collection);
-      return;
-    }
-
-    final progression = Provider.of<ProgressionProvider>(context, listen: false);
-    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-    
-    final isRedeemed = progression.isCollectionUnlocked(collection.productId);
-    final isPurchased = subProvider.purchasedCollections.contains(collection.productId);
-    
-    if (isRedeemed || isPurchased) {
-      _openGrid(context, collection);
-      return;
-    }
-
-    _showUnlockBottomSheet(context, collection);
+    _openGrid(context, collection);
   }
 
   void _openGrid(BuildContext context, Collections collection) {
@@ -187,24 +171,9 @@ class CollectionPage extends StatelessWidget {
         builder: (context) => GridPage(
           categoryName: collection.name,
           walls: collection.walls ?? [],
+          collection: collection,
         ),
       ),
     );
-  }
-
-  void _showUnlockBottomSheet(BuildContext context, Collections collection) async {
-    final unlocked = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => CollectionUnlockSheet(
-        collection: collection,
-      ),
-    );
-
-    if (unlocked == true) {
-      if (!context.mounted) return;
-      _openGrid(context, collection);
-    }
   }
 }

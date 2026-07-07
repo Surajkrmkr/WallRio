@@ -377,6 +377,7 @@ class RewardsHubPage extends StatelessWidget {
               ToastWidget.showToast("Daily share limit reached.");
               return;
             }
+            // ignore: deprecated_member_use
             Share.share('Check out WallRio for amazing AMOLED wallpapers! https://play.google.com/store/apps/details?id=com.shadowteam.wallrio');
             provider.trackAction(ActionType.shareApp);
           },

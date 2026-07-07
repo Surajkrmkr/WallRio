@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/ui/views/rewards_hub_page.dart';
 

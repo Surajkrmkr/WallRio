@@ -10,11 +10,13 @@ class GridPage extends StatefulWidget {
   final String categoryName;
   final List<Walls?> walls;
   final bool isSearchMode;
+  final Collections? collection;
   const GridPage(
       {super.key,
       required this.categoryName,
       required this.walls,
-      this.isSearchMode = false});
+      this.isSearchMode = false,
+      this.collection});
 
   @override
   State<GridPage> createState() => _GridPageState();
@@ -41,7 +43,37 @@ class _GridPageState extends State<GridPage> {
     super.initState();
   }
 
+  bool _hasAccessToCollection() {
+    if (widget.collection == null) return true;
+    if (UserProfile.hasCollectionAccess) return true;
+    
+    final progression = Provider.of<ProgressionProvider>(context, listen: false);
+    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+    
+    final isRedeemed = progression.isCollectionUnlocked(widget.collection!.productId);
+    final shortId = widget.collection!.productId.split('.').last;
+    final isPurchased = subProvider.purchasedCollections.contains(widget.collection!.productId) ||
+                        subProvider.purchasedCollections.contains(shortId);
+    
+    return isRedeemed || isPurchased;
+  }
+
+  void _showUnlockBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => CollectionUnlockSheet(
+        collection: widget.collection!,
+      ),
+    );
+  }
+
   void _onLongPressHandler(BuildContext context, dynamic model) {
+    if (!_hasAccessToCollection()) {
+      _showUnlockBottomSheet();
+      return;
+    }
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -52,6 +84,10 @@ class _GridPageState extends State<GridPage> {
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
+    if (!_hasAccessToCollection()) {
+      _showUnlockBottomSheet();
+      return;
+    }
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
   }

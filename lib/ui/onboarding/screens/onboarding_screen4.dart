@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -91,15 +92,21 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           if (didPop) return;
           widget.onComplete();
         },
-        child: Material(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildBackground(),
-              _buildBlurOverlay(),
-              Center(child: _buildContent(context, wallRio.subscriptionPlans)),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+          ),
+          child: Material(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildBackground(),
+                _buildBlurOverlay(),
+                Center(child: _buildContent(context, wallRio.subscriptionPlans)),
             ],
           ),
+        ),
         ),
       );
     });
@@ -232,7 +239,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   }
 
   static const List<String> _features = [
-    "Unlock all Premium Collections",
+    "Unlock all Premium Collections (Yearly & Lifetime plans only)",
     "Personalize with Custom App Icons",
     "Download Exclusive Live Wallpapers",
     "100% Ad-free experience",
@@ -408,7 +415,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
         final others = subProvider.products
-            .where((p) => p.id != _lifetimeProductId)
+            .where((p) => p.id != _lifetimeProductId && !p.id.contains('collection'))
             .toList();
         if (others.isEmpty) return const SizedBox.shrink();
         return Column(
@@ -546,21 +553,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.lock_rounded, size: 12, color: whiteColor.withValues(alpha: 0.4)),
-                const SizedBox(width: 6),
-                Text(
-                  "Secure checkout via Google Play  •  Cancel anytime",
-                  style: TextStyle(
-                    color: whiteColor.withValues(alpha: 0.4),
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
+
           ],
         );
       },

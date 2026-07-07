@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:wallrio/provider/export.dart';
 
 enum CollectionCardType { landscapeCinematic, mediumSquare, tallVertical, wideEditorial }
 
@@ -22,8 +23,20 @@ class CollectionCard extends StatefulWidget {
 }
 
 class _CollectionCardState extends State<CollectionCard> {
+  bool _hasAccessToCollection(BuildContext context) {
+    if (UserProfile.hasCollectionAccess) return true;
+    final progression = Provider.of<ProgressionProvider>(context);
+    final subProvider = Provider.of<SubscriptionProvider>(context);
+    final isRedeemed = progression.isCollectionUnlocked(widget.collection.productId);
+    final shortId = widget.collection.productId.split('.').last;
+    final isPurchased = subProvider.purchasedCollections.contains(widget.collection.productId) ||
+                        subProvider.purchasedCollections.contains(shortId);
+    return isRedeemed || isPurchased;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasAccess = _hasAccessToCollection(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final walls = widget.collection.walls ?? [];
     
@@ -110,7 +123,7 @@ class _CollectionCardState extends State<CollectionCard> {
                   bottom: 20,
                   left: 12,
                   right: 12,
-                  child: _buildCombinedInfoBox(isDarkMode),
+                  child: _buildCombinedInfoBox(isDarkMode, hasAccess),
                 ),
               ],
             ),
@@ -120,7 +133,7 @@ class _CollectionCardState extends State<CollectionCard> {
     );
   }
 
-  Widget _buildCombinedInfoBox(bool isDarkMode) {
+  Widget _buildCombinedInfoBox(bool isDarkMode, bool hasAccess) {
     final bool isGrid = widget.type == CollectionCardType.mediumSquare || widget.type == CollectionCardType.tallVertical;
     
     return ClipRRect(
@@ -185,7 +198,7 @@ class _CollectionCardState extends State<CollectionCard> {
                   color: Colors.white,
                 ),
                 child: Icon(
-                  Icons.arrow_forward_rounded,
+                  hasAccess ? Icons.arrow_forward_rounded : Icons.lock_outline_rounded,
                   color: Colors.black,
                   size: isGrid ? 16 : 18,
                 ),

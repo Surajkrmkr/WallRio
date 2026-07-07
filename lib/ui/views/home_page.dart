@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -22,7 +21,6 @@ class _HomePageState extends State<HomePage> {
         children: [
           Expanded(
             child: CustomScrollView(
-              controller: Provider.of<Navigation>(context).controller,
               primary: false,
               slivers: [
                 const SliverAppBarWidget(

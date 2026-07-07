@@ -29,8 +29,6 @@ class _LivePageState extends State<LivePage> {
       children: [
         Expanded(
           child: CustomScrollView(
-            controller:
-                Provider.of<Navigation>(context, listen: false).controller,
             primary: false,
             slivers: [
               const SliverAppBarWidget(

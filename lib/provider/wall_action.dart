@@ -92,6 +92,7 @@ class WallActionProvider extends ChangeNotifier {
         await WallpaperManagerPlus().setLiveWallpaper(file);
         ToastWidget.showToast("Live wallpaper applied");
       } else {
+        // ignore: deprecated_member_use
         await Share.shareXFiles([XFile(file.path)], text: 'Use as Wallpaper');
       }
     } catch (error) {
@@ -126,6 +127,7 @@ class WallActionProvider extends ChangeNotifier {
         await WallpaperManagerPlus().setWallpaper(file, wallLocation);
         ToastWidget.showToast("Wallpaper applied successfully");
       } else {
+         // ignore: deprecated_member_use
          await Share.shareXFiles([XFile(file.path)], text: 'Set as Wallpaper');
       }
     } catch (error) {

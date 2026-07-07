@@ -67,13 +67,6 @@ class _NavigationPageState extends State<NavigationPage> {
     _timer = Timer.periodic(const Duration(seconds: 30), _checkUserIsDisable);
     _checkPromoBanner();
 
-    final nav = Provider.of<Navigation>(context, listen: false);
-    final wallRio = Provider.of<WallRio>(context, listen: false);
-    nav.controller.addListener(() {
-      if (nav.controller.position.pixels >= nav.controller.position.maxScrollExtent - 500) {
-        wallRio.loadMore();
-      }
-    });
 
     super.initState();
   }
@@ -122,22 +115,32 @@ class _NavigationPageState extends State<NavigationPage> {
         child: Scaffold(
         extendBodyBehindAppBar: true,
         extendBody: true,
-        body: Stack(
-          children: [
-            PageTransitionSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (
-                Widget child,
-                Animation<double> animation,
-                Animation<double> secondaryAnimation,
-              ) =>
-                  FadeThroughTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                child: child,
+        body: NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification notification) {
+            if (notification is ScrollUpdateNotification) {
+              if (notification.metrics.pixels >=
+                  notification.metrics.maxScrollExtent - 500) {
+                Provider.of<WallRio>(context, listen: false).loadMore();
+              }
+            }
+            return false;
+          },
+          child: Stack(
+            children: [
+              PageTransitionSwitcher(
+                duration: const Duration(milliseconds: 500),
+                transitionBuilder: (
+                  Widget child,
+                  Animation<double> animation,
+                  Animation<double> secondaryAnimation,
+                ) =>
+                    FadeThroughTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  child: child,
+                ),
+                child: pages[provider.index],
               ),
-              child: pages[provider.index],
-            ),
             if (_showPromoBanner && !UserProfile.plusMember)
               Positioned(
                 bottom: MediaQuery.of(context).padding.bottom + 16 + 61 + 20 + 60,
@@ -149,30 +152,25 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
           ],
         ),
-        bottomNavigationBar: RepaintBoundary(
-          child: AnimatedSlide(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOutCubic,
-            offset: provider.visible ? Offset.zero : const Offset(0, 1.8),
-            child: Platform.isIOS
-                ? _buildCupertinoTabBar(provider, isDarkMode)
-                : _buildCustomTabBar(provider, isDarkMode),
-          ),
         ),
-        floatingActionButton: AnimatedSlide(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutCubic,
-          offset: provider.visible ? Offset.zero : const Offset(0, 1.8),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 70), // offset for bottom nav bar
-            child: FloatingActionButton(
-              onPressed: _isChanging ? null : _applyRandomWallpaper,
-              backgroundColor: const Color(0xFF37C3A3),
-              elevation: 4,
-              child: _isChanging
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                  : const Icon(Icons.shuffle_rounded, color: Colors.white),
-            ),
+        bottomNavigationBar: RepaintBoundary(
+          child: Platform.isIOS
+              ? _buildCupertinoTabBar(provider, isDarkMode)
+              : _buildCustomTabBar(provider, isDarkMode),
+        ),
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(
+            bottom: UserProfile.plusMember
+                ? 0.0
+                : (_showPromoBanner ? 140.0 : 70.0),
+          ),
+          child: FloatingActionButton(
+            onPressed: _isChanging ? null : _applyRandomWallpaper,
+            backgroundColor: const Color(0xFF37C3A3),
+            elevation: 4,
+            child: _isChanging
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                : const Icon(Icons.shuffle_rounded, color: Colors.white),
           ),
         ),
       ),

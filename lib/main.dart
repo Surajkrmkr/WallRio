@@ -57,7 +57,10 @@ Future<void> initializationHandler() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   final prefs = await SharedPreferences.getInstance();
-  UserProfile.setPlusMemberInfo(prefs.getBool('user_is_plus_member') ?? false);
+  UserProfile.setPlusMemberInfo(
+    prefs.getBool('user_is_plus_member') ?? false,
+    hasCollectionAccess: prefs.getBool('user_has_collection_access') ?? false,
+  );
 
   await ThemeService().getData();
   try {

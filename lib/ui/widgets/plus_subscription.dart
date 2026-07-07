@@ -85,7 +85,7 @@ class PlusSubscription extends StatelessWidget {
         children: [
           _buildPlusFeature(context: context, feature: "Ad-free experience."),
           _buildPlusFeature(
-              context: context, feature: "Unlock Plus collections."),
+              context: context, feature: "Unlock Plus collections (Yearly & Lifetime plans only)."),
           _buildPlusFeature(
               context: context, feature: "Maximum Quality Upto 8k.")
         ],
@@ -144,8 +144,10 @@ class PlusSubscription extends StatelessWidget {
       {required ProductDetails product, required String activeSubscription}) {
     return RadioListTile(
       value: product.id,
+      // ignore: deprecated_member_use
       groupValue: activeSubscription,
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      // ignore: deprecated_member_use
       onChanged: (val) =>
           Provider.of<SubscriptionProvider>(context, listen: false)
               .buyProduct(product),

@@ -55,15 +55,17 @@ class ProgressionModel {
     this.longestStreak = 0,
     required this.lastActiveDate,
     required this.lastCheckInDate,
-    this.redeemedCollections = const [],
-    this.completedMilestones = const [],
-    this.transactionHistory = const [],
+    List<String>? redeemedCollections,
+    List<String>? completedMilestones,
+    List<RewardTransaction>? transactionHistory,
     this.dailyAdViews = 0,
     this.dailyDownloads = 0,
     this.dailyApplies = 0,
     this.dailyShares = 0,
     required this.lastAdViewDate,
-  });
+  })  : redeemedCollections = redeemedCollections ?? [],
+        completedMilestones = completedMilestones ?? [],
+        transactionHistory = transactionHistory ?? [];
 
   factory ProgressionModel.fromJson(Map<String, dynamic> json) {
     return ProgressionModel(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
