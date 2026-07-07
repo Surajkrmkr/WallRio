@@ -146,17 +146,6 @@ class WallRio extends ChangeNotifier {
       setWallList = model.walls;
       setBannerList = model.banners;
 
-      for (var collection in model.collection.collections) {
-        final name = collection.name.toLowerCase();
-        if (name.contains('wild wonders') || name.contains('wildwonders')) {
-          collection.productId = 'com.wallrio.collection.wildwonders';
-        } else if (name.contains('christmas')) {
-          collection.productId = 'com.wallrio.collection.christmas';
-        } else if (name.contains('solitary')) {
-          collection.productId = 'com.wallrio.collection.solitary';
-        }
-      }
-
       setCollections = model.collection.collections;
       
       subProvider.addCollectionProductIds(model.collection.collections.map((c) => c.productId).toList());
