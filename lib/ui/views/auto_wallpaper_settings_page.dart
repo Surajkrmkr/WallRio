@@ -83,8 +83,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
-                child: Consumer3<AutoWallpaperProvider, WallRio, SubscriptionProvider>(
-                  builder: (context, autoWall, wallRio, subProvider, _) {
+                child: Consumer4<AutoWallpaperProvider, WallRio, SubscriptionProvider, ProgressionProvider>(
+                  builder: (context, autoWall, wallRio, subProvider, progression, _) {
                     final isPlusMember = UserProfile.plusMember;
                     
                     return Column(
@@ -199,11 +199,13 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                         title: 'Collections',
                                         count: autoWall.selectedCollections.length,
                                         children: [
-                                          _selectionList(
+                                          _collectionSelectionList(
                                             context,
-                                            items: wallRio.collections.map((c) => c.name).toList(),
+                                            collections: wallRio.collections,
                                             selectedItems: autoWall.selectedCollections,
                                             onToggle: (item) => autoWall.toggleCollection(item),
+                                            hasAccess: (collection) => _hasAccessToCollection(
+                                                collection, subProvider, progression),
                                           ),
                                         ],
                                       ),
@@ -535,6 +537,57 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
             contentPadding: const EdgeInsets.symmetric(horizontal: 24),
             controlAffinity: ListTileControlAffinity.trailing,
             dense: true,
+          );
+        },
+      ),
+    );
+  }
+
+  bool _hasAccessToCollection(
+    Collections collection,
+    SubscriptionProvider subProvider,
+    ProgressionProvider progression,
+  ) {
+    if (UserProfile.hasCollectionAccess) return true;
+    final isRedeemed = progression.isCollectionUnlocked(collection.productId);
+    final shortId = collection.productId.split('.').last;
+    final isPurchased = subProvider.purchasedCollections.contains(collection.productId) ||
+        subProvider.purchasedCollections.contains(shortId);
+    return isRedeemed || isPurchased;
+  }
+
+  Widget _collectionSelectionList(
+    BuildContext context, {
+    required List<Collections> collections,
+    required List<String> selectedItems,
+    required Function(String) onToggle,
+    required bool Function(Collections) hasAccess,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 300),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: collections.length,
+        padding: const EdgeInsets.only(bottom: 12),
+        itemBuilder: (context, index) {
+          final collection = collections[index];
+          final isUnlocked = hasAccess(collection);
+          final isSelected = selectedItems.contains(collection.name);
+          return Opacity(
+            opacity: isUnlocked ? 1.0 : 0.5,
+            child: CheckboxListTile(
+              title: Text(collection.name, style: Theme.of(context).textTheme.bodyMedium),
+              secondary: isUnlocked
+                  ? null
+                  : Icon(Icons.lock_outline_rounded,
+                      size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
+              value: isSelected,
+              onChanged: isUnlocked ? (_) => onToggle(collection.name) : null,
+              activeColor: const Color(0xFF37C3A3),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+              controlAffinity: ListTileControlAffinity.trailing,
+              dense: true,
+            ),
           );
         },
       ),

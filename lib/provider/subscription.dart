@@ -212,16 +212,19 @@ class SubscriptionProvider extends ChangeNotifier {
       await prefs.remove(keyExpiryDate);
       purchasedCollections.clear();
 
+      bool foundActiveSubscription = false;
+
       for (var element in querySnapshot.docs) {
         if (element["email"] == email) {
-          final String prodId = element.data().toString().contains("productID") 
+          final String prodId = element.data().toString().contains("productID")
               ? element["productID"] ?? "" : "";
-              
+
           if (prodId.startsWith('com.wallrio.collection.')) {
             purchasedCollections.add(prodId.split('.').last);
             continue;
           }
 
+          if (foundActiveSubscription) continue;
           if (!element.data().toString().contains("purchaseStartDate")) continue;
 
           final purchaseStartDate =
@@ -233,6 +236,7 @@ class SubscriptionProvider extends ChangeNotifier {
           final bool isPurchaseActive =
               purchaseStartDate.isBefore(now) && purchaseEndDate.isAfter(now);
           if (isPurchaseActive) {
+            foundActiveSubscription = true;
             setSubscriptionDaysLeft =
                 (purchaseEndDate.difference(now).inDays + 1).toString();
             final int totalDays = purchaseEndDate.difference(purchaseStartDate).inDays;
@@ -242,7 +246,6 @@ class SubscriptionProvider extends ChangeNotifier {
             await prefs.setBool('user_has_collection_access', hasCollectionAccess);
             await prefs.setString(keyExpiryDate, purchaseEndDate.toIso8601String());
             await prefs.setString('user_subscription_start', purchaseStartDate.toIso8601String());
-            return;
           }
         }
       }

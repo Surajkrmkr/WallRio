@@ -10,7 +10,8 @@
       "WebFetch(domain:pub.dev)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(./gradlew :app:compileDebugKotlin --console=plain)"
     ]
   }
 }

@@ -164,13 +164,57 @@ class _NavigationPageState extends State<NavigationPage> {
                 ? 0.0
                 : (_showPromoBanner ? 140.0 : 70.0),
           ),
-          child: FloatingActionButton(
-            onPressed: _isChanging ? null : _applyRandomWallpaper,
-            backgroundColor: const Color(0xFF37C3A3),
-            elevation: 4,
-            child: _isChanging
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                : const Icon(Icons.shuffle_rounded, color: Colors.white),
+          child: RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
+                        : Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: isDarkMode
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.05),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(30),
+                      onTap: _isChanging ? null : _applyRandomWallpaper,
+                      child: Center(
+                        child: _isChanging
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              )
+                            : Icon(Icons.shuffle_rounded,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                                size: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

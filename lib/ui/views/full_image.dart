@@ -167,28 +167,30 @@ class _FullImageState extends State<FullImage> {
         top: false,
         child: Padding(
         padding: const EdgeInsets.only(bottom: 30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildTagsUI(),
-                      SizedBox(height: 10),
-                      _buildDetailsUI(),
-                    ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTagsUI(),
+                        SizedBox(height: 10),
+                        _buildDetailsUI(),
+                      ],
+                    ),
                   ),
-                ),
-                _buildUtilsUI(),
-              ],
-            ),
-            _buildActionBtnUI(),
-          ],
+                  _buildUtilsUI(),
+                ],
+              ),
+              _buildActionBtnUI(),
+            ],
+          ),
         ),
         ),
       ),

@@ -26,9 +26,11 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+      final progProvider = Provider.of<ProgressionProvider>(context, listen: false);
       _purchaseSub = subProvider.successPurchasedStream.listen((success) {
-        if (success && mounted) {
-          Navigator.pop(context, true);
+        if (success) {
+          progProvider.unlockCollectionIAP(widget.collection.productId);
+          if (mounted) Navigator.pop(context, true);
         }
       });
       _inAppSub = InAppPurchase.instance.purchaseStream.listen((purchaseDetailsList) {
