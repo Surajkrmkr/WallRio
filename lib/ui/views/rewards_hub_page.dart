@@ -49,6 +49,10 @@ class RewardsHubPage extends StatelessWidget {
                         const SizedBox(height: 32),
                         _sectionTitle(context, 'Earn Diamonds'),
                         _buildQuestsList(context, progressionProvider, isDarkMode),
+                        if (progression.dailyShares >= 2) ...[
+                          const SizedBox(height: 16),
+                          _buildShareLimitWarning(isDarkMode),
+                        ],
                         const SizedBox(height: 32),
                         _buildStreakSection(context, progressionProvider, isDarkMode),
                         const SizedBox(height: 32),
@@ -176,6 +180,30 @@ class RewardsHubPage extends StatelessWidget {
             child: Text(
               'Clearing app data or uninstalling will remove your locally saved diamonds.',
               style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareLimitWarning(bool isDarkMode) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgDarkAccentColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: bgDarkAccentColor.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, size: 20, color: bgDarkAccentColor),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.",
+              style: TextStyle(fontSize: 12, color: bgDarkAccentColor, fontWeight: FontWeight.w600, height: 1.4),
             ),
           ),
         ],
@@ -344,7 +372,7 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.star_rate_rounded,
           title: 'Rate App',
-          subtitle: 'Instant 50 💎',
+          subtitle: 'Instant 20 💎',
           progressText: progression.completedMilestones.contains('rated_5_stars') ? 'Done' : 'Collect',
           isDarkMode: isDarkMode,
           onTap: () async {
@@ -369,12 +397,13 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.share_rounded,
           title: 'Invite',
-          subtitle: 'Earn 10 💎',
-          progressText: '${progression.dailyShares}/3',
+          subtitle: progression.dailyShares >= 2 ? 'Limit Reached' : 'Earn 5 💎',
+          progressText: '${progression.dailyShares >= 2 ? 2 : progression.dailyShares}/2',
           isDarkMode: isDarkMode,
+          isActionable: progression.dailyShares < 2,
           onTap: () {
-            if (progression.dailyShares >= 3) {
-              ToastWidget.showToast("Daily share limit reached.");
+            if (progression.dailyShares >= 2) {
+              ToastWidget.showToast("You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
               return;
             }
             // ignore: deprecated_member_use

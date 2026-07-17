@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
-import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/onboarding/screens/onboarding_screen4.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -58,7 +57,6 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
   @override
   Widget build(BuildContext context) {
     final subProvider = Provider.of<SubscriptionProvider>(context);
-    final progProvider = Provider.of<ProgressionProvider>(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
@@ -68,9 +66,12 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
         .cast<dynamic>()
         .firstWhere((p) => p.id == fullProductId, orElse: () => null);
 
-    final int diamondCost = 750;
-    final int userDiamonds = progProvider.progression?.diamondsBalance ?? 0;
-    final bool canAfford = userDiamonds >= diamondCost;
+    final yearlyProduct = subProvider.products
+        .cast<dynamic>()
+        .firstWhere((p) => p.id == "com.wallrio.yearly_365", orElse: () => null);
+    final lifetimeProduct = subProvider.products
+        .cast<dynamic>()
+        .firstWhere((p) => p.id == SubscriptionProvider.lifetimeProductId, orElse: () => null);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -112,34 +113,7 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           ),
           const SizedBox(height: 24),
 
-          // 1. Diamond Option
-          _buildOptionCard(
-            context: context,
-            title: 'Use Diamonds',
-            subtitle: 'Balance: $userDiamonds 💎',
-            trailingText: '$diamondCost 💎',
-            icon: Icons.diamond_rounded,
-            iconColor: Colors.blueAccent,
-            onTap: () async {
-              if (canAfford) {
-                final success = await progProvider.redeemCollection(
-                    widget.collection.productId, diamondCost);
-                if (success) {
-                  if (!context.mounted) return;
-                  Navigator.pop(context, true);
-                }
-              } else {
-                Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const RewardsHubPage()));
-              }
-            },
-            buttonText: canAfford ? 'Redeem' : 'Earn More',
-            isPrimary: false,
-          ),
-          const SizedBox(height: 12),
-
-          // 2. Buy Collection Option
+          // 1. Buy Collection Option
           _buildOptionCard(
             context: context,
             title: 'Buy Collection',
@@ -163,12 +137,12 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           ),
           const SizedBox(height: 12),
 
-          // 3. Pro Subscription Option
+          // 2. Unlock with Yearly Pro
           _buildOptionCard(
             context: context,
-            title: 'Get Pro',
-            subtitle: 'All collections (Yearly/Lifetime) + premium walls',
-            trailingText: '',
+            title: 'Unlock with Yearly Pro',
+            subtitle: 'All collections + premium walls',
+            trailingText: yearlyProduct != null ? yearlyProduct.price : '...',
             icon: Icons.star_rounded,
             iconColor: Colors.amber,
             onTap: () {
@@ -184,6 +158,30 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
             },
             buttonText: 'Subscribe',
             isPrimary: true,
+          ),
+          const SizedBox(height: 12),
+
+          // 3. Unlock with Lifetime Pro
+          _buildOptionCard(
+            context: context,
+            title: 'Unlock with Lifetime Pro',
+            subtitle: 'Lifetime access to everything (One-time)',
+            trailingText: lifetimeProduct != null ? lifetimeProduct.price : '...',
+            icon: Icons.stars_rounded,
+            iconColor: Colors.purpleAccent,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (navContext) => OnboardingScreen4(
+                            onComplete: () {
+                              Navigator.pop(navContext);
+                            },
+                          )));
+            },
+            buttonText: 'Get Lifetime',
+            isPrimary: false,
           ),
 
 

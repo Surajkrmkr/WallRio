@@ -6,6 +6,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 
 class AutoWallpaperSettingsPage extends StatefulWidget {
   const AutoWallpaperSettingsPage({super.key});
@@ -563,6 +564,55 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
     required Function(String) onToggle,
     required bool Function(Collections) hasAccess,
   }) {
+    final hasCollectionAccess = UserProfile.plusMember && UserProfile.hasCollectionAccess;
+
+    if (!hasCollectionAccess) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Text(
+              "Collections are available with Yearly and Lifetime Pro.",
+              style: TextStyle(
+                color: Colors.orange.shade300,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 250),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: collections.length,
+              padding: const EdgeInsets.only(bottom: 12),
+              itemBuilder: (context, index) {
+                final collection = collections[index];
+                return ListTile(
+                  title: Text(collection.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+                  trailing: const Icon(Icons.lock_outline_rounded, size: 18, color: Colors.grey),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  dense: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OnboardingScreen4(
+                          onComplete: () => Navigator.pop(context),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
     return Container(
       constraints: const BoxConstraints(maxHeight: 300),
       child: ListView.builder(

@@ -162,17 +162,17 @@ class ProgressionProvider extends ChangeNotifier {
       case ActionType.rateApp:
         if (!_progression!.completedMilestones.contains('rated_5_stars')) {
           _progression!.completedMilestones.add('rated_5_stars');
-          reward = 50;
+          reward = 20;
           reason = "5-Star Rating Bonus";
         }
         break;
       case ActionType.shareApp:
         _progression!.dailyShares += 1;
-        if (_progression!.dailyShares <= 3) { // Limit to 3 per day
-          reward = 10;
+        if (_progression!.dailyShares <= 2) {
+          reward = 5;
           reason = "App Shared";
         } else {
-          ToastWidget.showToast("Daily share limit reached.");
+          ToastWidget.showToast("You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
         }
         break;
       default:
@@ -249,8 +249,31 @@ class ProgressionProvider extends ChangeNotifier {
     return _progression?.redeemedCollections.contains("wall_$wallId") ?? false;
   }
 
+  Future<bool> redeemLiveWallpaper(String wallId, int cost) async {
+    if (_progression == null || _progression!.diamondsBalance < cost) return false;
+
+    if (!_progression!.redeemedCollections.contains("live_$wallId")) {
+      _progression!.redeemedCollections.add("live_$wallId");
+      _grantDiamonds(cost, "Unlocked Video Wallpaper", isCredit: false);
+      await _persistLocal();
+      return true;
+    }
+    return false;
+  }
+
+  bool isLiveWallpaperUnlocked(String wallId) {
+    return _progression?.redeemedCollections.contains("live_$wallId") ?? false;
+  }
+
   bool isCollectionUnlocked(String collectionId) {
     return _progression?.redeemedCollections.contains("col_$collectionId") ?? false;
+  }
+
+  Future<bool> deductDiamonds(int amount, String reason) async {
+    if (_progression == null || _progression!.diamondsBalance < amount) return false;
+    _grantDiamonds(amount, reason, isCredit: false);
+    await _persistLocal();
+    return true;
   }
 
   Future<void> _persistLocal() async {

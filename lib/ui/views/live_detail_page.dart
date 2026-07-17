@@ -4,6 +4,8 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:wallrio/ui/views/rewards_hub_page.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 
 class LiveDetailPage extends StatefulWidget {
   final LiveWallpaper wall;
@@ -17,6 +19,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
   bool _hasVideoError = false;
+  bool _isSessionUnlocked = false;
 
   @override
   void initState() {
@@ -72,17 +75,6 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   void _applyHandler() {
     Provider.of<WallActionProvider>(context, listen: false)
         .applyLiveWall(context, widget.wall.videoUrl);
-  }
-
-  void _showPlusDialog(bool isForDownload) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AdsWidget.getPlusDialog(
-        context,
-        showAdButton: false,
-      ),
-    );
   }
 
   @override
@@ -199,6 +191,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                 ],
               ),
               _buildActionBtnUI(),
+              const AdsWidget(clearNavBar: false, bottomPadding: 0),
             ],
           ),
         ),
@@ -313,6 +306,47 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   Widget _buildActionBtnUI() {
+    final progression = Provider.of<ProgressionProvider>(context);
+    final isPremium = widget.wall.isPremium;
+    final isFreeUser = !UserProfile.plusMember;
+
+    if (isFreeUser && isPremium && !_isSessionUnlocked) {
+      return Container(
+        margin: const EdgeInsets.all(20),
+        height: 40,
+        child: Row(
+          children: [
+            Expanded(
+              child: PrimaryBtnWidget(
+                btnText: 'Unlock with Pro',
+                textColor: whiteColor,
+                forceDarkStyle: true,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OnboardingScreen4(
+                        onComplete: () => Navigator.pop(context),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: PrimaryBtnWidget(
+                btnText: 'Unlock for 30 💎',
+                textColor: whiteColor,
+                forceDarkStyle: true,
+                onTap: () => _handleUnlockLiveWallpaper(progression),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.all(20),
       height: 40,
@@ -322,16 +356,12 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
             child: PrimaryBtnWidget(
               btnText: 'Download',
               textColor: whiteColor,
-              isLoading:
-                  Provider.of<WallActionProvider>(context, listen: true)
-                      .isDownloading,
-              progress:
-                  Provider.of<WallActionProvider>(context, listen: true)
-                      .progress,
-              onTap: () =>
-                  UserProfile.plusMember || !widget.wall.isPremium
-                      ? _downloadHandler()
-                      : _showPlusDialog(true),
+              forceDarkStyle: true,
+              isLoading: Provider.of<WallActionProvider>(context, listen: true)
+                  .isDownloading,
+              progress: Provider.of<WallActionProvider>(context, listen: true)
+                  .progress,
+              onTap: () => _downloadHandler(),
             ),
           ),
           const SizedBox(width: 10),
@@ -339,16 +369,175 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
             child: PrimaryBtnWidget(
               btnText: 'Apply',
               textColor: whiteColor,
-              isLoading:
-                  Provider.of<WallActionProvider>(context, listen: true)
-                      .isApplying,
-              onTap: () =>
-                  UserProfile.plusMember || !widget.wall.isPremium
-                      ? _applyHandler()
-                      : _showPlusDialog(false),
+              forceDarkStyle: true,
+              isLoading: Provider.of<WallActionProvider>(context, listen: true)
+                  .isApplying,
+              onTap: () => _applyHandler(),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleUnlockLiveWallpaper(ProgressionProvider progression) async {
+    final balance = progression.progression?.diamondsBalance ?? 0;
+    const cost = 30;
+
+    if (balance >= cost) {
+      final success =
+          await progression.deductDiamonds(cost, "Unlocked Video Wallpaper");
+      if (success) {
+        ToastWidget.showToast("Video Wallpaper Unlocked! 💎");
+        setState(() => _isSessionUnlocked = true);
+      } else {
+        ToastWidget.showToast("Redemption failed.");
+      }
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) => _UnlockLiveWallpaperInsufficientSheet(
+          cost: cost,
+          balance: balance,
+        ),
+      );
+    }
+  }
+}
+
+class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
+  final int cost;
+  final int balance;
+
+  const _UnlockLiveWallpaperInsufficientSheet({
+    required this.cost,
+    required this.balance,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Unlock Premium Video Wallpaper',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDarkMode
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text('💎', style: TextStyle(fontSize: 32)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$balance / $cost Diamonds',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Watch ads to earn more diamonds',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orangeAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RewardsHubPage(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDarkMode
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.1),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'GET DIAMONDS',
+                  style:
+                      TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OnboardingScreen4(
+                            onComplete: () => Navigator.pop(context)),
+                      ));
+                },
+                child: const Text(
+                  'Unlock ALL with Pro',
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

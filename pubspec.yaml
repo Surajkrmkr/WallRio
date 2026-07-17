@@ -52,6 +52,7 @@ dependencies:
   google_mobile_ads: ^9.0.0
   google_sign_in: ^7.2.0
   in_app_purchase: ^3.2.3
+  in_app_purchase_android: ^0.5.0
   in_app_update: ^4.2.5
   logger: ^2.7.0
   lottie: ^3.3.2

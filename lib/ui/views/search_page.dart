@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wallrio/model/wall_rio_model.dart';
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/views/grid_page.dart';
@@ -10,16 +10,40 @@ class SearchPage extends StatelessWidget {
 
   final ScrollController scrollController = ScrollController();
 
-  void _onTapHandler(BuildContext context, Banners banner) => banner.category.isEmpty
-      ? LaunchUrlWidget.launch(banner.link)
-      : Navigator.push(context, MaterialPageRoute(builder: (context) {
-          final categoryWalls =
-              Provider.of<WallRio>(context).categories![banner.category];
-          return GridPage(
-            categoryName: banner.category,
-            walls: categoryWalls!,
-          );
-        }));
+  void _onTapHandler(BuildContext context, Banners banner) {
+    if (banner.category.isEmpty) {
+      LaunchUrlWidget.launch(banner.link);
+      return;
+    }
+
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      final provider = Provider.of<WallRio>(context, listen: false);
+      final categoryWalls = provider.categories![banner.category];
+      if (categoryWalls != null) {
+        return GridPage(
+          categoryName: banner.category,
+          walls: categoryWalls,
+        );
+      }
+
+      final collection = provider.collections.firstWhere(
+        (c) => c.name.toLowerCase() == banner.category.toLowerCase(),
+        orElse: () => Collections(id: 0, name: "", productId: "", walls: []),
+      );
+      if (collection.name.isNotEmpty) {
+        return GridPage(
+          categoryName: collection.name,
+          walls: collection.walls ?? [],
+          collection: collection,
+        );
+      }
+
+      return GridPage(
+        categoryName: banner.category,
+        walls: const [],
+      );
+    }));
+  }
 
   @override
   Widget build(BuildContext context) {

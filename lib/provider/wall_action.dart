@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
+import 'package:wallrio/provider/ads.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -38,6 +39,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Downloading wallpaper");
     setIsDownloading = true;
     setProgress = 0.0;
+    bool downloadFailed = false;
     try {
       
       await FileDownloader.downloadFile(
@@ -58,10 +60,19 @@ class WallActionProvider extends ChangeNotifier {
             
           },
           onDownloadError: (String error) {
-            
+            downloadFailed = true;
           });
-      await Future.delayed(Duration(milliseconds: 500));
-      ToastWidget.showToast("Wallpaper Downloaded successfully");
+      
+      if (downloadFailed) {
+        setProgress = 0.0;
+        ToastWidget.showToast("Failed to download wallpaper");
+      } else {
+        await Future.delayed(const Duration(milliseconds: 500));
+        ToastWidget.showToast("Wallpaper Downloaded successfully");
+        if (context.mounted) {
+          Provider.of<AdsProvider>(context, listen: false).handleSuccessfulDownload(context);
+        }
+      }
     } catch (error) {
       setProgress = 0.0;
       logger.e(error);

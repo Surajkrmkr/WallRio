@@ -116,7 +116,7 @@ class _GridPageState extends State<GridPage> {
                 _buildListUI(context)
               ],
             ),
-            const AdsWidget()
+            const AdsWidget(clearNavBar: false)
           ],
         ),
       ),

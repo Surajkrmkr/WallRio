@@ -8,8 +8,12 @@ import 'package:wallrio/ui/widgets/export.dart';
 class AdsWidget extends StatefulWidget {
   final double bottomPadding;
   final AdSize size;
+  final bool clearNavBar;
   const AdsWidget(
-      {super.key, this.bottomPadding = 10, this.size = AdSize.banner});
+      {super.key,
+      this.bottomPadding = 10,
+      this.size = AdSize.banner,
+      this.clearNavBar = true});
 
   @override
   State<AdsWidget> createState() => _AdsWidgetState();
@@ -59,7 +63,7 @@ class AdsWidget extends StatefulWidget {
     );
   }
 
-  static FilledButton _getWatchAdBtnUI(void Function() onWatchAdClick) {
+  static Widget _getWatchAdBtnUI(void Function() onWatchAdClick) {
     return FilledButton(
         onPressed: onWatchAdClick, child: const Text("Watch AD"));
   }
@@ -83,13 +87,17 @@ class _AdsWidgetState extends State<AdsWidget> {
 
   @override
   void initState() {
-    if (!UserProfile.plusMember) loadBannerAd();
+    if (!UserProfile.plusMember) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) loadBannerAd();
+      });
+    }
     super.initState();
   }
 
   @override
   void dispose() {
-    if (!UserProfile.plusMember) bannerAd!.dispose();
+    if (!UserProfile.plusMember && bannerAd != null) bannerAd!.dispose();
     super.dispose();
   }
 
@@ -117,25 +125,34 @@ class _AdsWidgetState extends State<AdsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isBannerLoading || UserProfile.plusMember || _isBannerFailed) {
+    if (_isBannerLoading || UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
       return Container();
     }
 
     // Increased padding to clear the custom floating navigation bar
     // Height: 61 (bar) + 16 (bottom margin) + 16 (safe area approx)
-    final double navBarClearance = 85.0;
+    final double navBarClearance = (widget.size == AdSize.banner && widget.clearNavBar) ? 85.0 : 0.0;
+
+    Widget adContainer = Container(
+      margin: EdgeInsets.only(
+        bottom: widget.bottomPadding + navBarClearance,
+        top: 10,
+      ),
+      width: bannerAd!.size.width.toDouble(),
+      height: bannerAd!.size.height.toDouble(),
+      child: AdWidget(ad: bannerAd!),
+    );
+
+    if (widget.size == AdSize.banner && !widget.clearNavBar) {
+      adContainer = SafeArea(
+        top: false,
+        child: adContainer,
+      );
+    }
 
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Container(
-        margin: EdgeInsets.only(
-          bottom: widget.bottomPadding + navBarClearance,
-          top: 10,
-        ),
-        width: bannerAd!.size.width.toDouble(),
-        height: bannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: bannerAd!),
-      ),
+      child: adContainer,
     );
   }
 }

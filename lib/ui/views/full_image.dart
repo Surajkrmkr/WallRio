@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 // import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/onboarding/screens/onboarding_screen4.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -20,6 +21,7 @@ class FullImage extends StatefulWidget {
 class _FullImageState extends State<FullImage> {
   Map<dynamic, dynamic> _secureScreen() => {};
   bool _showPalette = false;
+  bool _isSessionUnlocked = false;
 
   // FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
 
@@ -61,27 +63,25 @@ class _FullImageState extends State<FullImage> {
   }
 
   void _showPlusDialog(BuildContext context, bool isForDownload) {
-    if (UserProfile.plusMember) {
-       isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
-       return;
-    }
-
-    final progression = Provider.of<ProgressionProvider>(context, listen: false);
-    final isUnlocked = progression.isWallpaperUnlocked(widget.wallModel.id.toString());
-    
-    if (isUnlocked) {
+    if (UserProfile.plusMember ||
+        !widget.wallModel.isPremium ||
+        _isSessionUnlocked) {
       isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
       return;
     }
+
+    final progression =
+        Provider.of<ProgressionProvider>(context, listen: false);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _UnlockWallpaperSheet(
         wall: widget.wallModel,
-        cost: 25, // Fixed cost for individual walls
+        cost: 20, // Fixed cost for individual walls is 20
         progression: progression,
         onUnlocked: () {
+          setState(() => _isSessionUnlocked = true);
           Navigator.pop(context);
           isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
         },
@@ -166,32 +166,33 @@ class _FullImageState extends State<FullImage> {
       child: SafeArea(
         top: false,
         child: Padding(
-        padding: const EdgeInsets.only(bottom: 30),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTagsUI(),
-                        SizedBox(height: 10),
-                        _buildDetailsUI(),
-                      ],
+          padding: const EdgeInsets.only(bottom: 30),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildTagsUI(),
+                          SizedBox(height: 10),
+                          _buildDetailsUI(),
+                        ],
+                      ),
                     ),
-                  ),
-                  _buildUtilsUI(),
-                ],
-              ),
-              _buildActionBtnUI(),
-            ],
+                    _buildUtilsUI(),
+                  ],
+                ),
+                _buildActionBtnUI(),
+                const AdsWidget(clearNavBar: false, bottomPadding: 0),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -368,24 +369,28 @@ class _FullImageState extends State<FullImage> {
             child: PrimaryBtnWidget(
                 btnText: "Download",
                 textColor: whiteColor,
+                forceDarkStyle: true,
                 isLoading:
                     Provider.of<WallActionProvider>(context, listen: true)
                         .isDownloading,
                 progress: Provider.of<WallActionProvider>(context, listen: true)
                     .progress,
-                onTap: () =>
-                    UserProfile.plusMember || !widget.wallModel.isPremium
-                        ? _downloadHandler(context)
-                        : _showPlusDialog(context, true))),
+                onTap: () => UserProfile.plusMember ||
+                        !widget.wallModel.isPremium ||
+                        _isSessionUnlocked
+                    ? _downloadHandler(context)
+                    : _showPlusDialog(context, true))),
         const SizedBox(width: 10),
         Expanded(
             child: PrimaryBtnWidget(
                 btnText: "Apply",
                 textColor: whiteColor,
-                onTap: () =>
-                    UserProfile.plusMember || !widget.wallModel.isPremium
-                        ? _applyImgHandler(context)
-                        : _showPlusDialog(context, false)))
+                forceDarkStyle: true,
+                onTap: () => UserProfile.plusMember ||
+                        !widget.wallModel.isPremium ||
+                        _isSessionUnlocked
+                    ? _applyImgHandler(context)
+                    : _showPlusDialog(context, false)))
       ]),
     );
   }
@@ -427,16 +432,27 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 24),
-            const Text('Unlock Premium Wallpaper', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+            const Text('Unlock Premium Wallpaper',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDarkMode ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                border: Border.all(
+                    color: isDarkMode
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05)),
               ),
               child: Row(
                 children: [
@@ -446,10 +462,19 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('$balance / ${widget.cost} Diamonds', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        Text('$balance / ${widget.cost} Diamonds',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        Text(canAfford ? 'You have enough diamonds!' : 'Watch ads to earn more diamonds', 
-                          style: TextStyle(fontSize: 12, color: canAfford ? const Color(0xFF37C3A3) : Colors.orangeAccent)),
+                        Text(
+                            canAfford
+                                ? 'You have enough diamonds!'
+                                : 'Watch ads to earn more diamonds',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: canAfford
+                                    ? const Color(0xFF37C3A3)
+                                    : Colors.orangeAccent)),
                       ],
                     ),
                   ),
@@ -461,26 +486,37 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isRedeeming ? null : () async {
-                    setState(() => _isRedeeming = true);
-                    final success = await widget.progression.redeemWallpaper(widget.wall.id.toString(), widget.cost);
-                    if (success) {
-                      ToastWidget.showToast("Wallpaper Unlocked! 💎");
-                      widget.onUnlocked();
-                    } else {
-                      setState(() => _isRedeeming = false);
-                      ToastWidget.showToast("Redemption failed.");
-                    }
-                  },
+                  onPressed: _isRedeeming
+                      ? null
+                      : () async {
+                          setState(() => _isRedeeming = true);
+                          final success = await widget.progression
+                              .deductDiamonds(
+                                  widget.cost, "Unlocked Wallpaper");
+                          if (success) {
+                            ToastWidget.showToast("Wallpaper Unlocked! 💎");
+                            widget.onUnlocked();
+                          } else {
+                            setState(() => _isRedeeming = false);
+                            ToastWidget.showToast("Redemption failed.");
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF37C3A3),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: _isRedeeming 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('REDEEM 25 DIAMONDS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  child: _isRedeeming
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text('REDEEM ${widget.cost} DIAMONDS',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w900, letterSpacing: 1)),
                 ),
               )
             else
@@ -489,16 +525,24 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsHubPage()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const RewardsHubPage()));
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
+                    backgroundColor: isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.1),
                     foregroundColor: isDarkMode ? Colors.white : Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
                   ),
-                  child: const Text('GET DIAMONDS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  child: const Text('GET DIAMONDS',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900, letterSpacing: 1)),
                 ),
               ),
             const SizedBox(height: 16),
@@ -507,9 +551,16 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
               child: TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  AdsWidget.getPlusDialog(context, isExplorePlus: true);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OnboardingScreen4(
+                            onComplete: () => Navigator.pop(context)),
+                      ));
                 },
-                child: const Text('Unlock ALL with Pro', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700)),
+                child: const Text('Unlock ALL with Pro',
+                    style: TextStyle(
+                        color: Colors.grey, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

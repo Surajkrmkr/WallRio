@@ -303,13 +303,12 @@ class SettingsPage extends StatelessWidget {
         children: [
           _sectionLabel(context, label),
           const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? bgDark2Color
-                  : const Color(0xFFF2F2F7),
-              borderRadius: BorderRadius.circular(18),
-            ),
+          Material(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? bgDark2Color
+                : const Color(0xFFF2F2F7),
+            borderRadius: BorderRadius.circular(18),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
                 for (int i = 0; i < children.length; i++) ...[
