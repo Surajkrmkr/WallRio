@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/theme_data.dart';
@@ -66,24 +67,28 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
                       _buildMembershipCard(personalization, isDarkMode),
                       const SizedBox(height: 28),
   
-                      // Tab Selector
-                      _buildTabBar(isDarkMode),
-                      const SizedBox(height: 20),
-  
-                      // Tab Content
-                      SizedBox(
-                        height: _calculateTabHeight(personalization),
-                        child: TabBarView(
-                          controller: _tabController,
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            _buildAppIconsTab(
-                                context, personalization, isDarkMode, hasSub),
-                            _buildProfileFramesTab(
-                                context, personalization, isDarkMode, hasSub),
-                          ],
+                      // Tab Selector — App Icons switching is Android-only
+                      // (no iOS native handler exists for the icon channel yet),
+                      // so iOS goes straight to Frames without a tab bar.
+                      if (Platform.isAndroid) ...[
+                        _buildTabBar(isDarkMode),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: _calculateTabHeight(personalization),
+                          child: TabBarView(
+                            controller: _tabController,
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              _buildAppIconsTab(context, personalization,
+                                  isDarkMode, hasSub),
+                              _buildProfileFramesTab(context, personalization,
+                                  isDarkMode, hasSub),
+                            ],
+                          ),
                         ),
-                      ),
+                      ] else
+                        _buildProfileFramesTab(
+                            context, personalization, isDarkMode, hasSub),
                       const SizedBox(height: 40),
                     ],
                   ),

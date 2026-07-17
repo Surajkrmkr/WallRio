@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
@@ -90,7 +91,7 @@ class PersonalizationProvider extends ChangeNotifier {
   /// Applies the stored app icon preference to the Android system.
   /// This ensures the launcher icon stays in sync after reinstalls or updates.
   Future<void> _syncIconWithSystem() async {
-    if (_personalization == null) return;
+    if (_personalization == null || !Platform.isAndroid) return;
     try {
       await _iconChannel.invokeMethod('setIcon', {
         'iconKey': _personalization!.activeAppIcon,
@@ -137,7 +138,9 @@ class PersonalizationProvider extends ChangeNotifier {
       _personalization!.activeAppIcon = iconKey;
       await _syncWithLocal();
       notifyListeners();
-      await _iconChannel.invokeMethod('setIcon', {'iconKey': iconKey});
+      if (Platform.isAndroid) {
+        await _iconChannel.invokeMethod('setIcon', {'iconKey': iconKey});
+      }
       ToastWidget.showToast("App Icon updated!");
       return true;
     } catch (e) {

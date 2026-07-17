@@ -11,7 +11,13 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebSearch",
-      "Bash(./gradlew :app:compileDebugKotlin --console=plain)"
+      "Bash(./gradlew :app:compileDebugKotlin --console=plain)",
+      "Bash(flutter --version)",
+      "Bash(xcodebuild -version)",
+      "Bash(flutter build *)",
+      "Bash(pod install *)",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(plutil -lint /Users/surajkrmkr/Github/wallrio/ios/Runner/Info.plist)"
     ]
   }
 }

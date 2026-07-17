@@ -51,7 +51,7 @@
             android:name=".icon_yellow"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/icon_yellow"
+            android:icon="@mipmap/launcher_icon"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -62,7 +62,7 @@
             android:name=".icon_black2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/icon_black2"
+            android:icon="@mipmap/launcher_icon"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -73,7 +73,7 @@
             android:name=".icon_color"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/icon_color"
+            android:icon="@mipmap/launcher_icon"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -84,7 +84,7 @@
             android:name=".icon_black"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/icon_black"
+            android:icon="@mipmap/launcher_icon"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

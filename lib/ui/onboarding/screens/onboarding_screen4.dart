@@ -22,12 +22,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   List<Walls>? _bgWalls; // cached — never re-randomize on setState
   StreamSubscription<bool>? _purchaseSub;
 
-  static const String _lifetimeProductId = 'com.wallrio.lifetime_pro';
-
   @override
   void initState() {
     super.initState();
-    _selectedProductId = _lifetimeProductId;
+    _selectedProductId = SubscriptionProvider.lifetimeProductId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _purchaseSub = Provider.of<SubscriptionProvider>(context, listen: false)
@@ -284,13 +282,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   Widget _buildLifetimeCard(
       BuildContext context, List<SubscriptionPlan> plans) {
-    final isSelected = _selectedProductId == _lifetimeProductId;
-    final plan = _planFor(_lifetimeProductId, plans);
+    final isSelected = _selectedProductId == SubscriptionProvider.lifetimeProductId;
+    final plan = _planFor(SubscriptionProvider.lifetimeProductId, plans);
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
         ProductDetails? lifetimeProd;
         for (final p in subProvider.products) {
-          if (p.id == _lifetimeProductId) {
+          if (p.id == SubscriptionProvider.lifetimeProductId) {
             lifetimeProd = p;
             break;
           }
@@ -299,7 +297,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             ? _discountPercent(lifetimeProd.rawPrice, plan.actualPrice)
             : 0;
         return GestureDetector(
-          onTap: () => setState(() => _selectedProductId = _lifetimeProductId),
+          onTap: () => setState(() => _selectedProductId = SubscriptionProvider.lifetimeProductId),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             padding: const EdgeInsets.all(18),
@@ -415,7 +413,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
         final others = subProvider.products
-            .where((p) => p.id != _lifetimeProductId && !p.id.contains('collection'))
+            .where((p) => p.id != SubscriptionProvider.lifetimeProductId && !p.id.contains('collection'))
             .toList();
         if (others.isEmpty) return const SizedBox.shrink();
         return Column(

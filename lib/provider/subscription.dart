@@ -28,15 +28,26 @@ class SubscriptionProvider extends ChangeNotifier {
   late StreamSubscription subscription;
 
   final InAppPurchase inAppPurchase = InAppPurchase.instance;
-  static const String lifetimeProductId = 'com.wallrio.lifetime_pro';
 
-  final Set<String> productIDs = {
-    //   "com.wallrio.test",
-    lifetimeProductId,
-    "com.wallrio.monthly_28",
-    "com.wallrio.quaterly_84",
-    "com.wallrio.yearly_365"
-  };
+  // App Store Connect and Play Console use separate product IDs for the same
+  // plans (registered independently per store), so these are platform-aware.
+  static final String lifetimeProductId = Platform.isIOS
+      ? 'com.wallrio.ios.lifetime_pro'
+      : 'com.wallrio.lifetime_pro';
+
+  final Set<String> productIDs = Platform.isIOS
+      ? {
+          lifetimeProductId,
+          "com.wallrio.ios.monthly_28",
+          "com.wallrio.ios.quaterly_84",
+          "com.wallrio.ios.yearly_365",
+        }
+      : {
+          lifetimeProductId,
+          "com.wallrio.monthly_28",
+          "com.wallrio.quaterly_84",
+          "com.wallrio.yearly_365",
+        };
 
   // final successPurchasedStream = StreamController<bool>();
   final PublishSubject<bool> _successPurchased = PublishSubject<bool>();

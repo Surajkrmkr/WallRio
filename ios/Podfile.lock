@@ -1188,6 +1188,8 @@ PODS:
     - abseil/meta/type_traits
     - abseil/xcprivacy
   - abseil/xcprivacy (1.20240722.0)
+  - app_tracking_transparency (0.0.1):
+    - Flutter
   - AppAuth (2.1.0):
     - AppAuth/Core (= 2.1.0)
     - AppAuth/ExternalUserAgent (= 2.1.0)
@@ -1200,8 +1202,6 @@ PODS:
     - PromisesObjC (~> 2.4)
     - PromisesSwift (~> 2.4)
     - RecaptchaInterop (~> 101.0)
-  - audio_session (0.0.1):
-    - Flutter
   - auto_start_flutter (0.0.1):
     - Flutter
   - BoringSSL-GRPC (0.0.37):
@@ -1215,10 +1215,6 @@ PODS:
     - firebase_core
     - Flutter
   - cupertino_native (0.0.1):
-    - Flutter
-  - downloadsfolder (0.0.1):
-    - Flutter
-  - dynamic_app_icon_flutter_plus (0.0.1):
     - Flutter
   - Firebase/Auth (12.14.0):
     - Firebase/CoreOnly
@@ -1356,12 +1352,15 @@ PODS:
     - PromisesSwift (~> 2.1)
   - FirebaseSharedSwift (12.14.0)
   - Flutter (1.0.0)
-  - flutter_downloader (0.0.1):
-    - Flutter
   - flutter_local_notifications (0.0.1):
+    - Flutter
+  - flutter_native_splash (2.4.3):
     - Flutter
   - fluttertoast (0.0.2):
     - Flutter
+  - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
   - Google-Mobile-Ads-SDK (13.3.0):
     - GoogleUserMessagingPlatform (>= 1.1)
   - google_mobile_ads (9.0.0):
@@ -1539,9 +1538,6 @@ PODS:
   - in_app_purchase_storekit (0.0.1):
     - Flutter
     - FlutterMacOS
-  - just_audio (0.0.1):
-    - Flutter
-    - FlutterMacOS
   - leveldb-library (1.22.6)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
@@ -1576,12 +1572,10 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - audio_session (from `.symlinks/plugins/audio_session/ios`)
+  - app_tracking_transparency (from `.symlinks/plugins/app_tracking_transparency/ios`)
   - auto_start_flutter (from `.symlinks/plugins/auto_start_flutter/ios`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - cupertino_native (from `.symlinks/plugins/cupertino_native/ios`)
-  - downloadsfolder (from `.symlinks/plugins/downloadsfolder/ios`)
-  - dynamic_app_icon_flutter_plus (from `.symlinks/plugins/dynamic_app_icon_flutter_plus/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_app_check (from `.symlinks/plugins/firebase_app_check/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
@@ -1589,13 +1583,13 @@ DEPENDENCIES:
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
-  - flutter_downloader (from `.symlinks/plugins/flutter_downloader/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
+  - gal (from `.symlinks/plugins/gal/darwin`)
   - google_mobile_ads (from `.symlinks/plugins/google_mobile_ads/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - in_app_purchase_storekit (from `.symlinks/plugins/in_app_purchase_storekit/darwin`)
-  - just_audio (from `.symlinks/plugins/just_audio/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -1647,18 +1641,14 @@ SPEC REPOS:
     - RecaptchaInterop
 
 EXTERNAL SOURCES:
-  audio_session:
-    :path: ".symlinks/plugins/audio_session/ios"
+  app_tracking_transparency:
+    :path: ".symlinks/plugins/app_tracking_transparency/ios"
   auto_start_flutter:
     :path: ".symlinks/plugins/auto_start_flutter/ios"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
   cupertino_native:
     :path: ".symlinks/plugins/cupertino_native/ios"
-  downloadsfolder:
-    :path: ".symlinks/plugins/downloadsfolder/ios"
-  dynamic_app_icon_flutter_plus:
-    :path: ".symlinks/plugins/dynamic_app_icon_flutter_plus/ios"
   firebase_analytics:
     :path: ".symlinks/plugins/firebase_analytics/ios"
   firebase_app_check:
@@ -1673,20 +1663,20 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
     :path: Flutter
-  flutter_downloader:
-    :path: ".symlinks/plugins/flutter_downloader/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_native_splash:
+    :path: ".symlinks/plugins/flutter_native_splash/ios"
   fluttertoast:
     :path: ".symlinks/plugins/fluttertoast/ios"
+  gal:
+    :path: ".symlinks/plugins/gal/darwin"
   google_mobile_ads:
     :path: ".symlinks/plugins/google_mobile_ads/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   in_app_purchase_storekit:
     :path: ".symlinks/plugins/in_app_purchase_storekit/darwin"
-  just_audio:
-    :path: ".symlinks/plugins/just_audio/darwin"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   permission_handler_apple:
@@ -1708,22 +1698,20 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   abseil: a05cc83bf02079535e17169a73c5be5ba47f714b
+  app_tracking_transparency: e169b653478da7bb15a6c61209015378ca73e375
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
   AppCheckCore: 214137f5c378d1dec88a68425c467fe65aaff637
-  audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
-  auto_start_flutter: 2c5e3de88155a4c9e2be0734e81bada81d6c6f85
+  auto_start_flutter: 68efca6fcf56550d9ea9a2a26c75bd770bda421c
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
-  cloud_firestore: 0b00f29ae2bb05adf7b0624b4aa883861a59761d
-  cupertino_native: 1db0611c94f9a9ea28433ed16a344dcb996370b5
-  downloadsfolder: 7d5c7b5d23e3c4dded522ff2a2ef14a56846378a
-  dynamic_app_icon_flutter_plus: 9235d8a780d99c6c53af52930567e33b42875395
+  cloud_firestore: 30c66469d4c8c1770b0e994e7501215f2bb51d56
+  cupertino_native: 2bf2872026a59c9db5b72250892f7d9ca5244197
   Firebase: 7cc10425300768ec86292688af5cb228f0604bde
-  firebase_analytics: 9ea6c22e60e1d37ee76772de57b4addddb03e276
-  firebase_app_check: 8e7687f90a90463348be5e505a821501cc43fb32
-  firebase_auth: d4091ec40b52cc2ea56171ea521c30b388844acb
-  firebase_core: 383e19b49a08df5d7a6cf5017616de6a357ed7af
-  firebase_crashlytics: 88273c8643a258ff74ee26203e319a782aa8b12c
-  firebase_messaging: ab03d6090864c0fb8136521231df6a66cb13be49
+  firebase_analytics: 1640d06cf3c1a365700857c51ef995d3591df101
+  firebase_app_check: cef54234542ccd7e8471e1eacee99961a6eb8b85
+  firebase_auth: 08d9e2155c59dee7b84db916334a017a1c22633f
+  firebase_core: 059f6939d27b5644ea96ad8ad71a9a6e17db74f1
+  firebase_crashlytics: 842464bf3dcf3ddc67ec7f4a0e48bf268d8e8c6a
+  firebase_messaging: 1f7160e8953184618d25f45ae0d7131cdab97965
   FirebaseAnalytics: 99364329a3ea4d1ab4a3744b5464371b7351c481
   FirebaseAppCheck: 49d593026a7959280816e303fd27a3f732ccb9aa
   FirebaseAppCheckInterop: f123c0261a7b46f060e98fc2961651f1ac68f384
@@ -1741,12 +1729,13 @@ SPEC CHECKSUMS:
   FirebaseSessions: c9e7b7829265454f08cb68f7f8a6650c9b221bd4
   FirebaseSharedSwift: 7c659ebf23afdc1e60a05df72a07ad7349f5758f
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_downloader: 78da0da1084e709cbfd3b723c7ea349c71681f09
-  flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
-  fluttertoast: fe6790210fdba20801685be946e3a2124b72eef5
+  flutter_local_notifications: eda81afddbf18f8589f6ec069ce593c4c6378769
+  flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
+  fluttertoast: fac57e14a92926e51402ed1da7a53ecd30588a44
+  gal: 6a522c75909f1244732d4596d11d6a2f86ff37a5
   Google-Mobile-Ads-SDK: 7692126a35ed859f20635af281c50a2162be8bea
-  google_mobile_ads: bab325fd4e31c9705cab0cb298e4f5a9bdb7370f
-  google_sign_in_ios: 000870aa06da9b28d1d0bf7ef70ff0213059dd28
+  google_mobile_ads: e0c300fcd472c3fa5a00d6cca8b0c65bbbb15faf
+  google_sign_in_ios: 7336a3372ea93ea56a21e126a0055ffca3723601
   GoogleAdsOnDeviceConversion: e3b71da24ff4cf01cf520756ac1c2b93c07b86ff
   GoogleAppMeasurement: 1987ffa55055dfb22c52e363c31aa50c1e11d349
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
@@ -1757,23 +1746,22 @@ SPEC CHECKSUMS:
   gRPC-Core: 860978b7db482de8b4f5e10677216309b5ff6330
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  in_app_purchase_storekit: 22cca7d08eebca9babdf4d07d0baccb73325d3c8
-  just_audio: 4e391f57b79cad2b0674030a00453ca5ce817eed
+  in_app_purchase_storekit: 2342c0a5da86593124d08dd13d920f39a52b273a
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  permission_handler_apple: 92d754bbaa7361d436db2d6c3c1c2a0fdcec462e
+  package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
+  permission_handler_apple: ee2fe0fd04551b304eb002714ff067c371c822ed
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
-  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
-  video_player_avfoundation: 3453f792138786248960ca029747fcd9f318ef52
-  webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
-  workmanager_apple: 904529ae31e97fc5be632cf628507652294a0778
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
+  shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
+  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
+  url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa
+  video_player_avfoundation: e54d03b3b19f64f2c557354f72ce538387541ba6
+  webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4
+  workmanager_apple: 7bac258335c310689a641e2d66e88d4845d372e9
 
 PODFILE CHECKSUM: 57c8aed26fba39d3ec9424816221f294a07c58eb
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2

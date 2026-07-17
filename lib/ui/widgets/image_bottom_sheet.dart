@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -28,9 +29,14 @@ class ImageBottomSheet extends StatelessWidget {
             }));
   }
 
-  void _applyImgHandler(BuildContext context) =>
-      Provider.of<WallActionProvider>(context, listen: false)
-          .setWall(wallModel.url, context);
+  void _applyImgHandler(BuildContext context) {
+    final action = Provider.of<WallActionProvider>(context, listen: false);
+    if (Platform.isAndroid) {
+      action.setWall(wallModel.url, context);
+    } else {
+      action.saveToPhotos(context, wallModel.url);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +86,7 @@ class ImageBottomSheet extends StatelessWidget {
           const SizedBox(height: 20),
           const AdsWidget(bottomPadding: 20),
           PrimaryBtnWidget(
-              btnText: "Apply",
+              btnText: Platform.isAndroid ? "Apply" : "Save Image",
               onTap: () => UserProfile.plusMember || !wallModel.isPremium
                   ? _applyImgHandler(context)
                   : _showPlusDialog(context)),

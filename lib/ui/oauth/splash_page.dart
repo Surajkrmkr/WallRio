@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
@@ -68,7 +69,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _checkInAppUpdate() {
-    if (kDebugMode) return;
+    if (kDebugMode || !Platform.isAndroid) return;
     InAppUpdate.checkForUpdate().then((updateInfo) async {
       if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
         await InAppUpdate.performImmediateUpdate();

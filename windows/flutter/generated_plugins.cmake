@@ -5,10 +5,10 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   auto_start_flutter
   cloud_firestore
-  downloadsfolder
   firebase_app_check
   firebase_auth
   firebase_core
+  gal
   permission_handler_windows
   share_plus
   url_launcher_windows

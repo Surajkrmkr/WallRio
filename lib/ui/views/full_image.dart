@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -44,15 +45,22 @@ class _FullImageState extends State<FullImage> {
   }
 
   void _downloadHandler(BuildContext context) {
-    Provider.of<WallActionProvider>(context, listen: false).downloadImg(
-        context,
-        widget.wallModel.url,
-        "${widget.wallModel.name}_${widget.wallModel.id}");
+    final action = Provider.of<WallActionProvider>(context, listen: false);
+    if (Platform.isAndroid) {
+      action.downloadImg(context, widget.wallModel.url,
+          "${widget.wallModel.name}_${widget.wallModel.id}");
+    } else {
+      action.saveToPhotos(context, widget.wallModel.url);
+    }
   }
 
   void _applyImgHandler(BuildContext context) {
-    Provider.of<WallActionProvider>(context, listen: false)
-        .setWall(widget.wallModel.url, context);
+    final action = Provider.of<WallActionProvider>(context, listen: false);
+    if (Platform.isAndroid) {
+      action.setWall(widget.wallModel.url, context);
+    } else {
+      action.shareFile(context, widget.wallModel.url);
+    }
   }
 
   void _showExplorePlusDialog(BuildContext context) {
@@ -289,14 +297,16 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildShareBtn() {
     return _buildBtn(
-        color: whiteColor, iconData: Icons.share, onTap: _launchPlayStore);
+        color: whiteColor, iconData: Icons.share, onTap: _launchAppStore);
   }
 
-  Future<void> _launchPlayStore() async {
-    final String playStoreUrl =
-        'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
+  Future<void> _launchAppStore() async {
+    // TODO: replace with the real App Store URL once WallRio is published on iOS.
+    final String storeUrl = Platform.isAndroid
+        ? 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio'
+        : 'https://apps.apple.com/app/idXXXXXXXXXX';
 
-    await SharePlus.instance.share(ShareParams(text: playStoreUrl));
+    await SharePlus.instance.share(ShareParams(text: storeUrl));
   }
 
   Consumer<FavouriteProvider> _buildFavUI() {
@@ -367,7 +377,7 @@ class _FullImageState extends State<FullImage> {
       child: Row(children: [
         Expanded(
             child: PrimaryBtnWidget(
-                btnText: "Download",
+                btnText: Platform.isAndroid ? "Download" : "Save Image",
                 textColor: whiteColor,
                 forceDarkStyle: true,
                 isLoading:
@@ -383,7 +393,7 @@ class _FullImageState extends State<FullImage> {
         const SizedBox(width: 10),
         Expanded(
             child: PrimaryBtnWidget(
-                btnText: "Apply",
+                btnText: Platform.isAndroid ? "Apply" : "Share",
                 textColor: whiteColor,
                 forceDarkStyle: true,
                 onTap: () => UserProfile.plusMember ||

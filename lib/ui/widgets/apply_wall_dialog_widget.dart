@@ -1,9 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
+/// Shown only from Android's Apply button — setting a wallpaper has no iOS
+/// API, so iOS uses Save Image/Share instead and never opens this dialog.
 class ApplyWallDialogWidget extends StatelessWidget {
   final String imgUrl;
   const ApplyWallDialogWidget({super.key, required this.imgUrl});
@@ -20,7 +21,7 @@ class ApplyWallDialogWidget extends StatelessWidget {
         children: [Text("Set Wallpaper"), CloseButton()],
       ),
       contentPadding: const EdgeInsets.all(20),
-      children: Platform.isAndroid ? [
+      children: [
         PrimaryBtnWidget(
           btnText: "Homescreen",
           onTap: () => applyWall(context,
@@ -37,12 +38,6 @@ class ApplyWallDialogWidget extends StatelessWidget {
           btnText: "Both",
           onTap: () => applyWall(context,
               url: imgUrl, wallLocation: WallpaperManagerPlus.bothScreens),
-        ),
-      ] : [
-        PrimaryBtnWidget(
-          btnText: "Set via Share Sheet",
-          onTap: () => applyWall(context,
-              url: imgUrl, wallLocation: 1), // location is ignored on iOS
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wallrio/model/export.dart';
@@ -65,16 +66,26 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   void _downloadHandler() {
-    Provider.of<WallActionProvider>(context, listen: false).downloadImg(
-      context,
-      widget.wall.videoUrl,
-      '${widget.wall.name}_${widget.wall.id}',
-    );
+    final action = Provider.of<WallActionProvider>(context, listen: false);
+    if (Platform.isAndroid) {
+      action.downloadImg(
+        context,
+        widget.wall.videoUrl,
+        '${widget.wall.name}_${widget.wall.id}',
+      );
+    } else {
+      action.saveToPhotos(context, widget.wall.videoUrl, isVideo: true);
+    }
   }
 
   void _applyHandler() {
-    Provider.of<WallActionProvider>(context, listen: false)
-        .applyLiveWall(context, widget.wall.videoUrl);
+    final action = Provider.of<WallActionProvider>(context, listen: false);
+    if (Platform.isAndroid) {
+      action.applyLiveWall(context, widget.wall.videoUrl);
+    } else {
+      action.shareFile(context, widget.wall.videoUrl,
+          text: 'Live wallpaper from WallRio');
+    }
   }
 
   @override
@@ -354,7 +365,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         children: [
           Expanded(
             child: PrimaryBtnWidget(
-              btnText: 'Download',
+              btnText: Platform.isAndroid ? 'Download' : 'Save Video',
               textColor: whiteColor,
               forceDarkStyle: true,
               isLoading: Provider.of<WallActionProvider>(context, listen: true)
@@ -367,7 +378,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
           const SizedBox(width: 10),
           Expanded(
             child: PrimaryBtnWidget(
-              btnText: 'Apply',
+              btnText: Platform.isAndroid ? 'Apply' : 'Share',
               textColor: whiteColor,
               forceDarkStyle: true,
               isLoading: Provider.of<WallActionProvider>(context, listen: true)

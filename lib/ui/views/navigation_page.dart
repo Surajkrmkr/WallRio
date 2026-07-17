@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/pages.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
@@ -46,6 +47,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   void initState() {
+    TrackingService.requestIfNeeded();
     Future.delayed(Duration.zero, () {
       _checkUserIsDisable(_timer);
       if (!mounted) return;
@@ -158,65 +160,70 @@ class _NavigationPageState extends State<NavigationPage> {
               ? _buildCupertinoTabBar(provider, isDarkMode)
               : _buildCustomTabBar(provider, isDarkMode),
         ),
-        floatingActionButton: Padding(
-          padding: EdgeInsets.only(
-            bottom: UserProfile.plusMember
-                ? 0.0
-                : (_showPromoBanner ? 140.0 : 70.0),
-          ),
-          child: RepaintBoundary(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
-                        : Colors.white.withValues(alpha: 0.85),
+        // The shuffle FAB sets the home-screen wallpaper directly via
+        // WallpaperManagerPlus, which has no iOS equivalent (no API sets a
+        // wallpaper without user interaction), so it's Android-only.
+        floatingActionButton: Platform.isAndroid
+            ? Padding(
+                padding: EdgeInsets.only(
+                  bottom: UserProfile.plusMember
+                      ? 0.0
+                      : (_showPromoBanner ? 140.0 : 70.0),
+                ),
+                child: RepaintBoundary(
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.05),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(30),
-                      onTap: _isChanging ? null : _applyRandomWallpaper,
-                      child: Center(
-                        child: _isChanging
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: isDarkMode ? Colors.white : Colors.black,
-                                ),
-                              )
-                            : Icon(Icons.shuffle_rounded,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                                size: 24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
+                              : Colors.white.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.05),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(30),
+                            onTap: _isChanging ? null : _applyRandomWallpaper,
+                            child: Center(
+                              child: _isChanging
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: isDarkMode ? Colors.white : Colors.black,
+                                      ),
+                                    )
+                                  : Icon(Icons.shuffle_rounded,
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                      size: 24),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
+              )
+            : null,
       ),
     );
     });

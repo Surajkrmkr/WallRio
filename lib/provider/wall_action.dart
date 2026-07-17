@@ -87,64 +87,103 @@ class WallActionProvider extends ChangeNotifier {
       barrierDismissible: false,
       builder: (context) => ApplyWallDialogWidget(imgUrl: url));
 
-  Future<void> applyLiveWall(BuildContext context, String url) async {
-    setIsApplying = true;
-    
-    // Track progression
-    Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.apply);
-    
-    if (Platform.isAndroid) {
-      ToastWidget.showToast("Applying live wallpaper…");
+  /// Saves an image or video to the device's Photos library. This is the
+  /// iOS counterpart to [downloadImg]/[applyLiveWall] — iOS has no API to set
+  /// a wallpaper or write to shared storage, so saving to Photos and letting
+  /// the user set it manually is the closest equivalent.
+  Future<void> saveToPhotos(BuildContext context, String url,
+      {bool isVideo = false}) async {
+    FirebaseAnalytics.instance
+        .logEvent(name: 'wallpaper_save_to_photos', parameters: {'name': url});
+    Provider.of<ProgressionProvider>(context, listen: false)
+        .trackAction(ActionType.download);
+
+    setIsDownloading = true;
+    setProgress = 0.0;
+    ToastWidget.showToast(isVideo ? "Saving video to Photos" : "Saving to Photos");
+
+    try {
+      final hasAccess = await Gal.hasAccess() || await Gal.requestAccess();
+      if (!hasAccess) {
+        ToastWidget.showToast("Photos access denied. Enable it in Settings.");
+        return;
+      }
+
+      final file = await DefaultCacheManager().getSingleFile(url);
+      if (isVideo) {
+        await Gal.putVideo(file.path, album: 'WallRio');
+      } else {
+        await Gal.putImage(file.path, album: 'WallRio');
+      }
+      ToastWidget.showToast(isVideo ? "Video saved to Photos" : "Saved to Photos");
+    } catch (error) {
+      logger.e(error);
+      ToastWidget.showToast("Failed to save to Photos");
+    } finally {
+      setIsDownloading = false;
     }
-    
+  }
+
+  /// Shares an image or video through the native share sheet.
+  Future<void> shareFile(BuildContext context, String url,
+      {String text = 'Wallpaper from WallRio'}) async {
+    Provider.of<ProgressionProvider>(context, listen: false)
+        .trackAction(ActionType.apply);
     try {
       final file = await DefaultCacheManager().getSingleFile(url);
-      if (Platform.isAndroid) {
-        await WallpaperManagerPlus().setLiveWallpaper(file);
-        ToastWidget.showToast("Live wallpaper applied");
-      } else {
-        // ignore: deprecated_member_use
-        await Share.shareXFiles([XFile(file.path)], text: 'Use as Wallpaper');
-      }
+      // ignore: deprecated_member_use
+      await Share.shareXFiles([XFile(file.path)], text: text);
     } catch (error) {
-      if (Platform.isAndroid) {
-        ToastWidget.showToast("Failed to apply live wallpaper");
-      }
+      logger.e(error);
+      ToastWidget.showToast("Failed to share");
+    }
+  }
+
+  /// Sets a live (video) wallpaper. Android-only — there is no iOS API to set
+  /// a live wallpaper; iOS uses [saveToPhotos] instead.
+  Future<void> applyLiveWall(BuildContext context, String url) async {
+    if (!Platform.isAndroid) return;
+
+    setIsApplying = true;
+    Provider.of<ProgressionProvider>(context, listen: false)
+        .trackAction(ActionType.apply);
+    ToastWidget.showToast("Applying live wallpaper…");
+
+    try {
+      final file = await DefaultCacheManager().getSingleFile(url);
+      await WallpaperManagerPlus().setLiveWallpaper(file);
+      ToastWidget.showToast("Live wallpaper applied");
+    } catch (error) {
+      ToastWidget.showToast("Failed to apply live wallpaper");
       logger.e(error);
     } finally {
       setIsApplying = false;
     }
   }
 
+  /// Sets a static wallpaper. Android-only — there is no iOS API to set a
+  /// wallpaper; iOS uses [saveToPhotos] instead.
   void applyWall(BuildContext context,
       {required String url, required int wallLocation}) async {
+    if (!Platform.isAndroid) return;
+
     FirebaseAnalytics.instance.logEvent(
         name: 'wallpaper_applied',
         parameters: {'location': wallLocation == 1 ? 'homescreen' : wallLocation == 2 ? 'lockscreen' : 'both'});
-    
+
     // Track progression
     Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.apply);
-    
+
     setIsApplying = true;
     Navigator.pop(context);
-    
-    if (Platform.isAndroid) {
-      ToastWidget.showToast("Applying wallpaper");
-    }
-    
+    ToastWidget.showToast("Applying wallpaper");
+
     var file = await DefaultCacheManager().getSingleFile(url);
     try {
-      if (Platform.isAndroid) {
-        await WallpaperManagerPlus().setWallpaper(file, wallLocation);
-        ToastWidget.showToast("Wallpaper applied successfully");
-      } else {
-         // ignore: deprecated_member_use
-         await Share.shareXFiles([XFile(file.path)], text: 'Set as Wallpaper');
-      }
+      await WallpaperManagerPlus().setWallpaper(file, wallLocation);
+      ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {
-      if (Platform.isAndroid) {
-         ToastWidget.showToast("Failed to apply wallpaper");
-      }
+      ToastWidget.showToast("Failed to apply wallpaper");
       logger.e(error);
     } finally {
       setIsApplying = false;
