@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  app_tracking_transparency:
+    dependency: "direct main"
+    description:
+      name: app_tracking_transparency
+      sha256: "3a52669c0645ffd7efe9a460047616de3e3f2128338f9ec7cdb681628d36238e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.7"
   archive:
     dependency: transitive
     description:
@@ -65,14 +73,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
-  audio_session:
-    dependency: transitive
-    description:
-      name: audio_session
-      sha256: "2b7fff16a552486d078bfc09a8cde19f426dc6d6329262b684182597bec5b1ac"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.25"
   auto_start_flutter:
     dependency: "direct main"
     description:
@@ -305,14 +305,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.7"
-  dartx:
-    dependency: transitive
-    description:
-      name: dartx
-      sha256: "8b25435617027257d43e6508b5fe061012880ddfdaa75a71d607c3de2a13d244"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   dbus:
     dependency: transitive
     description:
@@ -321,14 +313,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.14"
-  diacritic:
-    dependency: transitive
-    description:
-      name: diacritic
-      sha256: "12981945ec38931748836cd76f2b38773118d0baef3c68404bdfde9566147876"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.6"
   dio:
     dependency: "direct main"
     description:
@@ -345,22 +329,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  downloadsfolder:
-    dependency: "direct main"
-    description:
-      name: downloadsfolder
-      sha256: "0e1bb7dd634d6231c0ac116c467da94507a07ed62239712ea0dead981d58b114"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
-  dynamic_app_icon_flutter_plus:
-    dependency: "direct main"
-    description:
-      name: dynamic_app_icon_flutter_plus
-      sha256: "4846689bf57f6e7cb280bc42fcf25f147b5c304316662b191dcbb1eba7d582b4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -542,14 +510,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_animated_button:
-    dependency: "direct main"
-    description:
-      name: flutter_animated_button
-      sha256: "340770308cf72cfc380c421727d98691bb12a5596871954f289b0bafdd356256"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.4"
   flutter_cache_manager:
     dependency: "direct main"
     description:
@@ -558,14 +518,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.1"
-  flutter_downloader:
-    dependency: "direct main"
-    description:
-      name: flutter_downloader
-      sha256: "93a9ddbd561f8a3f5483b4189453fba145a0a1014a88143c96a966296b78a118"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.12.0"
   flutter_file_downloader:
     dependency: "direct main"
     description:
@@ -672,6 +624,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.1.0"
+  gal:
+    dependency: "direct main"
+    description:
+      name: gal
+      sha256: "969598f986789127fd407a750413249e1352116d4c2be66e81837ffeeaafdfee"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.2"
   glob:
     dependency: transitive
     description:
@@ -872,30 +832,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.12.0"
-  just_audio:
-    dependency: transitive
-    description:
-      name: just_audio
-      sha256: f978d5b4ccea08f267dae0232ec5405c1b05d3f3cd63f82097ea46c015d5c09e
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.9.46"
-  just_audio_platform_interface:
-    dependency: transitive
-    description:
-      name: just_audio_platform_interface
-      sha256: "2532c8d6702528824445921c5ff10548b518b13f808c2e34c2fd54793b999a6a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.6.0"
-  just_audio_web:
-    dependency: transitive
-    description:
-      name: just_audio_web
-      sha256: "6ba8a2a7e87d57d32f0f7b42856ade3d6a9fbe0f1a11fabae0a4f00bb73f0663"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.16"
   leak_tracker:
     dependency: transitive
     description:
@@ -928,14 +864,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
-  liquid_bottom_nav_bar:
-    dependency: "direct main"
-    description:
-      name: liquid_bottom_nav_bar
-      sha256: "663894f4298402a38be54dcdf8fb7b4545b88921f6124fe150b6e63f9db7ba66"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
   logger:
     dependency: "direct main"
     description:
@@ -980,10 +908,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "1741988757a65eb6b36abe716829688cf01910bbf91c34354ff7ec1c3de2b349"
+      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
       url: "https://pub.dev"
     source: hosted
-    version: "1.18.0"
+    version: "1.17.0"
   mime:
     dependency: transitive
     description:
@@ -1200,14 +1128,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
-  progressive_button_flutter:
-    dependency: "direct main"
-    description:
-      name: progressive_button_flutter
-      sha256: "798f9b19cc89998987fbd1c611b76b7f80fe6334edb5a4c0eed6b66d9cc62b8f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   provider:
     dependency: "direct main"
     description:
@@ -1465,18 +1385,10 @@ packages:
     dependency: transitive
     description:
       name: test_api
-      sha256: "949a932224383300f01be9221c39180316445ecb8e7547f70a41a35bf421fb9e"
+      sha256: "8161c84903fd860b26bfdefb7963b3f0b68fee7adea0f59ef805ecca346f0c7a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.11"
-  time:
-    dependency: transitive
-    description:
-      name: time
-      sha256: "46187cf30bffdab28c56be9a63861b36e4ab7347bf403297595d6a97e10c789f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.6"
+    version: "0.7.10"
   timezone:
     dependency: transitive
     description:

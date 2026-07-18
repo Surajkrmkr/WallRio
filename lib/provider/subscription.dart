@@ -87,6 +87,7 @@ class SubscriptionProvider extends ChangeNotifier {
 
   Future<void> checkSupportForIAP() async {
     isSupported = await inAppPurchase.isAvailable();
+    logger.i('IAP available: $isSupported, queried IDs: $productIDs');
     if (isSupported) {
       await getUserProducts();
       subscription = inAppPurchase.purchaseStream.listen((data) {
@@ -128,6 +129,12 @@ class SubscriptionProvider extends ChangeNotifier {
     try {
       final ProductDetailsResponse response =
           await inAppPurchase.queryProductDetails(productIDs);
+      if (response.notFoundIDs.isNotEmpty) {
+        logger.e('Store returned no product for IDs: ${response.notFoundIDs}');
+      }
+      if (response.error != null) {
+        logger.e('queryProductDetails error: ${response.error}');
+      }
       setProducts = response.productDetails;
     } catch (error) {
       logger.e(error);
