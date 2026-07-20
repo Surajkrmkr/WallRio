@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -55,12 +56,8 @@ class _FullImageState extends State<FullImage> {
   }
 
   void _applyImgHandler(BuildContext context) {
-    final action = Provider.of<WallActionProvider>(context, listen: false);
-    if (Platform.isAndroid) {
-      action.setWall(widget.wallModel.url, context);
-    } else {
-      action.shareFile(context, widget.wallModel.url);
-    }
+    Provider.of<WallActionProvider>(context, listen: false)
+        .setWall(widget.wallModel.url, context);
   }
 
   void _showExplorePlusDialog(BuildContext context) {
@@ -81,9 +78,10 @@ class _FullImageState extends State<FullImage> {
     final progression =
         Provider.of<ProgressionProvider>(context, listen: false);
 
-    showModalBottomSheet(
+    CNBottomSheet.show(
       context: context,
       backgroundColor: Colors.transparent,
+      showDragHandle: Platform.isIOS,
       builder: (context) => _UnlockWallpaperSheet(
         wall: widget.wallModel,
         cost: 20, // Fixed cost for individual walls is 20
@@ -371,36 +369,39 @@ class _FullImageState extends State<FullImage> {
   }
 
   Widget _buildActionBtnUI() {
+    final saveButton = Expanded(
+        child: PrimaryBtnWidget(
+            btnText: Platform.isAndroid ? "Download" : "Save Image",
+            textColor: whiteColor,
+            forceDarkStyle: true,
+            isLoading: Provider.of<WallActionProvider>(context, listen: true)
+                .isDownloading,
+            progress: Provider.of<WallActionProvider>(context, listen: true)
+                .progress,
+            onTap: () => UserProfile.plusMember ||
+                    !widget.wallModel.isPremium ||
+                    _isSessionUnlocked
+                ? _downloadHandler(context)
+                : _showPlusDialog(context, true)));
+
     return Container(
       margin: EdgeInsets.all(20),
       height: 40,
       child: Row(children: [
-        Expanded(
-            child: PrimaryBtnWidget(
-                btnText: Platform.isAndroid ? "Download" : "Save Image",
-                textColor: whiteColor,
-                forceDarkStyle: true,
-                isLoading:
-                    Provider.of<WallActionProvider>(context, listen: true)
-                        .isDownloading,
-                progress: Provider.of<WallActionProvider>(context, listen: true)
-                    .progress,
-                onTap: () => UserProfile.plusMember ||
-                        !widget.wallModel.isPremium ||
-                        _isSessionUnlocked
-                    ? _downloadHandler(context)
-                    : _showPlusDialog(context, true))),
-        const SizedBox(width: 10),
-        Expanded(
-            child: PrimaryBtnWidget(
-                btnText: Platform.isAndroid ? "Apply" : "Share",
-                textColor: whiteColor,
-                forceDarkStyle: true,
-                onTap: () => UserProfile.plusMember ||
-                        !widget.wallModel.isPremium ||
-                        _isSessionUnlocked
-                    ? _applyImgHandler(context)
-                    : _showPlusDialog(context, false)))
+        saveButton,
+        if (Platform.isAndroid) ...[
+          const SizedBox(width: 10),
+          Expanded(
+              child: PrimaryBtnWidget(
+                  btnText: "Apply",
+                  textColor: whiteColor,
+                  forceDarkStyle: true,
+                  onTap: () => UserProfile.plusMember ||
+                          !widget.wallModel.isPremium ||
+                          _isSessionUnlocked
+                      ? _applyImgHandler(context)
+                      : _showPlusDialog(context, false))),
+        ],
       ]),
     );
   }
@@ -432,10 +433,13 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
     final balance = widget.progression.progression?.diamondsBalance ?? 0;
     final canAfford = balance >= widget.cost;
 
-    return Container(
+    final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+    return glassSheetBackground(
+      Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        color: supportsGlassSheet ? Colors.transparent : sheetColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SafeArea(
@@ -576,6 +580,8 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
           ],
         ),
       ),
+      ),
+      tint: sheetColor,
     );
   }
 }

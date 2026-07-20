@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -21,7 +22,16 @@ class UserBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final sheetColor = isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7);
+
+    return glassSheetBackground(
+      Container(
+        decoration: BoxDecoration(
+          color: supportsGlassSheet ? Colors.transparent : sheetColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Padding(
       padding:
           const EdgeInsets.only(left: 20.0, right: 20, top: 20, bottom: 40),
       child: Wrap(
@@ -86,6 +96,9 @@ class UserBottomSheet extends StatelessWidget {
           }),
         ],
       ),
+        ),
+      ),
+      tint: sheetColor,
     );
   }
 

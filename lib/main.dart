@@ -9,6 +9,7 @@ import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/oauth/export.dart';
+import 'package:wallrio/ui/widgets/export.dart';
 
 void main() async {
   await initializationHandler();
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
           setStatusBarTheme(provider);
           return MaterialApp(
               title: 'WallRio',
+              navigatorKey: ToastWidget.navigatorKey,
               theme: WallRioThemeData.getLightThemeData(
                   context: context, isDarkTheme: false),
               darkTheme: WallRioThemeData.getLightThemeData(
@@ -45,6 +47,15 @@ class MyApp extends StatelessWidget {
                 FirebaseAnalyticsObserver(
                     analytics: FirebaseAnalytics.instance),
               ],
+              // Wraps the Navigator in its own Overlay ancestor so
+              // ToastWidget.navigatorKey.currentContext (the Navigator's own
+              // context, which sits above its internal Overlay) can still
+              // resolve Overlay.of() for CNToast.
+              builder: (context, child) => Overlay(
+                    initialEntries: [
+                      OverlayEntry(builder: (context) => child!),
+                    ],
+                  ),
               home: const SplashPage());
         },
       ),
@@ -73,6 +84,16 @@ Future<void> initializationHandler() async {
   await FirebaseAppCheck.instance.activate();
   await NotificationService().init();
   await MobileAds.instance.initialize();
+  if (kDebugMode) {
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        testDeviceIds: [
+          // TODO: paste your device's test ID here once you get it from the
+          // console log (see "To get test ads on this device, set...").
+        ],
+      ),
+    );
+  }
   await Workmanager().initialize(
     callbackDispatcher,
   );

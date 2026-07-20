@@ -74,10 +74,10 @@ dependencies:
   workmanager: ^0.9.0-3
   auto_start_flutter: ^1.4.0
   intl: ^0.20.2
-  cupertino_native: ^0.1.1
   rxdart: ^0.28.0
   gal: ^2.3.2
   app_tracking_transparency: ^2.0.7
+  cupertino_native_better: ^1.5.2
 
 dev_dependencies:
   flutter_test:

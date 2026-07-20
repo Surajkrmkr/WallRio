@@ -10,7 +10,7 @@ class TrackingService {
     if (!Platform.isIOS) return;
 
     final status = await AppTrackingTransparency.trackingAuthorizationStatus;
-    if (status == TrackingStatus.notDetermined) {
+    if (status == TrackingStatus.notDetermined || status == TrackingStatus.denied) {
       await AppTrackingTransparency.requestTrackingAuthorization();
     }
   }

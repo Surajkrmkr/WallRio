@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wallrio/model/export.dart';
@@ -250,12 +251,12 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                 .copyWith(color: whiteColor),
           ),
           const SizedBox(height: 6),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
             children: [
               _buildBadge('LIVE', bgDarkAccentColor),
-              if (widget.wall.isPremium) ...[
-                const SizedBox(width: 6),
+              if (widget.wall.isPremium)
                 _buildBadge(
                   'PRO',
                   const Color(0xFFE8401A),
@@ -263,7 +264,6 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                     colors: [Color(0xFFFF6B35), Color(0xFFE8401A)],
                   ),
                 ),
-              ],
             ],
           ),
         ],
@@ -405,9 +405,10 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         ToastWidget.showToast("Redemption failed.");
       }
     } else {
-      showModalBottomSheet(
+      CNBottomSheet.show(
         context: context,
         backgroundColor: Colors.transparent,
+        showDragHandle: Platform.isIOS,
         builder: (context) => _UnlockLiveWallpaperInsufficientSheet(
           cost: cost,
           balance: balance,
@@ -429,11 +430,13 @@ class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
 
-    return Container(
+    return glassSheetBackground(
+      Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        color: supportsGlassSheet ? Colors.transparent : sheetColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SafeArea(
@@ -550,6 +553,8 @@ class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
           ],
         ),
       ),
+      ),
+      tint: sheetColor,
     );
   }
 }

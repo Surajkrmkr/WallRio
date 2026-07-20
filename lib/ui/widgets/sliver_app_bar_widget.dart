@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
@@ -30,16 +33,15 @@ class SliverAppBarWidget extends StatelessWidget {
       this.showSaleChip = false});
 
   void _onLongPressHandler(BuildContext context) {
-    showModalBottomSheet(
+    CNBottomSheet.show(
         context: context,
         enableDrag: true,
         isScrollControlled: true,
         isDismissible: true,
+        showDragHandle: Platform.isIOS,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? bgDark2Color 
-            : const Color(0xFFF2F2F7),
+        backgroundColor: Colors.transparent,
         builder: (context) => const UserBottomSheet());
   }
 
@@ -160,14 +162,32 @@ class SliverAppBarWidget extends StatelessWidget {
     );
   }
 
+  // Material's ink-splash ripple has no iOS equivalent, so it's suppressed
+  // there in favor of the instant dim iOS buttons normally use.
+  Widget _iosAware(BuildContext context, Widget child) {
+    if (!Platform.isIOS) return child;
+    return Theme(
+      data: Theme.of(context).copyWith(splashFactory: NoSplash.splashFactory),
+      child: child,
+    );
+  }
+
+  void _hapticTap(VoidCallback action) {
+    if (Platform.isIOS) HapticFeedback.lightImpact();
+    action();
+  }
+
   Offstage _buildSearchIcon(BuildContext context) {
     return Offstage(
       offstage: !showSearchBtn,
-      child: IconButton(
-          iconSize: 30,
-          onPressed: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => SearchPage())),
-          icon: const Icon(Icons.search_rounded)),
+      child: _iosAware(
+        context,
+        IconButton(
+            iconSize: 30,
+            onPressed: () => _hapticTap(() => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => SearchPage()))),
+            icon: const Icon(Icons.search_rounded)),
+      ),
     );
   }
 
@@ -178,18 +198,21 @@ class SliverAppBarWidget extends StatelessWidget {
           offstage: !showUserProfileIcon,
           child: Padding(
               padding: const EdgeInsets.only(left: 8.0),
-              child: IconButton(
-                  iconSize: 30,
-                  icon: Consumer<AuthProvider>(
-                    builder: (context, provider, _) {
-                      return PremiumAvatar(
-                        imageUrl: provider.user.photoURL ?? '',
-                        radius: 18,
-                        onTap: () => _onLongPressHandler(context),
-                      );
-                    },
-                  ),
-                  onPressed: () => _onLongPressHandler(context)))),
+              child: _iosAware(
+                context,
+                IconButton(
+                    iconSize: 30,
+                    icon: Consumer<AuthProvider>(
+                      builder: (context, provider, _) {
+                        return PremiumAvatar(
+                          imageUrl: provider.user.photoURL ?? '',
+                          radius: 18,
+                          onTap: () => _hapticTap(() => _onLongPressHandler(context)),
+                        );
+                      },
+                    ),
+                    onPressed: () => _hapticTap(() => _onLongPressHandler(context))),
+              ))),
     );
   }
 }

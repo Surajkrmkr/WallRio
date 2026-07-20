@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
-import 'package:cupertino_native/cupertino_native.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/pages.dart';
@@ -28,12 +28,14 @@ class _NavigationPageState extends State<NavigationPage> {
 
   Future<void> _applyRandomWallpaper() async {
     final wallRio = Provider.of<WallRio>(context, listen: false);
-    final walls = wallRio.actionWallList.isNotEmpty ? wallRio.actionWallList : wallRio.originalWallList;
+    final walls = wallRio.actionWallList.isNotEmpty
+        ? wallRio.actionWallList
+        : wallRio.originalWallList;
     if (walls.isEmpty) return;
-    
+
     setState(() => _isChanging = true);
     final randomWall = walls[Random().nextInt(walls.length)];
-    
+
     try {
       final file = await DefaultCacheManager().getSingleFile(randomWall.url);
       await WallpaperManagerPlus().setWallpaper(file, 1);
@@ -41,7 +43,7 @@ class _NavigationPageState extends State<NavigationPage> {
     } catch (e) {
       ToastWidget.showToast('Failed to apply wallpaper');
     }
-    
+
     if (mounted) setState(() => _isChanging = false);
   }
 
@@ -68,7 +70,6 @@ class _NavigationPageState extends State<NavigationPage> {
 
     _timer = Timer.periodic(const Duration(seconds: 30), _checkUserIsDisable);
     _checkPromoBanner();
-
 
     super.initState();
   }
@@ -107,7 +108,7 @@ class _NavigationPageState extends State<NavigationPage> {
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Consumer<Navigation>(builder: (context, provider, _) {
       return PopScope(
         canPop: false,
@@ -115,117 +116,127 @@ class _NavigationPageState extends State<NavigationPage> {
           if (didPop) return;
         },
         child: Scaffold(
-        extendBodyBehindAppBar: true,
-        extendBody: true,
-        body: NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification notification) {
-            if (notification is ScrollUpdateNotification) {
-              if (notification.metrics.pixels >=
-                  notification.metrics.maxScrollExtent - 500) {
-                Provider.of<WallRio>(context, listen: false).loadMore();
+          extendBodyBehindAppBar: true,
+          extendBody: true,
+          body: NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification notification) {
+              if (notification is ScrollUpdateNotification) {
+                if (notification.metrics.pixels >=
+                    notification.metrics.maxScrollExtent - 500) {
+                  Provider.of<WallRio>(context, listen: false).loadMore();
+                }
               }
-            }
-            return false;
-          },
-          child: Stack(
-            children: [
-              PageTransitionSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (
-                  Widget child,
-                  Animation<double> animation,
-                  Animation<double> secondaryAnimation,
-                ) =>
-                    FadeThroughTransition(
-                  animation: animation,
-                  secondaryAnimation: secondaryAnimation,
-                  child: child,
+              return false;
+            },
+            child: Stack(
+              children: [
+                PageTransitionSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  transitionBuilder: (
+                    Widget child,
+                    Animation<double> animation,
+                    Animation<double> secondaryAnimation,
+                  ) =>
+                      FadeThroughTransition(
+                    animation: animation,
+                    secondaryAnimation: secondaryAnimation,
+                    child: child,
+                  ),
+                  child: pages[provider.index],
                 ),
-                child: pages[provider.index],
-              ),
-            if (_showPromoBanner && !UserProfile.plusMember)
-              Positioned(
-                bottom: MediaQuery.of(context).padding.bottom + 16 + 61 + 20 + 60,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: _buildPromoBanner(context),
-                ),
-              ),
-          ],
-        ),
-        ),
-        bottomNavigationBar: RepaintBoundary(
-          child: Platform.isIOS
-              ? _buildCupertinoTabBar(provider, isDarkMode)
-              : _buildCustomTabBar(provider, isDarkMode),
-        ),
-        // The shuffle FAB sets the home-screen wallpaper directly via
-        // WallpaperManagerPlus, which has no iOS equivalent (no API sets a
-        // wallpaper without user interaction), so it's Android-only.
-        floatingActionButton: Platform.isAndroid
-            ? Padding(
-                padding: EdgeInsets.only(
-                  bottom: UserProfile.plusMember
-                      ? 0.0
-                      : (_showPromoBanner ? 140.0 : 70.0),
-                ),
-                child: RepaintBoundary(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
-                              : Colors.white.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
+                if (_showPromoBanner && !UserProfile.plusMember)
+                  Positioned(
+                    bottom: MediaQuery.of(context).padding.bottom +
+                        16 +
+                        61 +
+                        20 +
+                        60,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: _buildPromoBanner(context),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: RepaintBoundary(
+            child: Platform.isIOS
+                ? _buildCupertinoTabBar(provider, isDarkMode)
+                : _buildCustomTabBar(provider, isDarkMode),
+          ),
+          // The shuffle FAB sets the home-screen wallpaper directly via
+          // WallpaperManagerPlus, which has no iOS equivalent (no API sets a
+          // wallpaper without user interaction), so it's Android-only.
+          floatingActionButton: Platform.isAndroid
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    bottom: UserProfile.plusMember
+                        ? 0.0
+                        : (_showPromoBanner ? 140.0 : 70.0),
+                  ),
+                  child: RepaintBoundary(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
                             color: isDarkMode
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.black.withValues(alpha: 0.05),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
+                                ? const Color(0xFF1E1E1E)
+                                    .withValues(alpha: 0.85)
+                                : Colors.white.withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(30),
-                            onTap: _isChanging ? null : _applyRandomWallpaper,
-                            child: Center(
-                              child: _isChanging
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: isDarkMode ? Colors.white : Colors.black,
-                                      ),
-                                    )
-                                  : Icon(Icons.shuffle_rounded,
-                                      color: isDarkMode ? Colors.white : Colors.black,
-                                      size: 24),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.05),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black
+                                    .withValues(alpha: isDarkMode ? 0.3 : 0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(30),
+                              onTap: _isChanging ? null : _applyRandomWallpaper,
+                              child: Center(
+                                child: _isChanging
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
+                                      )
+                                    : Icon(Icons.shuffle_rounded,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                        size: 24),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              )
-            : null,
-      ),
-    );
+                )
+              : null,
+        ),
+      );
     });
   }
 
@@ -233,19 +244,21 @@ class _NavigationPageState extends State<NavigationPage> {
     return CNTabBar(
       currentIndex: provider.index,
       onTap: (index) => provider.setIndex = index,
+      tint: bgDarkAccentColor,
       items: const [
-        CNTabBarItem(label: 'Explore', icon: CNSymbol('safari.fill')),
-        CNTabBarItem(label: 'Live', icon: CNSymbol('livephoto')),
-        CNTabBarItem(label: 'Collections', icon: CNSymbol('square.grid.2x2.fill')),
-        CNTabBarItem(label: 'Categories', icon: CNSymbol('list.bullet')),
-        CNTabBarItem(label: 'Favorites', icon: CNSymbol('heart.fill')),
+        CNTabBarItem(icon: CNSymbol('safari.fill', size: 20)),
+        CNTabBarItem(icon: CNSymbol('livephoto', size: 20)),
+        CNTabBarItem(icon: CNSymbol('square.grid.2x2.fill', size: 20)),
+        CNTabBarItem(icon: CNSymbol('list.bullet', size: 20)),
+        CNTabBarItem(icon: CNSymbol('heart.fill', size: 20)),
       ],
     );
   }
 
   Widget _buildCustomTabBar(Navigation provider, bool isDarkMode) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+          20, 0, 20, MediaQuery.of(context).padding.bottom + 16),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40),
         child: BackdropFilter(
@@ -254,12 +267,12 @@ class _NavigationPageState extends State<NavigationPage> {
             height: 61,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: isDarkMode 
+              color: isDarkMode
                   ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
                   : Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(40),
               border: Border.all(
-                color: isDarkMode 
+                color: isDarkMode
                     ? Colors.white.withValues(alpha: 0.08)
                     : Colors.black.withValues(alpha: 0.05),
                 width: 1,
@@ -288,21 +301,24 @@ class _NavigationPageState extends State<NavigationPage> {
                       height: 45,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                        color:
+                            isDarkMode ? const Color(0xFF121212) : Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: isDarkMode 
+                          color: isDarkMode
                               ? Colors.white.withValues(alpha: 0.05)
                               : Colors.black.withValues(alpha: 0.03),
                           width: 1,
                         ),
-                        boxShadow: isDarkMode ? [] : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        boxShadow: isDarkMode
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
                     ),
                   ),
@@ -325,7 +341,8 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  Widget _buildNavItem(int index, String iconName, Navigation provider, bool isDarkMode) {
+  Widget _buildNavItem(
+      int index, String iconName, Navigation provider, bool isDarkMode) {
     bool isSelected = provider.index == index;
     return Expanded(
       child: GestureDetector(
@@ -336,9 +353,11 @@ class _NavigationPageState extends State<NavigationPage> {
             'assets/icons/$iconName.svg',
             height: 18.5,
             colorFilter: ColorFilter.mode(
-              isSelected 
+              isSelected
                   ? (isDarkMode ? Colors.white : Colors.black)
-                  : (isDarkMode ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.4)),
+                  : (isDarkMode
+                      ? Colors.white.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.4)),
               BlendMode.srcIn,
             ),
           ),

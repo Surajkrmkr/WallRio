@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -10,11 +13,13 @@ class FavouritePage extends StatelessWidget {
   const FavouritePage({super.key});
 
   void _onLongPressHandler(BuildContext context, dynamic model) {
-    showModalBottomSheet(
+    CNBottomSheet.show(
         context: context,
         enableDrag: true,
         isScrollControlled: true,
         isDismissible: true,
+        showDragHandle: Platform.isIOS,
+        backgroundColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
         builder: (context) => ImageBottomSheet(wallModel: model));

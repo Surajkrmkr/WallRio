@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -145,16 +148,32 @@ class SearchPage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Consumer<WallRio>(builder: (context, provider, _) {
+          void navigateToSearch() => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => GridPage(
+                        categoryName: '',
+                        walls: provider.originalWallList,
+                        isSearchMode: true,
+                      )));
+
+          // This field is tap-to-navigate only — actual typing happens on
+          // the destination GridPage in search mode — so it's wrapped in an
+          // AbsorbPointer to keep it purely visual on iOS.
+          if (Platform.isIOS) {
+            return GestureDetector(
+              onTap: navigateToSearch,
+              child: AbsorbPointer(
+                child: CupertinoSearchTextField(
+                  placeholder: 'Search by wall name, tags, etc',
+                ),
+              ),
+            );
+          }
+
           return TextFormField(
             readOnly: true,
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => GridPage(
-                          categoryName: '',
-                          walls: provider.originalWallList,
-                          isSearchMode: true,
-                        ))),
+            onTap: navigateToSearch,
             decoration: InputDecoration(
               filled: true,
               fillColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.05),

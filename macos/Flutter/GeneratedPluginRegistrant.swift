@@ -7,7 +7,7 @@ import Foundation
 
 import auto_start_flutter
 import cloud_firestore
-import cupertino_native
+import cupertino_native_better
 import firebase_analytics
 import firebase_app_check
 import firebase_auth

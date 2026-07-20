@@ -103,9 +103,12 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast(isVideo ? "Saving video to Photos" : "Saving to Photos");
 
     try {
-      final hasAccess = await Gal.hasAccess() || await Gal.requestAccess();
+      // toAlbum: true — we save into a custom "WallRio" album, which needs
+      // the elevated album-write permission, not just add-to-camera-roll.
+      final hasAccess = await Gal.hasAccess(toAlbum: true) ||
+          await Gal.requestAccess(toAlbum: true);
       if (!hasAccess) {
-        ToastWidget.showToast("Photos access denied. Enable it in Settings.");
+        if (context.mounted) _showPhotosAccessDeniedDialog(context);
         return;
       }
 
@@ -122,6 +125,32 @@ class WallActionProvider extends ChangeNotifier {
     } finally {
       setIsDownloading = false;
     }
+  }
+
+  /// Once Photos access is denied, iOS/Android won't show the system
+  /// permission prompt again — the only way back is the app's Settings page.
+  void _showPhotosAccessDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog.adaptive(
+        title: const Text("Photos Access Needed"),
+        content: const Text(
+            "WallRio needs permission to save images to your Photos library. Please enable it in Settings."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text("Open Settings"),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Shares an image or video through the native share sheet.

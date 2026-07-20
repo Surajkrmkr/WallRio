@@ -68,15 +68,18 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
 
     final yearlyProduct = subProvider.products
         .cast<dynamic>()
-        .firstWhere((p) => p.id == "com.wallrio.yearly_365", orElse: () => null);
+        .firstWhere((p) => p.id == SubscriptionProvider.yearlyProductId, orElse: () => null);
     final lifetimeProduct = subProvider.products
         .cast<dynamic>()
         .firstWhere((p) => p.id == SubscriptionProvider.lifetimeProductId, orElse: () => null);
 
-    return Container(
+    final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+
+    return glassSheetBackground(
+      Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        color: supportsGlassSheet ? Colors.transparent : sheetColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
@@ -190,6 +193,8 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
         ],
       ),
+      ),
+      tint: sheetColor,
     );
   }
 

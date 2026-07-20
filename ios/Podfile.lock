@@ -1214,8 +1214,12 @@ PODS:
     - Firebase/Firestore (= 12.14.0)
     - firebase_core
     - Flutter
-  - cupertino_native (0.0.1):
+  - CocoaLumberjack (3.9.1):
+    - CocoaLumberjack/Core (= 3.9.1)
+  - CocoaLumberjack/Core (3.9.1)
+  - cupertino_native_better (0.0.1):
     - Flutter
+    - SVGKit (~> 3.0)
   - Firebase/Auth (12.14.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 12.14.0)
@@ -1560,6 +1564,8 @@ PODS:
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
+  - SVGKit (3.0.0):
+    - CocoaLumberjack (~> 3.0)
   - url_launcher_ios (0.0.1):
     - Flutter
   - video_player_avfoundation (0.0.1):
@@ -1575,7 +1581,7 @@ DEPENDENCIES:
   - app_tracking_transparency (from `.symlinks/plugins/app_tracking_transparency/ios`)
   - auto_start_flutter (from `.symlinks/plugins/auto_start_flutter/ios`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
-  - cupertino_native (from `.symlinks/plugins/cupertino_native/ios`)
+  - cupertino_native_better (from `.symlinks/plugins/cupertino_native_better/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_app_check (from `.symlinks/plugins/firebase_app_check/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
@@ -1606,6 +1612,7 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
+    - CocoaLumberjack
     - Firebase
     - FirebaseAnalytics
     - FirebaseAppCheck
@@ -1639,6 +1646,7 @@ SPEC REPOS:
     - PromisesObjC
     - PromisesSwift
     - RecaptchaInterop
+    - SVGKit
 
 EXTERNAL SOURCES:
   app_tracking_transparency:
@@ -1647,8 +1655,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/auto_start_flutter/ios"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
-  cupertino_native:
-    :path: ".symlinks/plugins/cupertino_native/ios"
+  cupertino_native_better:
+    :path: ".symlinks/plugins/cupertino_native_better/ios"
   firebase_analytics:
     :path: ".symlinks/plugins/firebase_analytics/ios"
   firebase_app_check:
@@ -1704,7 +1712,8 @@ SPEC CHECKSUMS:
   auto_start_flutter: 68efca6fcf56550d9ea9a2a26c75bd770bda421c
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: 30c66469d4c8c1770b0e994e7501215f2bb51d56
-  cupertino_native: 2bf2872026a59c9db5b72250892f7d9ca5244197
+  CocoaLumberjack: e4ba3b414dfca8c1916c6303d37f63b3a95134c6
+  cupertino_native_better: dfe682a5309d9e8e3c01e7d6e052c95cd23b8760
   Firebase: 7cc10425300768ec86292688af5cb228f0604bde
   firebase_analytics: 1640d06cf3c1a365700857c51ef995d3591df101
   firebase_app_check: cef54234542ccd7e8471e1eacee99961a6eb8b85
@@ -1757,6 +1766,7 @@ SPEC CHECKSUMS:
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
+  SVGKit: 1ad7513f8c74d9652f94ed64ddecda1a23864dea
   url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa
   video_player_avfoundation: e54d03b3b19f64f2c557354f72ce538387541ba6
   webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4

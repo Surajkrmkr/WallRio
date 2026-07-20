@@ -106,7 +106,9 @@ class WallRioThemeData {
               displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
               bodyLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               bodyMedium: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          colorScheme: isDarkTheme ? const ColorScheme.dark() : const ColorScheme.light());
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: bgDarkAccentColor,
+              brightness: isDarkTheme ? Brightness.dark : Brightness.light));
 
   static ThemeData getDarkThemeData() =>
       ThemeData(brightness: Brightness.dark, useMaterial3: true);

@@ -10,6 +10,7 @@ export 'back_btn_widget.dart';
 export 'banner_widget.dart';
 export 'verify_icon_widget.dart';
 export 'clear_cache_widget.dart';
+export 'glass_sheet_background.dart';
 export 'image_bottom_sheet.dart';
 export 'image_widget.dart';
 export 'launch_url_widget.dart';

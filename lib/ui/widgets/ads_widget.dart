@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -22,25 +25,57 @@ class AdsWidget extends StatefulWidget {
       {void Function()? onWatchAdClick,
       bool isExplorePlus = false,
       bool showAdButton = true}) {
+    final title = isExplorePlus ? "Explore Plus" : "Unlock Wallpaper";
+    final message = isExplorePlus
+        ? "Upgrade to Plus to unlock exclusive features and take your experience to the next level!"
+        : "Get access to the wallpapers by either watching an ad or purchasing the Plus Subscription.";
+    final showWatchAd = !isExplorePlus && showAdButton;
+
+    if (Platform.isIOS) {
+      return CupertinoAlertDialog(
+        title: Text(title),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(message),
+        ),
+        actions: [
+          if (showWatchAd)
+            Consumer<AdsProvider>(builder: (context, provider, _) {
+              return CupertinoDialogAction(
+                onPressed:
+                    provider.isRewardedAdLoading ? null : (onWatchAdClick ?? () {}),
+                child: provider.isRewardedAdLoading
+                    ? const CupertinoActivityIndicator()
+                    : const Text("Watch AD"),
+              );
+            }),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => _onPlusClick(context),
+            child: const Text("Go Pro"),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Not Now"),
+          ),
+        ],
+      );
+    }
+
     return AlertDialog(
       title: Row(
         children: [
-          Expanded(
-              child: Text(
-            isExplorePlus ? "Explore Plus" : "Unlock Wallpaper",
-          )),
+          Expanded(child: Text(title)),
           const CloseButton()
         ],
       ),
       content: Text(
-        isExplorePlus
-            ? "Upgrade to Plus to unlock exclusive features and take your experience to the next level!"
-            : "Get access to the wallpapers by either watching an ad or purchasing the Plus Subscription.",
+        message,
         style: Theme.of(context).textTheme.titleMedium,
       ),
       actions: [
         Offstage(
-          offstage: isExplorePlus || !showAdButton,
+          offstage: !showWatchAd,
           child: Consumer<AdsProvider>(builder: (context, provider, _) {
             return provider.isRewardedAdLoading
                 ? ShimmerWidget.withWidget(
@@ -49,7 +84,7 @@ class AdsWidget extends StatefulWidget {
           }),
         ),
         Visibility(
-          visible: isExplorePlus || !showAdButton,
+          visible: !showWatchAd,
           replacement: OutlinedButton.icon(
               icon: const Icon(Icons.verified),
               onPressed: () => _onPlusClick(context),
@@ -80,7 +115,11 @@ class AdsWidget extends StatefulWidget {
 }
 
 class _AdsWidgetState extends State<AdsWidget> {
-  final String _bannerId = "ca-app-pub-4861691653340010/8536832813";
+  // AdMob ad units are registered per-platform, so Android and iOS use
+  // separate ad unit IDs even though they share the same publisher account.
+  final String _bannerId = Platform.isIOS
+      ? "ca-app-pub-4861691653340010/2292486372"
+      : "ca-app-pub-4861691653340010/8536832813";
   bool _isBannerLoading = false;
   bool _isBannerFailed = false;
   BannerAd? bannerAd;

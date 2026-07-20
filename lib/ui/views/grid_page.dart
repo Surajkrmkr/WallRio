@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -59,10 +62,11 @@ class _GridPageState extends State<GridPage> {
   }
 
   void _showUnlockBottomSheet() {
-    showModalBottomSheet(
+    CNBottomSheet.show(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      showDragHandle: Platform.isIOS,
       builder: (context) => CollectionUnlockSheet(
         collection: widget.collection!,
       ),
@@ -74,10 +78,12 @@ class _GridPageState extends State<GridPage> {
       _showUnlockBottomSheet();
       return;
     }
-    showModalBottomSheet(
+    CNBottomSheet.show(
         context: context,
         isScrollControlled: true,
         enableDrag: true,
+        showDragHandle: Platform.isIOS,
+        backgroundColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
         builder: (context) => ImageBottomSheet(wallModel: model));

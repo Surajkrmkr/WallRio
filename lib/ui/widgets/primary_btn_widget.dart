@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/services/export.dart';
 
 class PrimaryBtnWidget extends StatelessWidget {
@@ -22,6 +24,11 @@ class PrimaryBtnWidget extends StatelessWidget {
     this.textColor,
     this.forceDarkStyle = false,
   });
+
+  void _handleTap() {
+    if (Platform.isIOS) HapticFeedback.lightImpact();
+    onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +54,29 @@ class PrimaryBtnWidget extends StatelessWidget {
       ),
     );
 
+    final content = _buildContent(context, isDark, resolvedColor, customStyle);
+    // Material's spreading ink-splash ripple has no iOS equivalent — iOS
+    // buttons just dim instantly on press instead. overlayColor above still
+    // provides that dim; this only removes the ripple animation on top of it.
+    final button = Platform.isIOS
+        ? Theme(
+            data: Theme.of(context).copyWith(splashFactory: NoSplash.splashFactory),
+            child: content,
+          )
+        : content;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-        child: isLoading
+        child: button,
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, bool isDark, Color resolvedColor,
+      ButtonStyle customStyle) {
+    return isLoading
             ? SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -120,7 +145,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                       height: 20,
                       child: icon!,
                     ),
-                    onPressed: onTap,
+                    onPressed: _handleTap,
                     label: Text(
                       btnText,
                       maxLines: 1,
@@ -132,7 +157,7 @@ class PrimaryBtnWidget extends StatelessWidget {
                   )
                 : OutlinedButton(
                     style: customStyle,
-                    onPressed: onTap,
+                    onPressed: _handleTap,
                     child: Center(
                       child: Text(
                         btnText,
@@ -142,8 +167,6 @@ class PrimaryBtnWidget extends StatelessWidget {
                             .copyWith(color: resolvedColor, fontSize: 14),
                       ),
                     ),
-                  ),
-      ),
-    );
+                  );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
@@ -5,8 +7,14 @@ import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/model/export.dart';
 
 class AdsProvider extends ChangeNotifier {
-  final String rewardedId = "ca-app-pub-4861691653340010/4965253463";
-  static const String interstitialId = "ca-app-pub-4861691653340010/1991520898";
+  // AdMob ad units are registered per-platform, so Android and iOS use
+  // separate ad unit IDs even though they share the same publisher account.
+  final String rewardedId = Platform.isIOS
+      ? "ca-app-pub-4861691653340010/5681635265"
+      : "ca-app-pub-4861691653340010/4965253463";
+  static final String interstitialId = Platform.isIOS
+      ? "ca-app-pub-4861691653340010/9620880275"
+      : "ca-app-pub-4861691653340010/1991520898";
   static const String keyDownloadCount = "download_count_for_interstitial";
 
   RewardedAd? rewardedAd;

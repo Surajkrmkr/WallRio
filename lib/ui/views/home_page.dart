@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -47,6 +50,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFilterRow() {
+    if (Platform.isIOS) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: CNSegmentedControl(
+          labels: _filters,
+          selectedIndex: _filterIndex,
+          onValueChanged: (i) => setState(() => _filterIndex = i),
+          color: bgDarkAccentColor,
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Container(

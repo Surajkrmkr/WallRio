@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -359,6 +360,25 @@ class SettingsPage extends StatelessWidget {
   Widget _darkModeTile(BuildContext context) {
     return Consumer<DarkThemeProvider>(
       builder: (context, provider, _) {
+        if (Platform.isIOS) {
+          return ListTile(
+            leading: _tileIcon(Icons.dark_mode_rounded),
+            title: const Text('Dark Mode'),
+            subtitle: Text(
+              'Switch to dark theme',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+            trailing: CNSwitch(
+              value: provider.darkTheme,
+              onChanged: (val) => provider.darkTheme = val,
+              color: bgDarkAccentColor,
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18)),
+          );
+        }
         return SwitchListTile(
           value: provider.darkTheme,
           onChanged: (val) => provider.darkTheme = val,

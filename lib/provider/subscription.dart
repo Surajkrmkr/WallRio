@@ -34,20 +34,20 @@ class SubscriptionProvider extends ChangeNotifier {
   static final String lifetimeProductId = Platform.isIOS
       ? 'com.wallrio.ios.lifetime_pro'
       : 'com.wallrio.lifetime_pro';
+  static final String monthlyProductId =
+      Platform.isIOS ? 'com.wallrio.ios.monthly_28' : 'com.wallrio.monthly_28';
+  static final String quaterlyProductId = Platform.isIOS
+      ? 'com.wallrio.ios.quaterly_84'
+      : 'com.wallrio.quaterly_84';
+  static final String yearlyProductId =
+      Platform.isIOS ? 'com.wallrio.ios.yearly_365' : 'com.wallrio.yearly_365';
 
-  final Set<String> productIDs = Platform.isIOS
-      ? {
-          lifetimeProductId,
-          "com.wallrio.ios.monthly_28",
-          "com.wallrio.ios.quaterly_84",
-          "com.wallrio.ios.yearly_365",
-        }
-      : {
-          lifetimeProductId,
-          "com.wallrio.monthly_28",
-          "com.wallrio.quaterly_84",
-          "com.wallrio.yearly_365",
-        };
+  final Set<String> productIDs = {
+    lifetimeProductId,
+    monthlyProductId,
+    quaterlyProductId,
+    yearlyProductId,
+  };
 
   // final successPurchasedStream = StreamController<bool>();
   final PublishSubject<bool> _successPurchased = PublishSubject<bool>();
