@@ -9,12 +9,18 @@ class CNImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // memCacheHeight is a target in physical pixels. For the full-screen
+    // preview, a fixed 1080 cap left the image visibly upscaled/blurry on
+    // taller, higher-density screens — match it to the actual device instead.
+    final targetHeight = isOriginalImg
+        ? (MediaQuery.of(context).size.height * MediaQuery.of(context).devicePixelRatio).round()
+        : 800;
     return CachedNetworkImage(
       filterQuality: FilterQuality.high,
       errorWidget: (context, url, error) =>
           const Icon(Icons.error_outline_rounded, color: Colors.red),
       fit: BoxFit.cover,
-      memCacheHeight: isOriginalImg ? 1080 : 800,
+      memCacheHeight: targetHeight,
       imageUrl: imageUrl!,
       placeholder: (context, url) {
         return const ShimmerWidget(

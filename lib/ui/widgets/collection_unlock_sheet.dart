@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
-import 'package:wallrio/ui/onboarding/screens/onboarding_screen4.dart';
+import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
@@ -58,6 +58,8 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
   Widget build(BuildContext context) {
     final subProvider = Provider.of<SubscriptionProvider>(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final subColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
 
     final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
         ? widget.collection.productId
@@ -66,296 +68,140 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
         .cast<dynamic>()
         .firstWhere((p) => p.id == fullProductId, orElse: () => null);
 
-    final yearlyProduct = subProvider.products
-        .cast<dynamic>()
-        .firstWhere((p) => p.id == SubscriptionProvider.yearlyProductId, orElse: () => null);
-    final lifetimeProduct = subProvider.products
-        .cast<dynamic>()
-        .firstWhere((p) => p.id == SubscriptionProvider.lifetimeProductId, orElse: () => null);
-
-    final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final wallCount = widget.collection.walls?.length ?? 0;
+    // Matches Profile's bottom sheet background color token
+    final sheetColor = isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7);
 
     return glassSheetBackground(
       Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        color: supportsGlassSheet ? Colors.transparent : sheetColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Icon(Icons.lock_rounded,
-                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                  size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Unlock ${widget.collection.name}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        decoration: BoxDecoration(
+          color: supportsGlassSheet ? Colors.transparent : sheetColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // 1. Buy Collection Option
-          _buildOptionCard(
-            context: context,
-            title: 'Buy Collection',
-            subtitle: 'Yours forever (One-time)',
-            trailingText: product != null ? product.price : '...',
-            icon: Icons.shopping_cart_rounded,
-            iconColor: Colors.green,
-            onTap: _isProcessingPurchase ? () {} : () {
-              if (product == null) {
-                ToastWidget.showToast(
-                    'Purchase currently unavailable. Try again later.');
-                return;
-              }
-              setState(() {
-                _isProcessingPurchase = true;
-              });
-              subProvider.buyProduct(product);
-            },
-            buttonText: _isProcessingPurchase ? 'Processing...' : 'Buy',
-            isPrimary: false,
-          ),
-          const SizedBox(height: 12),
-
-          // 2. Unlock with Yearly Pro
-          _buildOptionCard(
-            context: context,
-            title: 'Unlock with Yearly Pro',
-            subtitle: 'All collections + premium walls',
-            trailingText: yearlyProduct != null ? yearlyProduct.price : '...',
-            icon: Icons.star_rounded,
-            iconColor: Colors.amber,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (navContext) => OnboardingScreen4(
-                            onComplete: () {
-                              Navigator.pop(navContext);
-                            },
-                          )));
-            },
-            buttonText: 'Subscribe',
-            isPrimary: true,
-          ),
-          const SizedBox(height: 12),
-
-          // 3. Unlock with Lifetime Pro
-          _buildOptionCard(
-            context: context,
-            title: 'Unlock with Lifetime Pro',
-            subtitle: 'Lifetime access to everything (One-time)',
-            trailingText: lifetimeProduct != null ? lifetimeProduct.price : '...',
-            icon: Icons.stars_rounded,
-            iconColor: Colors.purpleAccent,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (navContext) => OnboardingScreen4(
-                            onComplete: () {
-                              Navigator.pop(navContext);
-                            },
-                          )));
-            },
-            buttonText: 'Get Lifetime',
-            isPrimary: false,
-          ),
-
-
-
-
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
-        ],
-      ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: bgDarkAccentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.diamond_rounded, color: bgDarkAccentColor, size: 30),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Unlock ${widget.collection.name}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              wallCount > 0
+                  ? 'Get instant access to all $wallCount wallpapers in this collection — forever.'
+                  : 'Get instant access to every wallpaper in this collection — forever.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: subColor, height: 1.4),
+            ),
+            const SizedBox(height: 24),
+            _buildFeatureRow(
+              icon: Icons.all_inclusive_rounded,
+              text: 'Every wallpaper in ${widget.collection.name}',
+              textColor: textColor,
+            ),
+            const SizedBox(height: 12),
+            _buildFeatureRow(
+              icon: Icons.high_quality_rounded,
+              text: 'Full-resolution downloads',
+              textColor: textColor,
+            ),
+            const SizedBox(height: 12),
+            _buildFeatureRow(
+              icon: Icons.bolt_rounded,
+              text: 'One-time payment, no subscription',
+              textColor: textColor,
+            ),
+            const SizedBox(height: 26),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isProcessingPurchase
+                    ? null
+                    : () {
+                        if (product == null) {
+                          ToastWidget.showToast(
+                              'Purchase currently unavailable. Try again later.');
+                          return;
+                        }
+                        setState(() {
+                          _isProcessingPurchase = true;
+                        });
+                        subProvider.buyProduct(product);
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: bgDarkAccentColor,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: bgDarkAccentColor.withValues(alpha: 0.5),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
+                child: _isProcessingPurchase
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : Text(
+                        product != null ? 'Unlock for ${product.price}' : 'Unlock Collection',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+          ],
+        ),
       ),
       tint: sheetColor,
     );
   }
 
-  Widget _buildOptionCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required String trailingText,
+  Widget _buildFeatureRow({
     required IconData icon,
-    required Color iconColor,
-    required VoidCallback onTap,
-    required String buttonText,
-    required bool isPrimary,
+    required String text,
+    required Color textColor,
   }) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDarkMode ? Colors.white : Colors.black;
-    final subColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-
-    final cardContent = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: isPrimary
-            ? null
-            : (isDarkMode
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.black.withValues(alpha: 0.03)),
-        gradient: isPrimary
-            ? LinearGradient(
-                colors: [
-                  iconColor.withValues(alpha: 0.2),
-                  iconColor.withValues(alpha: 0.05)
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        border: Border.all(
-          color: isPrimary
-              ? iconColor.withValues(alpha: 0.6)
-              : (isDarkMode
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.05)),
-          width: isPrimary ? 1.5 : 1,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: textColor,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: subColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (trailingText.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Text(
-              trailingText,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 13,
-                color: textColor,
-              ),
-            ),
-          ],
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isPrimary
-                    ? iconColor
-                    : (isDarkMode ? Colors.white12 : Colors.black12),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: isPrimary
-                    ? [
-                        BoxShadow(
-                          color: iconColor.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : null,
-              ),
-              child: Text(
-                buttonText,
-                style: TextStyle(
-                  color: isPrimary ? Colors.black : textColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (!isPrimary) return cardContent;
-
-    // Wrap Primary card with a Best Value Badge
-    return Stack(
-      clipBehavior: Clip.none,
+    return Row(
       children: [
-        cardContent,
-        Positioned(
-          top: -10,
-          right: 24,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.orange.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Text(
-              'BEST VALUE',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
-              ),
+        Icon(icon, color: bgDarkAccentColor, size: 18),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
         ),

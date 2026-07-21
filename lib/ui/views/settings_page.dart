@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
@@ -70,6 +71,43 @@ class SettingsPage extends StatelessWidget {
         label: 'Social',
         children: [
           _tile(context,
+              icon: Icons.star_rounded,
+              title: 'Rate WallRio',
+              subtitle: 'Rate us on Google Play',
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => RateUsDialog(
+                    onRateNow: () {
+                      Navigator.pop(dialogContext);
+                      if (!hasSub) {
+                        Provider.of<ProgressionProvider>(context, listen: false)
+                            .trackAction(ActionType.rateApp);
+                      }
+                      launch('https://play.google.com/store/apps/dev?id=5668598285863173548');
+                    },
+                    onDismiss: () => Navigator.pop(dialogContext),
+                  ),
+                );
+              }),
+          _tile(context,
+              icon: Icons.share_rounded,
+              title: 'Share WallRio',
+              subtitle: 'Share app with friends',
+              onTap: () {
+                if (!hasSub) {
+                  Provider.of<ProgressionProvider>(context, listen: false)
+                      .trackAction(ActionType.shareApp);
+                }
+                // ignore: deprecated_member_use
+                Share.share('Check out WallRio for amazing 4K & Live wallpapers! https://play.google.com/store/apps/dev?id=5668598285863173548');
+              }),
+          _tile(context,
+              icon: Icons.apps_rounded,
+              title: 'More Apps',
+              subtitle: 'Check out our other apps',
+              onTap: () => launch('https://play.google.com/store/apps/dev?id=5668598285863173548')),
+          _tile(context,
               icon: Icons.photo_camera_rounded,
               title: 'Instagram',
               subtitle: 'Follow us @studio.teamshadow',
@@ -77,9 +115,9 @@ class SettingsPage extends StatelessWidget {
                   launch('https://instagram.com/studio.teamshadow')),
           _tile(context,
               icon: Icons.alternate_email_rounded,
-              title: 'Twitter',
-              subtitle: 'Follow us @TeamShadowST',
-              onTap: () => launch('https://twitter.com/4XDesigns')),
+              title: 'Twitter/X',
+              subtitle: 'Follow us @4XDesigns',
+              onTap: () => launch('https://x.com/4XDesigns')),
           _tile(context,
               icon: Icons.send_rounded,
               title: 'Telegram',
@@ -89,8 +127,14 @@ class SettingsPage extends StatelessWidget {
       ),
       _sectionCard(
         context,
-        label: 'Legal',
+        label: 'Support & Legal',
         children: [
+          _tile(context,
+              icon: Icons.help_outline_rounded,
+              title: 'Support',
+              subtitle: 'Get help and support',
+              onTap: () =>
+                  launch('https://piyushkpv.github.io/wallrio-support/')),
           _tile(context,
               icon: Icons.privacy_tip_rounded,
               title: 'Privacy Policy',
@@ -147,17 +191,8 @@ class SettingsPage extends StatelessWidget {
       child: Consumer<SubscriptionProvider>(
         builder: (context, provider, _) {
           final bool hasSub = provider.subscriptionDaysLeft.isNotEmpty;
-          return GestureDetector(
-            onTap: hasSub
-                ? null
-                : () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OnboardingScreen4(
-                            onComplete: () => Navigator.popUntil(context, (route) => route.isFirst)),
-                      ),
-                    ),
-            child: Container(
+          if (hasSub) {
+            return Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -174,65 +209,12 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: hasSub
-                  ? _subscribedContent(context, provider)
-                  : _upgradeContent(context),
-            ),
-          );
+              child: _subscribedContent(context, provider),
+            );
+          }
+          return const _AnimatedSubscriptionBanner();
         },
       ),
-    );
-  }
-
-  Widget _upgradeContent(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'WallRio Pro',
-                style: TextStyle(
-                  color: whiteColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Ad-free  •  Exclusive walls  •  Pro access',
-                style: TextStyle(
-                  color: whiteColor.withValues(alpha: 0.85),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 18, vertical: 9),
-                decoration: BoxDecoration(
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Text(
-                  'Upgrade Now',
-                  style: TextStyle(
-                    color: Color(0xFF178A76),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Icon(Icons.workspace_premium_rounded,
-            color: whiteColor, size: 64),
-      ],
     );
   }
 
@@ -461,4 +443,245 @@ class SettingsPage extends StatelessWidget {
 
   static void launch(String url) => launchUrl(Uri.parse(url),
       mode: LaunchMode.externalApplication);
+}
+
+class _AnimatedSubscriptionBanner extends StatefulWidget {
+  const _AnimatedSubscriptionBanner();
+
+  @override
+  State<_AnimatedSubscriptionBanner> createState() =>
+      __AnimatedSubscriptionBannerState();
+}
+
+class __AnimatedSubscriptionBannerState
+    extends State<_AnimatedSubscriptionBanner> with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  List<Walls> _bannerWalls = [];
+  bool _isLocalLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 40),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadOrSaveLocalWalls(List<Walls> allWalls) async {
+    if (_isLocalLoaded || allWalls.isEmpty) return;
+    _isLocalLoaded = true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String>? savedIds = prefs.getStringList('settings_banner_wallpaper_ids');
+
+      List<Walls> matched = [];
+      if (savedIds != null && savedIds.isNotEmpty) {
+        for (final id in savedIds) {
+          for (final wall in allWalls) {
+            if (wall.id.toString() == id) {
+              matched.add(wall);
+              break;
+            }
+          }
+        }
+      }
+
+      if (matched.length >= 5) {
+        if (mounted) setState(() => _bannerWalls = matched);
+        return;
+      }
+
+      final proWalls = allWalls.where((w) => w.isPremium).toList()
+        ..sort((a, b) => b.id.compareTo(a.id));
+      final sourceList = proWalls.isNotEmpty ? proWalls : allWalls;
+      final selected = sourceList.take(10).toList();
+
+      final idsToSave = selected.map((w) => w.id.toString()).toList();
+      await prefs.setStringList('settings_banner_wallpaper_ids', idsToSave);
+
+      if (mounted) setState(() => _bannerWalls = selected);
+    } catch (e) {
+      logger.e('Error loading settings banner walls: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<WallRio>(
+      builder: (context, wallRio, _) {
+        if (!_isLocalLoaded && wallRio.originalWallList.isNotEmpty) {
+          _loadOrSaveLocalWalls(wallRio.originalWallList);
+        }
+
+        final wallsToUse = _bannerWalls.isNotEmpty
+            ? _bannerWalls
+            : wallRio.originalWallList.take(10).toList();
+
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OnboardingScreen4(
+                onComplete: () => Navigator.popUntil(
+                    context, (route) => route.isFirst),
+              ),
+            ),
+          ),
+          child: Container(
+            height: 190,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                children: [
+                  // 1. Animated background wallpapers (scrolling left-to-right & right-to-left)
+                  Positioned.fill(
+                    child: wallsToUse.isEmpty
+                        ? Container(color: bgDark2Color)
+                        : AnimatedBuilder(
+                            animation: _animController,
+                            builder: (context, child) {
+                              const cardWidth = 110.0;
+                              final totalSingleSetWidth =
+                                  wallsToUse.length * cardWidth;
+
+                              final maxScroll = (totalSingleSetWidth * 2) - MediaQuery.of(context).size.width + 40;
+                              final dx = -(_animController.value * maxScroll).clamp(0.0, totalSingleSetWidth * 1.5);
+
+                              final doubleWalls = [
+                                ...wallsToUse,
+                                ...wallsToUse,
+                              ];
+
+                              return Transform.translate(
+                                offset: Offset(dx, 0),
+                                child: OverflowBox(
+                                  minWidth: 0,
+                                  maxWidth: double.infinity,
+                                  minHeight: 190,
+                                  maxHeight: 190,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    children: doubleWalls.map((wall) {
+                                      return SizedBox(
+                                        width: cardWidth,
+                                        height: 190,
+                                        child: CachedNetworkImage(
+                                          imageUrl: wall.thumbnail.isNotEmpty
+                                              ? wall.thumbnail
+                                              : wall.url,
+                                          fit: BoxFit.cover,
+                                          filterQuality: FilterQuality.high,
+                                          placeholder: (_, __) =>
+                                              Container(color: bgDark2Color),
+                                          errorWidget: (_, __, ___) =>
+                                              Container(color: bgDark2Color),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // 2. Dark translucent overlay
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.55),
+                            Colors.black.withValues(alpha: 0.75),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 3. Foreground overlay content
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Unlock Pro',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Get unlimited access to all wallpapers',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 28, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'See Plans',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

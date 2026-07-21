@@ -79,7 +79,7 @@ class SearchPage extends StatelessWidget {
                 const TrendingWallGridWidget(
                     isShuffled: false, isActionGrid: true)
               ]),
-              const AdsWidget()
+              const AdsWidget(clearNavBar: false)
             ],
           ),
         ),

@@ -36,6 +36,7 @@ class CategoryPage extends StatelessWidget {
         children: [
           Expanded(
             child: CustomScrollView(
+              key: const PageStorageKey('category_scroll'),
               primary: false,
               slivers: [
                 const SliverAppBarWidget(

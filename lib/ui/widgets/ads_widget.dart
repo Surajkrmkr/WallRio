@@ -173,6 +173,7 @@ class _AdsWidgetState extends State<AdsWidget> {
     final double navBarClearance = (widget.size == AdSize.banner && widget.clearNavBar) ? 85.0 : 0.0;
 
     Widget adContainer = Container(
+      color: Colors.transparent,
       margin: EdgeInsets.only(
         bottom: widget.bottomPadding + navBarClearance,
         top: 10,

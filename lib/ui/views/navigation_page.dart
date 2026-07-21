@@ -70,8 +70,82 @@ class _NavigationPageState extends State<NavigationPage> {
 
     _timer = Timer.periodic(const Duration(seconds: 30), _checkUserIsDisable);
     _checkPromoBanner();
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) _checkRateUsPopup();
+    });
 
     super.initState();
+  }
+
+  Future<void> _checkRateUsPopup() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasRated = prefs.getBool('rate_has_rated') ?? false;
+    final bool rateRefused = prefs.getBool('rate_refused') ?? false;
+    if (hasRated || rateRefused) return;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    int firstLaunch = prefs.getInt('app_first_launch_time') ?? 0;
+    if (firstLaunch == 0) {
+      firstLaunch = now;
+      await prefs.setInt('app_first_launch_time', firstLaunch);
+    }
+
+    final hoursSinceInstall = (now - firstLaunch) / (1000 * 60 * 60);
+    final dismissCount = prefs.getInt('rate_dismiss_count') ?? 0;
+
+    bool shouldShow = false;
+
+    if (dismissCount == 0) {
+      if (hoursSinceInstall >= 24) {
+        shouldShow = true;
+      }
+    } else if (dismissCount == 1) {
+      final lastDismiss = prefs.getInt('rate_last_dismiss_time') ?? 0;
+      final daysSinceDismiss = (now - lastDismiss) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismiss >= 4) {
+        shouldShow = true;
+      }
+    }
+
+    if (shouldShow && mounted) {
+      _showRateUsDialog(context);
+    }
+  }
+
+  void _showRateUsDialog(BuildContext context) {
+    final progProvider = Provider.of<ProgressionProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => RateUsDialog(
+        onRateNow: () async {
+          Navigator.pop(dialogContext);
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('rate_has_rated', true);
+
+          final String url = Platform.isAndroid
+              ? "https://play.google.com/store/apps/details?id=com.shadowteam.wallrio"
+              : "https://apps.apple.com/app/wallrio/id6789848688";
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+
+          if (!UserProfile.plusMember) {
+            progProvider.trackAction(ActionType.rateApp);
+          }
+        },
+        onDismiss: () async {
+          Navigator.pop(dialogContext);
+          final prefs = await SharedPreferences.getInstance();
+          final count = prefs.getInt('rate_dismiss_count') ?? 0;
+          if (count == 0) {
+            await prefs.setInt('rate_dismiss_count', 1);
+            await prefs.setInt(
+                'rate_last_dismiss_time', DateTime.now().millisecondsSinceEpoch);
+          } else {
+            await prefs.setBool('rate_refused', true);
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _checkPromoBanner() async {
@@ -418,31 +492,41 @@ class _NavigationPageState extends State<NavigationPage> {
                 ),
               ),
             ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A).withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$discount% off on Lifetime',
-                    style: const TextStyle(
-                      color: Color(0xFFFFD54F),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: _dismissPromoBanner,
-                    behavior: HitTestBehavior.opaque,
-                    child: Icon(Icons.close_rounded,
-                        color: Colors.white.withValues(alpha: 0.5), size: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$discount% off on Lifetime',
+                        style: const TextStyle(
+                          color: Color(0xFFFFD54F),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: _dismissPromoBanner,
+                        behavior: HitTestBehavior.opaque,
+                        child: Icon(Icons.close_rounded,
+                            color: Colors.white.withValues(alpha: 0.5), size: 16),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

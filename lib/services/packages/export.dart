@@ -18,6 +18,7 @@ export 'package:package_info_plus/package_info_plus.dart';
 export 'package:palette_generator/palette_generator.dart';
 export 'package:permission_handler/permission_handler.dart';
 
+export 'package:share_plus/share_plus.dart';
 export 'package:shared_preferences/shared_preferences.dart';
 export 'package:flutter_svg/flutter_svg.dart';
 export 'package:simple_gradient_text/simple_gradient_text.dart';

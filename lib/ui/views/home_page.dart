@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           Expanded(
             child: CustomScrollView(
+              key: const PageStorageKey('home_scroll'),
               primary: false,
               slivers: [
                 const SliverAppBarWidget(

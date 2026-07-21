@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,7 +17,6 @@ class OnboardingScreen4 extends StatefulWidget {
 
 class _OnboardingScreen4State extends State<OnboardingScreen4> {
   String? _selectedProductId;
-  List<Walls>? _bgWalls; // cached — never re-randomize on setState
   StreamSubscription<bool>? _purchaseSub;
 
   @override
@@ -40,13 +37,6 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   void dispose() {
     _purchaseSub?.cancel();
     super.dispose();
-  }
-
-  void _cacheBgWalls(List<Walls> all) {
-    if (_bgWalls == null && all.isNotEmpty) {
-      final shuffled = List<Walls>.from(all)..shuffle(Random());
-      _bgWalls = shuffled.take(4).toList();
-    }
   }
 
   void _purchase() {
@@ -80,10 +70,41 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return '$symbol$actualPrice';
   }
 
+  /// The product id encodes its duration as a trailing `_days` segment
+  /// (e.g. com.wallrio.yearly_365) — reused here to anchor a per-day price.
+  int? _daysForProduct(String productId) {
+    final suffix = productId.split('_').last;
+    return int.tryParse(suffix);
+  }
+
+  String? _perDayPrice(ProductDetails product) {
+    final days = _daysForProduct(product.id);
+    if (days == null || days <= 0) return null;
+    final symbol = product.price.replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
+    final perDay = product.rawPrice / days;
+    return '$symbol${perDay.toStringAsFixed(perDay < 10 ? 1 : 0)}/day';
+  }
+
+  String _ctaLabel(List<ProductDetails> products) {
+    if (_selectedProductId == null) return 'Continue';
+    if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
+      return 'Get Lifetime Access';
+    }
+    final match = products.cast<dynamic>().firstWhere(
+        (p) => p.id == _selectedProductId,
+        orElse: () => null);
+    if (match == null) return 'Continue';
+    return 'Continue • ${match.price}';
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _textColor => _isDark ? Colors.white : Colors.black;
+  Color get _subColor => _isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+  Color get _sheetColor => _isDark ? bgDark2Color : const Color(0xFFF2F2F7);
+
   @override
   Widget build(BuildContext context) {
     return Consumer<WallRio>(builder: (context, wallRio, _) {
-      _cacheBgWalls(wallRio.originalWallList);
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -91,82 +112,52 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           widget.onComplete();
         },
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
+          value: SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
+            statusBarIconBrightness: _isDark ? Brightness.light : Brightness.dark,
           ),
           child: Material(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildBackground(),
-                _buildBlurOverlay(),
-                Center(child: _buildContent(context, wallRio.subscriptionPlans)),
-            ],
+            color: _sheetColor,
+            child: _buildContent(
+                context, wallRio.subscriptionPlans, wallRio.originalWallList),
           ),
-        ),
         ),
       );
     });
   }
 
-  Widget _buildBackground() {
-    final walls = _bgWalls;
-    if (walls == null || walls.isEmpty) {
-      return Container(color: bgDarkColor);
-    }
-    return GridView.count(
-      crossAxisCount: 2,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.65,
-      children: walls
-          .map((w) => CachedNetworkImage(
-                imageUrl: w.url,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: bgDark2Color),
-                errorWidget: (_, __, ___) => Container(color: bgDark2Color),
-              ))
-          .toList(),
-    );
-  }
-
-  Widget _buildBlurOverlay() {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.60),
-              Colors.black.withValues(alpha: 0.90),
-              Colors.black.withValues(alpha: 1.0),
-            ],
-            stops: const [0.0, 0.45, 1.0],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context, List<SubscriptionPlan> plans) {
+  Widget _buildContent(BuildContext context, List<SubscriptionPlan> plans, List<Walls> allWalls) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-        child: Column(
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 22),
-            _buildFeatureList(),
-            const SizedBox(height: 20),
-            _buildLifetimeCard(context, plans),
-            const SizedBox(height: 10),
-            _buildOtherPlans(context, plans),
-            const SizedBox(height: 22),
-            _buildCTA(context),
-          ],
-        ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _SubscriptionTopAnimatedBanner(allWalls: allWalls),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        _buildFeatureList(),
+                        const SizedBox(height: 16),
+                        _buildLifetimeCard(plans),
+                        const SizedBox(height: 8),
+                        _buildOtherPlans(plans),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
+            child: _buildCTA(),
+          ),
+        ],
       ),
     );
   }
@@ -190,98 +181,53 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Column(
-      children: [
-        // Container(
-        //   width: 52,
-        //   height: 52,
-        //   decoration: BoxDecoration(
-        //     shape: BoxShape.circle,
-        //     color: bgDarkAccentColor.withValues(alpha: 0.15),
-        //     border: Border.all(
-        //         color: bgDarkAccentColor.withValues(alpha: 0.4), width: 1.5),
-        //   ),
-        //   padding: const EdgeInsets.all(10),
-        //   child: Image.asset(
-        //     "assets/app_icon/icon_white.png",
-        //     fit: BoxFit.contain,
-        //   ),
-        // ),
-        const SizedBox(height: 14),
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
-                ),
-            children: const [
-              TextSpan(text: "WallRio ", style: TextStyle(color: whiteColor)),
-              TextSpan(text: "Pro", style: TextStyle(color: bgDarkAccentColor)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Unlock exclusive collections & personalize your app",
-          style: TextStyle(
-            color: whiteColor.withValues(alpha: 0.5),
-            fontSize: 15,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
   static const List<String> _features = [
-    "Unlock all Premium Collections (Yearly & Lifetime plans only)",
-    "Personalize with Custom App Icons",
-    "Download Exclusive Live Wallpapers",
-    "100% Ad-free experience",
+    "Premium Collections",
+    "Custom App Icons",
+    "Live Wallpapers",
+    "100% Ad-Free",
   ];
 
   Widget _buildFeatureList() {
     return Column(
       children: [
-        for (final feature in _features) ...[
-          _buildFeatureTile(feature),
-          const SizedBox(height: 14),
-        ],
+        Row(
+          children: [
+            Expanded(child: _buildFeatureRow(_features[0])),
+            const SizedBox(width: 10),
+            Expanded(child: _buildFeatureRow(_features[1])),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _buildFeatureRow(_features[2])),
+            const SizedBox(width: 10),
+            Expanded(child: _buildFeatureRow(_features[3])),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildFeatureTile(String feature) {
+  Widget _buildFeatureRow(String text) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: bgDarkAccentColor.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.check_rounded, color: bgDarkAccentColor, size: 16),
-        ),
-        const SizedBox(width: 14),
+        const Icon(Icons.check_rounded, color: bgDarkAccentColor, size: 16),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
-            feature,
-            style: const TextStyle(
-              color: whiteColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
+            text,
+            style: TextStyle(color: _textColor, fontWeight: FontWeight.w600, fontSize: 12),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLifetimeCard(
-      BuildContext context, List<SubscriptionPlan> plans) {
+  Widget _buildLifetimeCard(List<SubscriptionPlan> plans) {
     final isSelected = _selectedProductId == SubscriptionProvider.lifetimeProductId;
     final plan = _planFor(SubscriptionProvider.lifetimeProductId, plans);
     return Consumer<SubscriptionProvider>(
@@ -299,59 +245,42 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         return GestureDetector(
           onTap: () => setState(() => _selectedProductId = SubscriptionProvider.lifetimeProductId),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: const EdgeInsets.all(18),
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2ABFAA), Color(0xFF178A76)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: isSelected ? bgDarkAccentColor.withValues(alpha: 0.12) : _textColor.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isSelected
-                    ? whiteColor.withValues(alpha: 0.45)
-                    : Colors.transparent,
+                color: isSelected ? bgDarkAccentColor.withValues(alpha: 0.6) : Colors.transparent,
                 width: 1.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: bgDarkAccentColor.withValues(
-                      alpha: isSelected ? 0.4 : 0.15),
-                  blurRadius: isSelected ? 24 : 10,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                _RadioDot(isSelected: isSelected),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            "Lifetime Pro",
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 17,
-                            ),
+                          Text(
+                            "Lifetime",
+                            style: TextStyle(color: _textColor, fontWeight: FontWeight.w800, fontSize: 15),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.25),
+                              color: bgDarkAccentColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
-                              "BEST VALUE",
+                              "LIMITED TIME",
                               style: TextStyle(
-                                color: whiteColor,
+                                color: bgDarkAccentColor,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
@@ -360,20 +289,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 3),
                       Text(
                         "One-time payment. Yours forever.",
-                        style: TextStyle(
-                          color: whiteColor.withValues(alpha: 0.8),
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: _subColor, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (discount > 0) ...[
                       _buildDiscountChip(discount),
@@ -383,22 +308,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                       Text(
                         _formatActualPrice(lifetimeProd, plan.actualPrice),
                         style: TextStyle(
-                          color: whiteColor.withValues(alpha: 0.55),
-                          fontSize: 12,
+                          color: _subColor,
+                          fontSize: 11,
                           decoration: TextDecoration.lineThrough,
-                          decorationColor: whiteColor.withValues(alpha: 0.55),
+                          decorationColor: _subColor,
                         ),
                       ),
                     Text(
                       lifetimeProd?.price ?? "—",
-                      style: const TextStyle(
-                        color: whiteColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                      ),
+                      style: TextStyle(color: _textColor, fontWeight: FontWeight.w800, fontSize: 17),
                     ),
-                    const SizedBox(height: 6),
-                    _RadioDot(isSelected: isSelected),
                   ],
                 ),
               ],
@@ -409,12 +328,20 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
-  Widget _buildOtherPlans(BuildContext context, List<SubscriptionPlan> plans) {
+  int _productOrderIndex(String id) {
+    if (id == SubscriptionProvider.yearlyProductId) return 1;
+    if (id == SubscriptionProvider.quaterlyProductId) return 2;
+    if (id == SubscriptionProvider.monthlyProductId) return 3;
+    return 4;
+  }
+
+  Widget _buildOtherPlans(List<SubscriptionPlan> plans) {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
         final others = subProvider.products
             .where((p) => p.id != SubscriptionProvider.lifetimeProductId && !p.id.contains('collection'))
-            .toList();
+            .toList()
+          ..sort((a, b) => _productOrderIndex(a.id).compareTo(_productOrderIndex(b.id)));
         if (others.isEmpty) return const SizedBox.shrink();
         return Column(
           children: others.map((product) {
@@ -423,25 +350,54 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             final discount = plan != null
                 ? _discountPercent(product.rawPrice, plan.actualPrice)
                 : 0;
-            final labelColor =
-                isSelected ? whiteColor : whiteColor.withValues(alpha: 0.65);
+            final labelColor = isSelected ? _textColor : _textColor.withValues(alpha: 0.65);
+
+            String displayTitle;
+            String subtitle;
+            Widget? badgeWidget;
+
+            if (product.id == SubscriptionProvider.yearlyProductId) {
+              displayTitle = "Yearly";
+              subtitle = "Billed annually. Full access.";
+              badgeWidget = Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: bgDarkAccentColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  "POPULAR",
+                  style: TextStyle(
+                    color: bgDarkAccentColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              );
+            } else if (product.id == SubscriptionProvider.quaterlyProductId) {
+              displayTitle = "Quarterly";
+              subtitle = "Billed every 3 months. Flexible.";
+            } else if (product.id == SubscriptionProvider.monthlyProductId) {
+              displayTitle = "Monthly";
+              subtitle = "Billed monthly. Cancel anytime.";
+            } else {
+              displayTitle = product.title.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+              subtitle = "Flexible plan. Cancel anytime.";
+            }
+
             return GestureDetector(
               onTap: () => setState(() => _selectedProductId = product.id),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? whiteColor.withValues(alpha: 0.1)
-                      : whiteColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(14),
+                  color: isSelected ? bgDarkAccentColor.withValues(alpha: 0.12) : _textColor.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected
-                        ? whiteColor.withValues(alpha: 0.28)
-                        : Colors.transparent,
-                    width: 1,
+                    color: isSelected ? bgDarkAccentColor.withValues(alpha: 0.6) : Colors.transparent,
+                    width: 1.5,
                   ),
                 ),
                 child: Row(
@@ -449,13 +405,27 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                     _RadioDot(isSelected: isSelected),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        product.title,
-                        style: TextStyle(
-                          color: labelColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                displayTitle,
+                                style: TextStyle(color: labelColor, fontWeight: FontWeight.w800, fontSize: 15),
+                              ),
+                              if (badgeWidget != null) ...[
+                                const SizedBox(width: 8),
+                                badgeWidget,
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            subtitle,
+                            style: TextStyle(color: _subColor, fontSize: 12),
+                          ),
+                        ],
                       ),
                     ),
                     Column(
@@ -471,27 +441,29 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                                 child: Text(
                                   _formatActualPrice(product, plan.actualPrice),
                                   style: TextStyle(
-                                    color: whiteColor.withValues(alpha: 0.4),
+                                    color: _subColor,
                                     fontSize: 11,
                                     decoration: TextDecoration.lineThrough,
-                                    decorationColor:
-                                        whiteColor.withValues(alpha: 0.4),
+                                    decorationColor: _subColor,
                                   ),
                                 ),
                               ),
                             Text(
                               product.price,
-                              style: TextStyle(
-                                color: labelColor,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
+                              style: TextStyle(color: labelColor, fontWeight: FontWeight.w700, fontSize: 14),
                             ),
                           ],
                         ),
                         if (discount > 0) ...[
                           const SizedBox(height: 3),
                           _buildDiscountChip(discount),
+                        ],
+                        if (_perDayPrice(product) != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'just ${_perDayPrice(product)}',
+                            style: TextStyle(color: _subColor, fontSize: 10, fontWeight: FontWeight.w600),
+                          ),
                         ],
                       ],
                     ),
@@ -505,7 +477,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
-  Widget _buildCTA(BuildContext context) {
+  Widget _buildCTA() {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
         final hasProducts = subProvider.products.isNotEmpty;
@@ -513,48 +485,79 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           children: [
             SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 50,
               child: ElevatedButton(
                 onPressed: hasProducts ? _purchase : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: whiteColor,
-                  foregroundColor: Colors.black87,
-                  disabledBackgroundColor: const Color(0xFF2A2A2A),
-                  disabledForegroundColor: whiteColor.withValues(alpha: 0.35),
-                  elevation: 4,
-                  shadowColor: Colors.black54,
+                  backgroundColor: bgDarkAccentColor,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: bgDarkAccentColor.withValues(alpha: 0.5),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(28),
                   ),
                 ),
                 child: subProvider.isLoading
                     ? const SizedBox(
                         width: 22,
                         height: 22,
-                        child: CircularProgressIndicator(
-                            color: Colors.black45, strokeWidth: 2.5),
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                       )
-                    : const Text(
-                        "Unlock WallRio Pro",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 16),
+                    : Text(
+                        _ctaLabel(subProvider.products),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                       ),
               ),
             ),
+            const SizedBox(height: 8),
+            _buildTrustRow(),
             TextButton(
               onPressed: widget.onComplete,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
                 "Continue with free",
-                style: TextStyle(
-                  color: whiteColor.withValues(alpha: 0.4),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: _subColor, fontSize: 13),
               ),
             ),
-
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTrustRow() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildTrustItem(Icons.lock_rounded, "Secure payment"),
+          const SizedBox(width: 16),
+          _buildTrustItem(
+            _selectedProductId == SubscriptionProvider.lifetimeProductId
+                ? Icons.done_all_rounded
+                : Icons.event_repeat_rounded,
+            _selectedProductId == SubscriptionProvider.lifetimeProductId
+                ? "Pay once, forever"
+                : "Cancel anytime",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrustItem(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: _subColor),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(color: _subColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }
@@ -565,6 +568,7 @@ class _RadioDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: 20,
@@ -575,13 +579,336 @@ class _RadioDot extends StatelessWidget {
         border: Border.all(
           color: isSelected
               ? bgDarkAccentColor
-              : whiteColor.withValues(alpha: 0.35),
+              : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.35),
           width: 2,
         ),
       ),
-      child: isSelected
-          ? const Icon(Icons.check, color: whiteColor, size: 12)
-          : null,
+      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+    );
+  }
+}
+
+class _SubscriptionTopAnimatedBanner extends StatefulWidget {
+  final List<Walls> allWalls;
+  const _SubscriptionTopAnimatedBanner({required this.allWalls});
+
+  @override
+  State<_SubscriptionTopAnimatedBanner> createState() =>
+      _SubscriptionTopAnimatedBannerState();
+}
+
+class _SubscriptionTopAnimatedBannerState
+    extends State<_SubscriptionTopAnimatedBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  List<Walls> _bannerWalls = [];
+  bool _isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 25),
+    )..repeat(reverse: true);
+
+    if (widget.allWalls.isNotEmpty) {
+      _loadOrSaveLocalWalls(widget.allWalls);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _SubscriptionTopAnimatedBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isLoaded && widget.allWalls.isNotEmpty) {
+      _loadOrSaveLocalWalls(widget.allWalls);
+    }
+  }
+
+  Future<void> _loadOrSaveLocalWalls(List<Walls> allWalls) async {
+    try {
+      _isLoaded = true;
+      final prefs = await SharedPreferences.getInstance();
+      final savedIds = prefs.getStringList('sub_page_pro_wallpaper_ids_20');
+
+      if (savedIds != null && savedIds.isNotEmpty) {
+        final Map<int, Walls> wallMap = {for (var w in allWalls) w.id: w};
+        final loaded = <Walls>[];
+        for (final idStr in savedIds) {
+          final id = int.tryParse(idStr);
+          if (id != null && wallMap.containsKey(id)) {
+            loaded.add(wallMap[id]!);
+          }
+        }
+        if (loaded.length >= 10) {
+          if (mounted) setState(() => _bannerWalls = loaded);
+          return;
+        }
+      }
+
+      final proWalls = allWalls.where((w) => w.isPremium).toList()
+        ..sort((a, b) => b.id.compareTo(a.id));
+      final sourceList = proWalls.isNotEmpty ? proWalls : allWalls;
+      final selected = sourceList.take(20).toList();
+
+      final idsToSave = selected.map((w) => w.id.toString()).toList();
+      await prefs.setStringList('sub_page_pro_wallpaper_ids_20', idsToSave);
+
+      if (mounted) setState(() => _bannerWalls = selected);
+    } catch (e) {
+      logger.e('Error loading subscription page pro walls: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _textColor => _isDark ? Colors.white : Colors.black;
+  Color get _subColor => _isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+  Color get _sheetColor => _isDark ? bgDark2Color : const Color(0xFFF2F2F7);
+
+  Widget _buildCard(Walls wall, double width, double height) {
+    return Container(
+      width: width,
+      height: height,
+      margin: const EdgeInsets.only(right: 8),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: wall.thumbnail.isNotEmpty ? wall.thumbnail : wall.url,
+              fit: BoxFit.cover,
+              width: width,
+              height: height,
+              filterQuality: FilterQuality.high,
+              placeholder: (_, __) =>
+                  Container(color: Colors.grey.withValues(alpha: 0.2)),
+              errorWidget: (_, __, ___) =>
+                  Container(color: Colors.grey.withValues(alpha: 0.2)),
+            ),
+          ),
+          Positioned(
+            top: 5,
+            right: 5,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_rounded,
+                color: Colors.white,
+                size: 9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allToUse = _bannerWalls.isNotEmpty
+        ? _bannerWalls
+        : widget.allWalls.where((w) => w.isPremium).toList().take(20).toList();
+
+    final row1ToUse = allToUse.take(10).toList();
+    final row2ToUse = allToUse.length >= 20
+        ? allToUse.skip(10).take(10).toList()
+        : row1ToUse.reversed.toList();
+
+    return SizedBox(
+      height: 230,
+      child: Stack(
+        children: [
+          // 1. Dual-Row Marquee Tracks animating in opposite directions
+          Positioned.fill(
+            child: allToUse.isEmpty
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Top Row: Animates Left-to-Right
+                        SizedBox(
+                          height: 104,
+                          child: AnimatedBuilder(
+                            animation: _animController,
+                            builder: (context, child) {
+                              const cardWidth = 82.0;
+                              const cardMargin = 8.0;
+                              final totalWidth =
+                                  row1ToUse.length * (cardWidth + cardMargin);
+                              final maxScroll = (totalWidth * 2) -
+                                  MediaQuery.of(context).size.width +
+                                  40;
+                              final dx = -(_animController.value * maxScroll)
+                                  .clamp(0.0, totalWidth * 1.5);
+
+                              final doubleWalls = [
+                                ...row1ToUse,
+                                ...row1ToUse,
+                              ];
+
+                              return Transform.translate(
+                                offset: Offset(dx, 0),
+                                child: OverflowBox(
+                                  minWidth: 0,
+                                  maxWidth: double.infinity,
+                                  minHeight: 104,
+                                  maxHeight: 104,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    children: doubleWalls
+                                        .map((w) => _buildCard(w, cardWidth, 104))
+                                        .toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Bottom Row: Animates in OPPOSITE Direction (Right-to-Left)
+                        SizedBox(
+                          height: 104,
+                          child: AnimatedBuilder(
+                            animation: _animController,
+                            builder: (context, child) {
+                              const cardWidth = 82.0;
+                              const cardMargin = 8.0;
+                              final totalWidth =
+                                  row2ToUse.length * (cardWidth + cardMargin);
+                              final maxScroll = (totalWidth * 2) -
+                                  MediaQuery.of(context).size.width +
+                                  40;
+                              final dx = -((1.0 - _animController.value) *
+                                      maxScroll)
+                                  .clamp(0.0, totalWidth * 1.5);
+
+                              final doubleWalls = [
+                                ...row2ToUse,
+                                ...row2ToUse,
+                              ];
+
+                              return Transform.translate(
+                                offset: Offset(dx, 0),
+                                child: OverflowBox(
+                                  minWidth: 0,
+                                  maxWidth: double.infinity,
+                                  minHeight: 104,
+                                  maxHeight: 104,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    children: doubleWalls
+                                        .map((w) => _buildCard(w, cardWidth, 104))
+                                        .toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+
+          // 2. Light / Dark mode legibility gradient overlay (seamlessly blends to page background)
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.5, 1.0],
+                  colors: [
+                    _sheetColor.withValues(alpha: 0.0),
+                    _sheetColor.withValues(alpha: 0.7),
+                    _sheetColor,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Foreground Overlay Title ("Wall" + green "Rio" + gold "Pro") & Rating Chip
+          Positioned.fill(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                    children: [
+                      TextSpan(text: "Wall", style: TextStyle(color: _textColor)),
+                      const TextSpan(
+                        text: "Rio",
+                        style: TextStyle(
+                          color: bgDarkAccentColor,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const TextSpan(
+                        text: " Pro",
+                        style: TextStyle(
+                          color: Color(0xFFFFB300),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _isDark
+                        ? Colors.black.withValues(alpha: 0.4)
+                        : Colors.white.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: _isDark
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.black.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded, color: Color(0xFFFFB300), size: 14),
+                      const SizedBox(width: 5),
+                      Text(
+                        "4.8  •  400+ ratings  •  100k+ downloads",
+                        style: TextStyle(
+                          color: _subColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

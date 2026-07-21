@@ -60,14 +60,33 @@ class Banners {
   final String url;
   final String category;
   final String link;
+  final String title;
+  final int? wallId;
 
-  const Banners({this.id = 0, this.url = "", this.category = "", this.link = ""});
+  const Banners({
+    this.id = 0,
+    this.url = "",
+    this.category = "",
+    this.link = "",
+    this.title = "",
+    this.wallId,
+  });
 
   factory Banners.fromJson(Map<String, dynamic> json) => Banners(
         id: json['id'] ?? 0,
         url: json['url'] ?? "",
         category: json['category'] ?? "",
         link: json['link'] ?? "",
+        title: (json['title'] ??
+                json['text'] ??
+                json['banner_title'] ??
+                json['caption'] ??
+                json['label'] ??
+                "")
+            .toString(),
+        wallId: json['wall_id'] is int
+            ? json['wall_id']
+            : int.tryParse(json['wall_id']?.toString() ?? ''),
       );
 }
 

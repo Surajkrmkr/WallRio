@@ -9,8 +9,6 @@ class CollectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicatorWidget(
@@ -18,6 +16,7 @@ class CollectionPage extends StatelessWidget {
           children: [
             Expanded(
               child: CustomScrollView(
+                key: const PageStorageKey('collections_scroll'),
                 primary: false,
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -29,7 +28,7 @@ class CollectionPage extends StatelessWidget {
                     userProfileIconRight: false,
                     showUserProfileIcon: true,
                   ),
-                  _buildCollectionUI(isDarkMode),
+                  _buildCollectionUI(),
                 ],
               ),
             ),
@@ -40,128 +39,47 @@ class CollectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCollectionUI(bool isDarkMode) {
+  Widget _buildCollectionUI() {
     return Consumer<WallRio>(builder: (context, provider, _) {
       if (provider.isLoading) {
         return SliverPadding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               childCount: 3,
-              (context, index) => const Padding(
-                padding: EdgeInsets.only(bottom: 32),
-                child: ShimmerWidget(height: 300, width: double.infinity, radius: 40),
-              ),
+              (context, index) => const CollectionLoadingSkeleton(),
             ),
           ),
         );
       }
       if (provider.error.isNotEmpty) {
         return SliverFillRemaining(
-          child: Center(
-            child: Text(
-              provider.error, 
-              style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-            ),
-          ),
+          child: CollectionEmptyState(message: provider.error),
         );
       }
 
       final collections = provider.collections;
       if (collections.isEmpty) {
-        return SliverFillRemaining(
-          child: Center(
-            child: Text(
-              "No collections found", 
-              style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-            ),
+        return const SliverFillRemaining(
+          child: CollectionEmptyState(
+            message: "Check back soon — new premium collections are on the way.",
           ),
         );
       }
 
-      // Pre-calculate rows to avoid O(n^2) in build
-      final rows = <Widget>[];
-      int currentItem = 0;
-      int rowIndex = 0;
-      
-      while (currentItem < collections.length) {
-        if (rowIndex == 0) {
-          // Row 1: Large Landscape Cinematic
-          final collection = collections[currentItem];
-          rows.add(
-            CollectionCard(
-              collection: collection,
-              type: CollectionCardType.landscapeCinematic,
-              onTap: () => _navigateToGrid(context, collection),
-            ),
-          );
-          currentItem += 1;
-        } else if (rowIndex == 1) {
-          // Row 2: Medium Square (2 per row)
-          rows.add(_buildMediumSquareRow(context, currentItem, collections));
-          currentItem += 2;
-        } else {
-          // All subsequent rows: Tall Vertical (2 per row)
-          rows.add(_buildTallVerticalRow(context, currentItem, collections));
-          currentItem += 2;
-        }
-        rowIndex++;
-      }
-
       return SliverPadding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => rows[index],
-            childCount: rows.length,
+            (context, index) => PremiumCollectionCard(
+              collection: collections[index],
+              onTap: () => _openGrid(context, collections[index]),
+            ),
+            childCount: collections.length,
           ),
         ),
       );
     });
-  }
-
-  Widget _buildMediumSquareRow(BuildContext context, int startIndex, List<Collections> collections) {
-    List<Widget> cards = [];
-    for (int i = 0; i < 2 && (startIndex + i) < collections.length; i++) {
-      final collection = collections[startIndex + i];
-      cards.add(
-        Expanded(
-          child: CollectionCard(
-            collection: collection,
-            type: CollectionCardType.mediumSquare,
-            onTap: () => _navigateToGrid(context, collection),
-          ),
-        ),
-      );
-      if (i == 0 && (startIndex + 1) < collections.length) {
-        cards.add(const SizedBox(width: 16));
-      }
-    }
-    return Row(children: cards);
-  }
-
-  Widget _buildTallVerticalRow(BuildContext context, int startIndex, List<Collections> collections) {
-    List<Widget> cards = [];
-    for (int i = 0; i < 2 && (startIndex + i) < collections.length; i++) {
-      final collection = collections[startIndex + i];
-      cards.add(
-        Expanded(
-          child: CollectionCard(
-            collection: collection,
-            type: CollectionCardType.tallVertical,
-            onTap: () => _navigateToGrid(context, collection),
-          ),
-        ),
-      );
-      if (i == 0 && (startIndex + 1) < collections.length) {
-        cards.add(const SizedBox(width: 16));
-      }
-    }
-    return Row(children: cards);
-  }
-
-  void _navigateToGrid(BuildContext context, Collections collection) {
-    _openGrid(context, collection);
   }
 
   void _openGrid(BuildContext context, Collections collection) {
