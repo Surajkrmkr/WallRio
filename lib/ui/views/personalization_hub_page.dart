@@ -40,6 +40,14 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      bottomNavigationBar: !hasSub
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: _buildSubscribeButton(context),
+              ),
+            )
+          : null,
       body: Consumer<PersonalizationProvider>(
         builder: (context, personalization, _) {
           if (personalization.isLoading ||
@@ -74,7 +82,7 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
                         _buildTabBar(isDarkMode),
                         const SizedBox(height: 20),
                         SizedBox(
-                          height: _calculateTabHeight(personalization),
+                          height: _calculateTabHeight(context, personalization),
                           child: TabBarView(
                             controller: _tabController,
                             physics: const BouncingScrollPhysics(),
@@ -101,14 +109,22 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
     );
   }
 
-  double _calculateTabHeight(PersonalizationProvider provider) {
-    // Icons: 5 items in rows of 3 = 2 rows
-    // Frames: 8 items in rows of 3 = 3 rows
-    // Each row ~190 height + spacing + active indicator section
-    final iconsRows = (5 / 3).ceil();
-    final framesRows = (8 / 3).ceil();
-    final maxRows = iconsRows > framesRows ? iconsRows : framesRows;
-    return (maxRows * 195.0) + 90;
+  double _calculateTabHeight(BuildContext context, PersonalizationProvider provider) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final gridWidth = screenWidth - 40; // 20 padding on each side
+    
+    // Icons: 20 items in 4 columns = 5 rows
+    final iconCardWidth = (gridWidth - (3 * 16)) / 4;
+    // Aspect ratio 1.0, cardHeight = iconCardWidth
+    final iconsHeight = (5 * (iconCardWidth + 16)) + 120;
+    
+    // Frames: 8 items in 3 columns = 3 rows
+    final frameCardWidth = (gridWidth - (2 * 14)) / 3;
+    final frameCardHeight = frameCardWidth / 0.72;
+    final framesHeight = (3 * (frameCardHeight + 14)) + 120;
+    
+    final maxHeight = iconsHeight > framesHeight ? iconsHeight : framesHeight;
+    return maxHeight;
   }
 
   // ──────────────────────────────────────────────────────────
@@ -244,33 +260,123 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
     final icons = [
       {
         'key': 'icon_default',
-        'name': 'Classic',
+        'name': 'Default',
         'unlock': 0,
-        'imageAsset': 'assets/app_icon/icon_white.png'
+        'imageAsset': 'assets/app_icon/icon_default.png'
       },
       {
-        'key': 'icon_yellow',
-        'name': 'Sunshine',
+        'key': 'icon_cosmic_galaxy',
+        'name': 'Cosmic Galaxy',
         'unlock': 0,
-        'imageAsset': 'assets/app_icon/icon_yellow.png'
+        'imageAsset': 'assets/app_icon/icon_cosmic_galaxy.png'
       },
       {
-        'key': 'icon_black2',
-        'name': 'Blaze',
+        'key': 'icon_aurora',
+        'name': 'Aurora',
+        'unlock': 0,
+        'imageAsset': 'assets/app_icon/icon_aurora.png'
+      },
+      {
+        'key': 'icon_diamond',
+        'name': 'Diamond',
+        'unlock': 1,
+        'imageAsset': 'assets/app_icon/icon_diamond.png'
+      },
+      {
+        'key': 'icon_electric_plasma',
+        'name': 'Electric Plasma',
+        'unlock': 2,
+        'imageAsset': 'assets/app_icon/icon_electric_plasma.png'
+      },
+      {
+        'key': 'icon_emerald_energy',
+        'name': 'Emerald Energy',
         'unlock': 3,
-        'imageAsset': 'assets/app_icon/icon_black2.png'
+        'imageAsset': 'assets/app_icon/icon_emerald_energy.png'
       },
       {
-        'key': 'icon_color',
-        'name': 'Vibrant',
+        'key': 'icon_gold_luxury',
+        'name': 'Gold Luxury',
+        'unlock': 4,
+        'imageAsset': 'assets/app_icon/icon_gold_luxury.png'
+      },
+      {
+        'key': 'icon_holographic_crystal',
+        'name': 'Holo Crystal',
+        'unlock': 5,
+        'imageAsset': 'assets/app_icon/icon_holographic_crystal.png'
+      },
+      {
+        'key': 'icon_ice_crystal',
+        'name': 'Ice Crystal',
         'unlock': 6,
-        'imageAsset': 'assets/app_icon/icon_color.png'
+        'imageAsset': 'assets/app_icon/icon_ice_crystal.png'
       },
       {
-        'key': 'icon_black',
-        'name': 'Spectrum',
+        'key': 'icon_jelly_glass',
+        'name': 'Jelly Glass',
+        'unlock': 7,
+        'imageAsset': 'assets/app_icon/icon_jelly_glass.png'
+      },
+      {
+        'key': 'icon_liquid_chrome',
+        'name': 'Liquid Chrome',
+        'unlock': 8,
+        'imageAsset': 'assets/app_icon/icon_liquid_chrome.png'
+      },
+      {
+        'key': 'icon_liquid_glass',
+        'name': 'Liquid Glass',
+        'unlock': 9,
+        'imageAsset': 'assets/app_icon/icon_liquid_glass.png'
+      },
+      {
+        'key': 'icon_marble',
+        'name': 'Marble',
+        'unlock': 10,
+        'imageAsset': 'assets/app_icon/icon_marble.png'
+      },
+      {
+        'key': 'icon_molten_lava',
+        'name': 'Molten Lava',
+        'unlock': 11,
+        'imageAsset': 'assets/app_icon/icon_molten_lava.png'
+      },
+      {
+        'key': 'icon_neon_glow',
+        'name': 'Neon Glow',
         'unlock': 12,
-        'imageAsset': 'assets/app_icon/icon_black.png'
+        'imageAsset': 'assets/app_icon/icon_neon_glow.png'
+      },
+      {
+        'key': 'icon_obsidian_glass',
+        'name': 'Obsidian Glass',
+        'unlock': 13,
+        'imageAsset': 'assets/app_icon/icon_obsidian_glass.png'
+      },
+      {
+        'key': 'icon_prism_glass',
+        'name': 'Prism Glass',
+        'unlock': 14,
+        'imageAsset': 'assets/app_icon/icon_prism_glass.png'
+      },
+      {
+        'key': 'icon_rose_gold',
+        'name': 'Rose Gold',
+        'unlock': 15,
+        'imageAsset': 'assets/app_icon/icon_rose_gold.png'
+      },
+      {
+        'key': 'icon_ruby_crystal',
+        'name': 'Ruby Crystal',
+        'unlock': 16,
+        'imageAsset': 'assets/app_icon/icon_ruby_crystal.png'
+      },
+      {
+        'key': 'icon_titanium',
+        'name': 'Titanium',
+        'unlock': 18,
+        'imageAsset': 'assets/app_icon/icon_titanium.png'
       },
     ];
 
@@ -289,10 +395,10 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.72,
+              crossAxisCount: 4,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.0,
             ),
             itemCount: icons.length,
             itemBuilder: (context, index) {
@@ -466,57 +572,99 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
     } catch (_) {
       active = items.first;
     }
-
+ 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7),
-        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1C1C1E), const Color(0xFF121214)]
+              : [const Color(0xFFF9F9FB), const Color(0xFFE5E5EA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDarkMode ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              image: DecorationImage(
-                image: AssetImage(active['imageAsset'] as String),
-                fit: BoxFit.cover,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2C5364), Color(0xFF203A43), Color(0xFF0F2027)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+                image: DecorationImage(
+                  image: AssetImage(active['imageAsset'] as String),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Currently Active',
-                  style: Theme.of(context).textTheme.labelSmall,
+                  'ACTIVE APP ICON',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: bgDarkAccentColor,
+                    letterSpacing: 1.5,
+                  ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   active['name'] as String,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: bgDarkAccentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFFFFE600),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
               'IN USE',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1,
-                color: bgDarkAccentColor,
+                color: Colors.black,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -600,7 +748,6 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
 
   // ──────────────────────────────────────────────────────────
   // ICON CARD — Premium glassmorphic card for app icons
-  // ──────────────────────────────────────────────────────────
   Widget _buildIconCard({
     required BuildContext context,
     required String name,
@@ -617,132 +764,74 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: isActive
-              ? bgDarkAccentColor.withValues(alpha: 0.15)
-              : (isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7)),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive
-                ? bgDarkAccentColor.withValues(alpha: 0.5)
-                : Colors.transparent,
-            width: isActive ? 1.8 : 1,
+                ? const Color(0xFFFFE600)
+                : (isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+            width: isActive ? 3.0 : 1.0,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: bgDarkAccentColor.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    spreadRadius: 0,
+                    color: const Color(0xFFFFE600).withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    spreadRadius: 1,
                   )
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ],
         ),
         child: Stack(
           children: [
-            // Glow effect for active
-            if (isActive)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 3,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(22)),
-                    gradient: LinearGradient(
-                      colors: [
-                        bgDarkAccentColor.withValues(alpha: 0),
-                        bgDarkAccentColor.withValues(alpha: 0.6),
-                        bgDarkAccentColor.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-            // Main content
             Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Icon image
-                    Opacity(
-                      opacity: isUnlocked ? 1.0 : 0.35,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          image: DecorationImage(
-                            image: AssetImage(imageAsset),
-                            fit: BoxFit.cover,
-                          ),
-                          boxShadow: isActive
-                              ? [
-                                  BoxShadow(
-                                    color:
-                                        bgDarkAccentColor.withValues(alpha: 0.2),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  )
-                                ]
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Name
-                    Text(
-                      name,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isUnlocked
-                            ? (isActive
-                                ? bgDarkAccentColor
-                                : (isDarkMode
-                                    ? Colors.white.withValues(alpha: 0.85)
-                                    : Colors.black.withValues(alpha: 0.75)))
-                            : Colors.grey.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Status chip
-                    _buildStatusChip(
-                        isActive, isUnlocked, unlockMonth, isDarkMode),
-                  ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(isActive ? 17 : 19),
+                child: Opacity(
+                  opacity: isUnlocked ? 1.0 : 0.4,
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-
-            // Lock overlay
-            if (!isUnlocked)
+            if (isActive)
               Positioned(
-                top: 10,
-                right: 10,
+                bottom: 6,
+                right: 6,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFE600),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lock_rounded,
-                      size: 12, color: Colors.white70),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 12,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            if (!isUnlocked)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(isActive ? 17 : 19),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.lock_rounded,
+                      size: 20,
+                      color: Colors.white70,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -751,7 +840,6 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
     );
   }
 
-  // ──────────────────────────────────────────────────────────
   // FRAME CARD — For profile frames
   // ──────────────────────────────────────────────────────────
   Widget _buildFrameCard({
@@ -952,5 +1040,54 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildSubscribeButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFFC00), Color(0xFFFFE600)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(27),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFE600).withValues(alpha: 0.35),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(27),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OnboardingScreen4(
+                  onComplete: () => Navigator.pop(context),
+                ),
+              ),
+            );
+          },
+          child: const Center(
+            child: Text(
+              'GET WALLRIO+ TO UNLOCK ALL ICONS',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -41,7 +41,7 @@ class UserBottomSheet extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 25.0),
             child: Consumer<AuthProvider>(
               builder: (context, provider, _) {
-                final String name = provider.user.displayName!;
+                final String name = provider.user.displayName ?? provider.user.email?.split('@').first ?? "User";
                 return Row(children: [
                   PremiumAvatar(
                     imageUrl: provider.user.photoURL ?? '',
@@ -105,10 +105,16 @@ class UserBottomSheet extends StatelessWidget {
   PrimaryBtnWidget _buildSignOutBtn(BuildContext context) {
     return PrimaryBtnWidget(
         btnText: 'LOG OUT',
-        onTap: () {
-          Navigator.pop(context);
-          Provider.of<SubscriptionProvider>(context, listen: false).clearData();
-          Provider.of<AuthProvider>(context, listen: false).signOut();
+        onTap: () async {
+          final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          
+          subProvider.clearData();
+          await authProvider.signOut();
+          
+          if (context.mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         });
   }
 }

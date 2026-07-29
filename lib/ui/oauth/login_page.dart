@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:wallrio/provider/export.dart';
@@ -55,15 +56,35 @@ class LoginPage extends StatelessWidget {
                         .copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 30),
                 Container(
-                  margin: const EdgeInsets.only(bottom: 60),
-                  height: 50,
+                  margin: EdgeInsets.only(bottom: Platform.isIOS ? 40 : 60),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Consumer<AuthProvider>(
                     builder: (context, provider, _) {
-                      return provider.isLoading
-                          ? ShimmerWidget.withWidget(
-                              _buildSignInBtn(provider), context)
-                          : _buildSignInBtn(provider);
+                      if (provider.isLoading) {
+                        return ShimmerWidget.withWidget(
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildGoogleSignInBtn(provider),
+                              if (Platform.isIOS) ...[
+                                const SizedBox(height: 12),
+                                _buildAppleSignInBtn(provider),
+                              ],
+                            ],
+                          ),
+                          context,
+                        );
+                      }
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildGoogleSignInBtn(provider),
+                          if (Platform.isIOS) ...[
+                            const SizedBox(height: 12),
+                            _buildAppleSignInBtn(provider),
+                          ],
+                        ],
+                      );
                     },
                   ),
                 ),
@@ -75,11 +96,19 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  PrimaryBtnWidget _buildSignInBtn(AuthProvider provider) {
+  PrimaryBtnWidget _buildGoogleSignInBtn(AuthProvider provider) {
     return PrimaryBtnWidget(
-      btnText: "SIGN IN",
+      btnText: Platform.isIOS ? "SIGN IN WITH GOOGLE" : "SIGN IN",
       onTap: provider.signIn,
       icon: Image.asset("assets/google_logo.png"),
+    );
+  }
+
+  PrimaryBtnWidget _buildAppleSignInBtn(AuthProvider provider) {
+    return PrimaryBtnWidget(
+      btnText: "SIGN IN WITH APPLE",
+      onTap: provider.signInWithApple,
+      icon: const Icon(Icons.apple, size: 24),
     );
   }
 }

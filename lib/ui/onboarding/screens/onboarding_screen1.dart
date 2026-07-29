@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth, User;
@@ -170,13 +171,32 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
             const SizedBox(height: 22),
             Consumer<AuthProvider>(
               builder: (context, authProvider, _) {
-                final btn = _SignInButton(
-                  isLoading: authProvider.isLoading,
-                  onTap: authProvider.signIn,
-                );
+                Widget buildButtons() {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _SignInButton(
+                        isLoading: authProvider.isLoading,
+                        onTap: authProvider.signIn,
+                        label: Platform.isIOS ? "Sign In with Google" : "Sign In",
+                        icon: Image.asset("assets/google_logo.png", height: 22),
+                      ),
+                      if (Platform.isIOS) ...[
+                        const SizedBox(height: 12),
+                        _SignInButton(
+                          isLoading: authProvider.isLoading,
+                          onTap: authProvider.signInWithApple,
+                          label: "Sign In with Apple",
+                          icon: const Icon(Icons.apple, color: Colors.black87, size: 24),
+                        ),
+                      ],
+                    ],
+                  );
+                }
+
                 return authProvider.isLoading
-                    ? ShimmerWidget.withWidget(btn, context)
-                    : btn;
+                    ? ShimmerWidget.withWidget(buildButtons(), context)
+                    : buildButtons();
               },
             ),
           ],
@@ -223,7 +243,15 @@ class _PhoneFrame extends StatelessWidget {
 class _SignInButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
-  const _SignInButton({required this.isLoading, required this.onTap});
+  final String label;
+  final Widget icon;
+
+  const _SignInButton({
+    required this.isLoading,
+    required this.onTap,
+    required this.label,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -232,12 +260,15 @@ class _SignInButton extends StatelessWidget {
       height: 52,
       child: ElevatedButton.icon(
         onPressed: isLoading ? null : onTap,
-        icon: Image.asset("assets/google_logo.png", height: 22),
+        icon: Container(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: icon,
+        ),
         label: Padding(
           padding: const EdgeInsets.only(top: 4.0),
-          child: const Text(
-            "Sign In",
-            style: TextStyle(
+          child: Text(
+            label,
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w600,
               fontSize: 18,

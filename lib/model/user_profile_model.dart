@@ -20,9 +20,9 @@ class UserProfile {
   static set _setHasCollectionAccess(bool val) => _hasCollectionAccess = val;
 
   static void setUserData(User user) {
-    _setName = user.displayName!;
-    _setEmail = user.email!;
-    _setAvatarUrl = user.photoURL!;
+    _setName = user.displayName ?? user.email?.split('@').first ?? "User";
+    _setEmail = user.email ?? "";
+    _setAvatarUrl = user.photoURL ?? "";
   }
 
   static void setPlusMemberInfo(bool val, {bool hasCollectionAccess = false}) {

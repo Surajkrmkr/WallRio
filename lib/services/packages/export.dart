@@ -11,7 +11,7 @@ export 'package:wallpaper_manager_plus/wallpaper_manager_plus.dart';
 export 'package:fluttertoast/fluttertoast.dart';
 export 'package:google_mobile_ads/google_mobile_ads.dart';
 export 'package:in_app_purchase/in_app_purchase.dart';
-export 'package:in_app_update/in_app_update.dart';
+export 'package:in_app_update_flutter/in_app_update_flutter.dart';
 export 'package:logger/logger.dart';
 export 'package:lottie/lottie.dart';
 export 'package:package_info_plus/package_info_plus.dart';

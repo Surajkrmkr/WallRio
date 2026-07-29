@@ -9,13 +9,27 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.shadowteam.wallrio/app_icon"
 
-    // Activity-alias names declared in AndroidManifest.xml (NOT including MainActivity)
     private val iconAliases = listOf(
         "com.shadowteam.wallrio.icon_default",
-        "com.shadowteam.wallrio.icon_yellow",
-        "com.shadowteam.wallrio.icon_black2",
-        "com.shadowteam.wallrio.icon_color",
-        "com.shadowteam.wallrio.icon_black"
+        "com.shadowteam.wallrio.icon_cosmic_galaxy",
+        "com.shadowteam.wallrio.icon_aurora",
+        "com.shadowteam.wallrio.icon_diamond",
+        "com.shadowteam.wallrio.icon_electric_plasma",
+        "com.shadowteam.wallrio.icon_emerald_energy",
+        "com.shadowteam.wallrio.icon_gold_luxury",
+        "com.shadowteam.wallrio.icon_holographic_crystal",
+        "com.shadowteam.wallrio.icon_ice_crystal",
+        "com.shadowteam.wallrio.icon_jelly_glass",
+        "com.shadowteam.wallrio.icon_liquid_chrome",
+        "com.shadowteam.wallrio.icon_liquid_glass",
+        "com.shadowteam.wallrio.icon_marble",
+        "com.shadowteam.wallrio.icon_molten_lava",
+        "com.shadowteam.wallrio.icon_neon_glow",
+        "com.shadowteam.wallrio.icon_obsidian_glass",
+        "com.shadowteam.wallrio.icon_prism_glass",
+        "com.shadowteam.wallrio.icon_rose_gold",
+        "com.shadowteam.wallrio.icon_ruby_crystal",
+        "com.shadowteam.wallrio.icon_titanium"
     )
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

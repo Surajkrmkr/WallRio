@@ -69,14 +69,68 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _checkInAppUpdate() {
-    if (kDebugMode || !Platform.isAndroid) return;
-    InAppUpdate.checkForUpdate().then((updateInfo) async {
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
-        await InAppUpdate.performImmediateUpdate();
+    if (kDebugMode) return;
+    if (Platform.isAndroid) {
+      final plugin = InAppUpdateFlutter();
+      plugin.checkUpdateAndroid().then((info) async {
+        if (info.updateAvailability == UpdateAvailabilityAndroid.updateAvailable) {
+          if (info.isImmediateUpdateAllowed) {
+            await plugin.startImmediateUpdateAndroid();
+          } else if (info.isFlexibleUpdateAllowed) {
+            await plugin.startFlexibleUpdateAndroid();
+            plugin.installStateStreamAndroid.listen((state) {
+              if (state.status == InstallStatusAndroid.downloaded) {
+                plugin.completeUpdateAndroid();
+              }
+            });
+          }
+        }
+      }, onError: (error) {
+        logger.e(error);
+      });
+    } else if (Platform.isIOS) {
+      _checkIosUpdate();
+    }
+  }
+
+  void _checkIosUpdate() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+      final bundleId = packageInfo.packageName;
+      
+      final response = await Dio().get('https://itunes.apple.com/lookup?bundleId=$bundleId');
+      if (response.statusCode == 200 && response.data != null) {
+        final results = response.data['results'];
+        if (results != null && results.isNotEmpty) {
+          final latestVersion = results[0]['version'];
+          if (_isVersionNewer(currentVersion, latestVersion)) {
+            await InAppUpdateFlutter().showUpdateForIos(appStoreId: '6789848688');
+          }
+        }
       }
-    }, onError: (error) {
-      logger.e(error);
-    });
+    } catch (e) {
+      logger.e('Failed to check iOS update: $e');
+    }
+  }
+
+  bool _isVersionNewer(String current, String latest) {
+    try {
+      List<int> currentParts = current.split('.').map(int.parse).toList();
+      List<int> latestParts = latest.split('.').map(int.parse).toList();
+      int currentLen = currentParts.length;
+      int latestLen = latestParts.length;
+      int length = currentLen > latestLen ? currentLen : latestLen;
+      for (int i = 0; i < length; i++) {
+        int currentPart = i < currentLen ? currentParts[i] : 0;
+        int latestPart = i < latestLen ? latestParts[i] : 0;
+        if (latestPart > currentPart) return true;
+        if (currentPart > latestPart) return false;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
   }
 
   @override

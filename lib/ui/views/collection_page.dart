@@ -16,7 +16,6 @@ class CollectionPage extends StatelessWidget {
           children: [
             Expanded(
               child: CustomScrollView(
-                key: const PageStorageKey('collections_scroll'),
                 primary: false,
                 physics: const BouncingScrollPhysics(),
                 slivers: [

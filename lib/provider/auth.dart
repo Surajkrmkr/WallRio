@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -76,6 +77,40 @@ class AuthProvider with ChangeNotifier {
       debugPrint(exception.toString());
     } catch (error) {
       debugPrint(error.toString());
+    } finally {
+      setIsLoading = false;
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    setIsLoading = true;
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final AuthCredential oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: credential.identityToken,
+        accessToken: credential.authorizationCode,
+      );
+
+      final firebaseAuth = FirebaseAuth.instance;
+      await firebaseAuth.signInWithCredential(oauthCredential);
+      if (firebaseAuth.currentUser != null) {
+        setSignedInUser = firebaseAuth.currentUser!;
+        await FirebaseAnalytics.instance.logLogin(loginMethod: 'apple');
+      }
+      ToastWidget.showToast("Logged in successfully");
+    } on Exception catch (exception) {
+      logger.e(exception.toString());
+      signOut();
+      ToastWidget.showToast('Something went wrong');
+    } catch (error) {
+      logger.e(error.toString());
+      ToastWidget.showToast('Unexpected error occurred');
     } finally {
       setIsLoading = false;
     }

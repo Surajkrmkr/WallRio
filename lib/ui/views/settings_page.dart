@@ -84,7 +84,9 @@ class SettingsPage extends StatelessWidget {
                         Provider.of<ProgressionProvider>(context, listen: false)
                             .trackAction(ActionType.rateApp);
                       }
-                      launch('https://play.google.com/store/apps/dev?id=5668598285863173548');
+                      launch(Platform.isAndroid
+                          ? 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio'
+                          : 'https://apps.apple.com/app/wallrio/id6789848688');
                     },
                     onDismiss: () => Navigator.pop(dialogContext),
                   ),
@@ -107,22 +109,7 @@ class SettingsPage extends StatelessWidget {
               title: 'More Apps',
               subtitle: 'Check out our other apps',
               onTap: () => launch('https://play.google.com/store/apps/dev?id=5668598285863173548')),
-          _tile(context,
-              icon: Icons.photo_camera_rounded,
-              title: 'Instagram',
-              subtitle: 'Follow us @studio.teamshadow',
-              onTap: () =>
-                  launch('https://instagram.com/studio.teamshadow')),
-          _tile(context,
-              icon: Icons.alternate_email_rounded,
-              title: 'Twitter/X',
-              subtitle: 'Follow us @4XDesigns',
-              onTap: () => launch('https://x.com/4XDesigns')),
-          _tile(context,
-              icon: Icons.send_rounded,
-              title: 'Telegram',
-              subtitle: 'Join our community',
-              onTap: () => launch('https://t.me/TeamShadow_Studio')),
+          _socialRow(context),
         ],
       ),
       _sectionCard(
@@ -413,6 +400,69 @@ class SettingsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, color: bgDarkAccentColor, size: 20),
+    );
+  }
+
+  Widget _socialRow(BuildContext context) {
+    Widget socialItem({
+      required IconData icon,
+      required String label,
+      required String url,
+    }) {
+      return Expanded(
+        child: InkWell(
+          onTap: () => launch(url),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: bgDarkAccentColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: bgDarkAccentColor, size: 24),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          socialItem(
+            icon: Icons.photo_camera_rounded,
+            label: 'Instagram',
+            url: 'https://instagram.com/studio.teamshadow',
+          ),
+          socialItem(
+            icon: Icons.alternate_email_rounded,
+            label: 'Twitter/X',
+            url: 'https://x.com/4XDesigns',
+          ),
+          socialItem(
+            icon: Icons.send_rounded,
+            label: 'Telegram',
+            url: 'https://t.me/TeamShadow_Studio',
+          ),
+        ],
+      ),
     );
   }
 
