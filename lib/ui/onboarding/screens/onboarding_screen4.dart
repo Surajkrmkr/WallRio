@@ -6,6 +6,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/widgets/export.dart';
 
 class OnboardingScreen4 extends StatefulWidget {
   final VoidCallback onComplete;
@@ -517,31 +518,57 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 TextButton(
                   onPressed: () => subProvider.restorePurchases(),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    "Restore Purchases",
+                    "Restore",
                     style: TextStyle(
                       color: _subColor,
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
-                Text("•", style: TextStyle(color: _subColor, fontSize: 13)),
+                Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
                 TextButton(
-                  onPressed: widget.onComplete,
+                  onPressed: () => LaunchUrlWidget.launch('https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    "Continue with free",
-                    style: TextStyle(color: _subColor, fontSize: 13),
+                    "Privacy",
+                    style: TextStyle(color: _subColor, fontSize: 12),
+                  ),
+                ),
+                Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
+                TextButton(
+                  onPressed: () => LaunchUrlWidget.launch('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    "Terms",
+                    style: TextStyle(color: _subColor, fontSize: 12),
+                  ),
+                ),
+                Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
+                TextButton(
+                  onPressed: widget.onComplete,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    "Skip",
+                    style: TextStyle(color: _subColor, fontSize: 12),
                   ),
                 ),
               ],
