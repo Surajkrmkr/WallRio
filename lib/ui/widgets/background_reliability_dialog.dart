@@ -34,6 +34,7 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
     if (state == AppLifecycleState.resumed) {
       _checkStatus();
     }

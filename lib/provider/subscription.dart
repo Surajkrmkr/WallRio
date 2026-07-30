@@ -2,35 +2,20 @@ import 'dart:async' show Future, Stream, StreamSubscription;
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:wallrio/model/export.dart';
-import 'package:wallrio/services/firebase/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
-import 'package:wallrio/ui/widgets/export.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
-  final String subscriptionFirebasePath = "purchases";
   static const String keyPlusMember = 'user_is_plus_member';
   static const String keyExpiryDate = 'user_subscription_expiry';
 
-  bool isLoading = false;
-  bool isSupported = false;
+  late final PremiumService _service;
+  StreamSubscription<bool>? _purchaseSub;
+
   bool isSubscriptionLoading = false;
   bool isSubcriptionAnimating = false;
 
-  String _subscriptionDaysLeft = "";
-
-  List<ProductDetails> products = [];
-  List<PurchaseDetails> purchases = [];
-  Set<String> purchasedCollections = {};
-
-  late StreamSubscription subscription;
-
-  final InAppPurchase inAppPurchase = InAppPurchase.instance;
-
-  // App Store Connect and Play Console use separate product IDs for the same
-  // plans (registered independently per store), so these are platform-aware.
   static final String lifetimeProductId = Platform.isIOS
       ? 'com.wallrio.ios.lifetime_pro'
       : 'com.wallrio.lifetime_pro';
@@ -49,31 +34,26 @@ class SubscriptionProvider extends ChangeNotifier {
     yearlyProductId,
   };
 
-  // final successPurchasedStream = StreamController<bool>();
   final PublishSubject<bool> _successPurchased = PublishSubject<bool>();
   Stream<bool> get successPurchasedStream => _successPurchased.stream;
 
-  set setProducts(List<ProductDetails> productList) {
-    products = productList;
-    notifyListeners();
+  SubscriptionProvider() {
+    _service = Platform.isIOS ? IOSPremiumService() : AndroidPremiumService();
+    _purchaseSub = _service.successPurchasedStream.listen((event) {
+      _successPurchased.sink.add(event);
+      notifyListeners();
+    });
   }
 
-  set setPurchases(List<PurchaseDetails> purchasesList) {
-    purchases = purchasesList;
-    notifyListeners();
-  }
+  bool get isLoading => _service.isLoading;
+  bool get isSupported =>
+      _service is AndroidPremiumService
+          ? (_service as AndroidPremiumService).isSupported
+          : (_service as IOSPremiumService).isSupported;
 
-  set setSubscriptionDaysLeft(String days) {
-    _subscriptionDaysLeft = days;
-    notifyListeners();
-  }
-
-  String get subscriptionDaysLeft => _subscriptionDaysLeft;
-
-  set setIsLoading(bool val) {
-    isLoading = val;
-    notifyListeners();
-  }
+  List<ProductDetails> get products => _service.products;
+  Set<String> get purchasedCollections => _service.purchasedCollections;
+  String get subscriptionDaysLeft => _service.subscriptionDaysLeft;
 
   set setIsSubscriptionIdLoading(bool val) {
     isSubscriptionLoading = val;
@@ -86,61 +66,28 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> checkSupportForIAP() async {
-    isSupported = await inAppPurchase.isAvailable();
-    logger.i('IAP available: $isSupported, queried IDs: $productIDs');
-    if (isSupported) {
-      await getUserProducts();
-      subscription = inAppPurchase.purchaseStream.listen((data) {
-        switch (data.first.status) {
-          case PurchaseStatus.canceled:
-            ToastWidget.showToast('Purchase Cancelled');
-            break;
-          case PurchaseStatus.error:
-            final error = data.first.error;
-            if (Platform.isAndroid &&
-                error != null &&
-                error.message.contains('itemAlreadyOwned')) {
-              ToastWidget.showToast(
-                  'Fixing a stuck purchase, please try again in a moment');
-              _consumeStalePurchases();
-            } else {
-              ToastWidget.showToast('Something went wrong');
-            }
-            break;
-          case PurchaseStatus.pending:
-            ToastWidget.showToast(
-                'Your purchase is currently pending. Please check back in sometime');
-            break;
-          case PurchaseStatus.purchased:
-            ToastWidget.showToast('Purchased successfully');
-            _verifyPurchase(data.first);
-            break;
-          case PurchaseStatus.restored:
-            _consumeRestoredPurchase(data.first);
-            break;
-          default:
-        }
-      });
+    setIsSubscriptionIdLoading = true;
+    try {
+      await _service.checkSupportForIAP(productIDs);
+    } finally {
+      setIsSubscriptionIdLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> getUserProducts() async {
-    setIsLoading = true;
-    try {
-      final ProductDetailsResponse response =
-          await inAppPurchase.queryProductDetails(productIDs);
-      if (response.notFoundIDs.isNotEmpty) {
-        logger.e('Store returned no product for IDs: ${response.notFoundIDs}');
+    await _service.getUserProducts(productIDs);
+    notifyListeners();
+  }
+
+  Future<void> fetchProducts(Set<String> extraProductIDs) async {
+    for (String id in extraProductIDs) {
+      if (!productIDs.contains(id)) {
+        productIDs.add(id);
       }
-      if (response.error != null) {
-        logger.e('queryProductDetails error: ${response.error}');
-      }
-      setProducts = response.productDetails;
-    } catch (error) {
-      logger.e(error);
-    } finally {
-      setIsLoading = false;
     }
+    await _service.getUserProducts(productIDs);
+    notifyListeners();
   }
 
   void addCollectionProductIds(List<String> collectionIds) {
@@ -157,173 +104,45 @@ class SubscriptionProvider extends ChangeNotifier {
     if (added) getUserProducts();
   }
 
-  void buyProduct(ProductDetails prod) async {
-    try {
-      final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
-      // Entitlement is tracked in Firestore (see _verifyPurchase), not by the
-      // store's "owned" state, so every product is bought as consumable. This
-      // keeps the store from permanently locking lifetime/collection items as
-      // owned, which previously blocked legitimate re-purchase attempts.
-      await inAppPurchase.buyConsumable(
-          purchaseParam: purchaseParam, autoConsume: true);
-    } on Exception catch (e) {
-      logger.e(e);
-    }
+  Future<void> buyProduct(ProductDetails prod) async {
+    await _service.buyProduct(prod);
+    notifyListeners();
   }
 
-  /// Recovers items purchased before the consumable migration that are stuck
-  /// "already owned" on Google Play by restoring and consuming them.
-  Future<void> _consumeStalePurchases() async {
-    if (!Platform.isAndroid) return;
-    try {
-      await inAppPurchase.restorePurchases();
-    } on Exception catch (e) {
-      logger.e(e);
-    }
+  Future<void> restorePurchases() async {
+    await _service.restorePurchases();
+    notifyListeners();
   }
 
-  Future<void> _consumeRestoredPurchase(PurchaseDetails purchase) async {
-    try {
-      if (Platform.isAndroid) {
-        final addition = inAppPurchase
-            .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
-        await addition.consumePurchase(purchase);
-      }
-      if (purchase.pendingCompletePurchase) {
-        await inAppPurchase.completePurchase(purchase);
-      }
-    } on Exception catch (e) {
-      logger.e(e);
-    }
-  }
-
-  Future<void> _verifyPurchase(PurchaseDetails purchase) async {
-    setIsLoading = true;
-    try {
-      await inAppPurchase.completePurchase(purchase);
-      final CollectionReference purchases =
-          FirebaseFirestore.instance.collection(subscriptionFirebasePath);
-      final now = DateTime.now();
-
-      if (purchase.productID.startsWith('com.wallrio.collection.')) {
-        final collectionId = purchase.productID.split('.').last;
-        purchasedCollections.add(collectionId);
-        await purchases.add({
-          "productID": purchase.productID,
-          "purchaseID": purchase.purchaseID,
-          "pendingCompletePurchase": purchase.pendingCompletePurchase,
-          "transactionDate": purchase.transactionDate,
-          'email': FirebaseAuth.instance.currentUser!.email,
-          'purchaseDate': now.toUtc(),
-          'isCollection': true,
-        });
-        _successPurchased.sink.add(true);
-        notifyListeners();
-        return;
-      }
-
-      final int subscriptionDays = purchase.productID == lifetimeProductId
-          ? 36135 // ~99 years
-          : int.parse(purchase.productID.split("_").last);
-      final endDate = now.add(Duration(days: subscriptionDays));
-      await purchases.add({
-        "productID": purchase.productID,
-        "purchaseID": purchase.purchaseID,
-        "pendingCompletePurchase": purchase.pendingCompletePurchase,
-        "transactionDate": purchase.transactionDate,
-        'email': FirebaseAuth.instance.currentUser!.email,
-        'purchaseStartDate': now.toUtc(),
-        'purchaseEndDate': endDate.toUtc(),
-      });
-      setSubscriptionDaysLeft = endDate.difference(now).inDays.toString();
-      final bool hasCollectionAccess = subscriptionDays >= 360;
-      UserProfile.setPlusMemberInfo(true,
-          hasCollectionAccess: hasCollectionAccess);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(keyPlusMember, true);
-      await prefs.setBool('user_has_collection_access', hasCollectionAccess);
-      await prefs.setString(keyExpiryDate, endDate.toIso8601String());
-      await prefs.setString('user_subscription_start', now.toIso8601String());
-      FirebaseAnalytics.instance
-          .logPurchase(currency: 'USD', value: null, parameters: {
-        'product_id': purchase.productID,
-        'subscription_days': subscriptionDays,
-      });
-      _successPurchased.sink.add(true);
-    } catch (error) {
-      logger.e(error);
-    } finally {
-      setIsLoading = false;
-    }
-  }
-
-  Future<void> checkPastPurchases({required String email}) async {
+  Future<void> checkPastPurchases({String? email}) async {
     setIsSubscriptionIdLoading = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final CollectionReference purchases =
-          FirebaseFirestore.instance.collection(subscriptionFirebasePath);
-      final QuerySnapshot<Object?> querySnapshot = await purchases.get();
-      final now = DateTime.now();
-      UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
-      await prefs.setBool(keyPlusMember, false);
-      await prefs.setBool('user_has_collection_access', false);
-      await prefs.remove(keyExpiryDate);
-      purchasedCollections.clear();
-
-      bool foundActiveSubscription = false;
-
-      for (var element in querySnapshot.docs) {
-        if (element["email"] == email) {
-          final String prodId = element.data().toString().contains("productID")
-              ? element["productID"] ?? ""
-              : "";
-
-          if (prodId.startsWith('com.wallrio.collection.')) {
-            purchasedCollections.add(prodId.split('.').last);
-            continue;
-          }
-
-          if (foundActiveSubscription) continue;
-          if (!element.data().toString().contains("purchaseStartDate"))
-            continue;
-
-          final purchaseStartDate =
-              DateTime.parse(element["purchaseStartDate"].toDate().toString())
-                  .toLocal();
-          final purchaseEndDate =
-              DateTime.parse(element["purchaseEndDate"].toDate().toString())
-                  .toLocal();
-          final bool isPurchaseActive =
-              purchaseStartDate.isBefore(now) && purchaseEndDate.isAfter(now);
-          if (isPurchaseActive) {
-            foundActiveSubscription = true;
-            setSubscriptionDaysLeft =
-                (purchaseEndDate.difference(now).inDays + 1).toString();
-            final int totalDays =
-                purchaseEndDate.difference(purchaseStartDate).inDays;
-            final bool hasCollectionAccess = totalDays >= 360;
-            UserProfile.setPlusMemberInfo(true,
-                hasCollectionAccess: hasCollectionAccess);
-            await prefs.setBool(keyPlusMember, true);
-            await prefs.setBool(
-                'user_has_collection_access', hasCollectionAccess);
-            await prefs.setString(
-                keyExpiryDate, purchaseEndDate.toIso8601String());
-            await prefs.setString(
-                'user_subscription_start', purchaseStartDate.toIso8601String());
-          }
-        }
+      if (Platform.isIOS) {
+        await _service.checkPastPurchases();
+      } else {
+        await _service.checkPastPurchases(email: email);
       }
-    } catch (error) {
-      throw Exception(error);
     } finally {
       setIsSubscriptionIdLoading = false;
+      notifyListeners();
     }
+  }
+
+  Future<void> clearPurchaseSharedPreferences() async {
+    await _service.clearPurchaseSharedPreferences();
+    notifyListeners();
   }
 
   void clearData() {
-    setSubscriptionDaysLeft = "";
-    purchasedCollections.clear();
+    _service.purchasedCollections.clear();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _purchaseSub?.cancel();
+    _service.dispose();
+    _successPurchased.close();
+    super.dispose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class LoginPage extends StatelessWidget {
@@ -32,83 +33,123 @@ class LoginPage extends StatelessWidget {
                     Colors.transparent
                   ])),
             ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Welcome to",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                GradientText(
-                  "WallRio",
-                  style: Theme.of(context)
-                      .textTheme
-                      .displayLarge!
-                      .copyWith(fontSize: 35),
-                  colors: gradientColorMap[GradientAccentType.defaultType]!,
-                ),
-                Text("Team Shadow",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 30),
-                Container(
-                  margin: EdgeInsets.only(bottom: Platform.isIOS ? 40 : 60),
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Container(
+                  margin: EdgeInsets.only(bottom: Platform.isIOS ? 20 : 40),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Consumer<AuthProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.isLoading) {
-                        return ShimmerWidget.withWidget(
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildGoogleSignInBtn(provider),
-                              if (Platform.isIOS) ...[
-                                const SizedBox(height: 12),
-                                _buildAppleSignInBtn(provider),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("Welcome to",
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall!
+                              .copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      GradientText(
+                        "WallRio",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayLarge!
+                            .copyWith(fontSize: 35),
+                        colors: gradientColorMap[GradientAccentType.defaultType]!,
+                      ),
+                      Text("Team Shadow",
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall!
+                              .copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 30),
+                      Consumer<AuthProvider>(
+                        builder: (context, provider, _) {
+                          void onSuccess() {
+                            if (!context.mounted) return;
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const NavigationPage()),
+                              );
+                            }
+                          }
+
+                          Widget buildButtons() {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SocialIconButton(
+                                      onTap: provider.isLoading
+                                          ? null
+                                          : () async {
+                                              final ok = await provider.signIn();
+                                              if (ok) onSuccess();
+                                            },
+                                      icon: Image.asset("assets/google_logo.png", height: 26),
+                                      tooltip: "Sign In with Google",
+                                    ),
+                                    if (Platform.isIOS) ...[
+                                      const SizedBox(width: 20),
+                                      SocialIconButton(
+                                        onTap: provider.isLoading
+                                            ? null
+                                            : () async {
+                                                final ok = await provider.signInWithApple();
+                                                if (ok) onSuccess();
+                                              },
+                                        icon: const Icon(Icons.apple, color: Colors.black, size: 30),
+                                        tooltip: "Sign In with Apple",
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (Platform.isIOS) ...[
+                                  const SizedBox(height: 14),
+                                  TextButton(
+                                    onPressed: () {
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
+                                      } else {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) => const NavigationPage()),
+                                        );
+                                      }
+                                    },
+                                    child: const Text(
+                                      "Continue as Guest",
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
-                          ),
-                          context,
-                        );
-                      }
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildGoogleSignInBtn(provider),
-                          if (Platform.isIOS) ...[
-                            const SizedBox(height: 12),
-                            _buildAppleSignInBtn(provider),
-                          ],
-                        ],
-                      );
-                    },
+                            );
+                          }
+
+                          return provider.isLoading
+                              ? ShimmerWidget.withWidget(buildButtons(), context)
+                              : buildButtons();
+                        },
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  PrimaryBtnWidget _buildGoogleSignInBtn(AuthProvider provider) {
-    return PrimaryBtnWidget(
-      btnText: Platform.isIOS ? "SIGN IN WITH GOOGLE" : "SIGN IN",
-      onTap: provider.signIn,
-      icon: Image.asset("assets/google_logo.png"),
-    );
-  }
-
-  PrimaryBtnWidget _buildAppleSignInBtn(AuthProvider provider) {
-    return PrimaryBtnWidget(
-      btnText: "SIGN IN WITH APPLE",
-      onTap: provider.signInWithApple,
-      icon: const Icon(Icons.apple, size: 24),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/oauth/login_page.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/views/auto_wallpaper_settings_page.dart';
 import 'package:wallrio/ui/views/personalization_hub_page.dart';
@@ -19,7 +20,7 @@ class SettingsPage extends StatelessWidget {
     final hasSub = Provider.of<SubscriptionProvider>(context).subscriptionDaysLeft.isNotEmpty;
 
     final sections = [
-      _plusBanner(context),
+      _topBanners(context),
       _sectionCard(
         context,
         label: 'Appearance',
@@ -117,6 +118,12 @@ class SettingsPage extends StatelessWidget {
         label: 'Support & Legal',
         children: [
           _tile(context,
+              icon: Icons.restore_rounded,
+              title: 'Restore Purchases',
+              subtitle: 'Restore previous in-app purchases',
+              onTap: () => Provider.of<SubscriptionProvider>(context, listen: false)
+                  .restorePurchases()),
+          _tile(context,
               icon: Icons.help_outline_rounded,
               title: 'Support',
               subtitle: 'Get help and support',
@@ -130,12 +137,44 @@ class SettingsPage extends StatelessWidget {
                   'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy')),
         ],
       ),
+      _sectionCard(
+        context,
+        label: 'Debug Tools (Temporary)',
+        children: [
+          _tile(context,
+              icon: Icons.bug_report_rounded,
+              title: 'Clear Purchase Prefs',
+              subtitle: 'Reset local purchase & collection state in SharedPreferences',
+              onTap: () async {
+                final subProvider =
+                    Provider.of<SubscriptionProvider>(context, listen: false);
+                final progProvider =
+                    Provider.of<ProgressionProvider>(context, listen: false);
+                await subProvider.clearPurchaseSharedPreferences();
+                await progProvider.clearUnlockedCollections();
+                ToastWidget.showToast('Debug: Cleared purchase & collection SharedPreferences');
+              }),
+          _tile(context,
+              icon: Icons.restart_alt_rounded,
+              title: 'Clear Onboarding Prefs',
+              subtitle: 'Reset onboarding completion state in SharedPreferences',
+              onTap: () async {
+                final onboardingProvider =
+                    Provider.of<OnboardingProvider>(context, listen: false);
+                await onboardingProvider.clearOnboardingState();
+                ToastWidget.showToast('Debug: Cleared onboarding SharedPreferences');
+              }),
+        ],
+      ),
       _appInfoSection(context),
     ];
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
+        top: false,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             const SliverAppBarWidget(
                 showLogo: false,
@@ -144,29 +183,75 @@ class SettingsPage extends StatelessWidget {
                 showBackBtn: true,
                 text: 'Settings'),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   childCount: sections.length,
-                  (context, i) => TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    duration: Duration(milliseconds: 350 + i * 60),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, child) => Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 24 * (1 - value)),
-                        child: child,
-                      ),
-                    ),
-                    child: sections[i],
-                  ),
+                  (context, i) => sections[i],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // ─── Top Banners (Guest Sign-In + Plus Banner) ────────────────
+
+  Widget _topBanners(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!authProvider.isLoggedIn) _guestSignInBanner(context),
+            _plusBanner(context),
+          ],
+        );
+      },
+    );
+  }
+
+  // ─── Guest Sign-In Banner ─────────────────────────────────────
+
+  Widget _guestSignInBanner(BuildContext context) {
+    return _sectionCard(
+      context,
+      label: 'Account',
+      children: [
+        ListTile(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          leading: _tileIcon(Icons.person_outline_rounded),
+          title: Text('Signed in as Guest',
+              style: Theme.of(context).textTheme.titleMedium),
+          subtitle: Text('Tap to sign in & sync your data',
+              style: Theme.of(context).textTheme.labelSmall),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: BoxDecoration(
+              color: bgDarkAccentColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'SIGN IN',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        ),
+      ],
     );
   }
 

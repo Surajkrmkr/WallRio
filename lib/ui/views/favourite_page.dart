@@ -6,6 +6,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/oauth/login_page.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -32,6 +33,7 @@ class FavouritePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     return Stack(
       children: [
         CustomScrollView(
@@ -44,11 +46,93 @@ class FavouritePage extends StatelessWidget {
                 secondaryText: "",
                 userProfileIconRight: false,
                 showUserProfileIcon: true),
-            _buildListUI(context)
+            if (!authProvider.isLoggedIn)
+              _buildGuestUI(context)
+            else
+              _buildListUI(context)
           ],
         ),
         const AdsWidget()
       ],
+    );
+  }
+
+  Widget _buildGuestUI(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return SliverFillRemaining(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: bgDarkAccentColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: bgDarkAccentColor,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Sync Your Favorites",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Sign in to sync your favorite wallpapers across all your devices and back them up securely.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.4,
+                  color: (isDarkMode ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size.zero,
+                    backgroundColor: bgDarkAccentColor,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shadowColor: bgDarkAccentColor.withValues(alpha: 0.4),
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    "SIGN IN TO SYNC",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

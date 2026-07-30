@@ -2,5 +2,8 @@ export 'api_services.dart';
 export 'dark_mode_services.dart';
 export 'live_wallpaper_service.dart';
 export 'notification.dart';
+export 'premium/android_premium_service.dart';
+export 'premium/ios_premium_service.dart';
+export 'premium/premium_service.dart';
 export 'theme_data.dart';
 export 'tracking_service.dart';

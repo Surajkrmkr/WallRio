@@ -47,4 +47,15 @@ class OnboardingProvider extends ChangeNotifier {
     await prefs.setInt(_stepKey, 4);
     notifyListeners();
   }
+
+  Future<void> clearOnboardingState() async {
+    isCompleted = false;
+    currentStep = 0;
+    selectedVibes.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_completedKey);
+    await prefs.remove(_stepKey);
+    await prefs.remove(_vibesKey);
+    notifyListeners();
+  }
 }

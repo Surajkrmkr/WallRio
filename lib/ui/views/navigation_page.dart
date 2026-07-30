@@ -20,7 +20,7 @@ class NavigationPage extends StatefulWidget {
   State<NavigationPage> createState() => _NavigationPageState();
 }
 
-class _NavigationPageState extends State<NavigationPage> {
+class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObserver {
   Timer _timer = Timer(Duration.zero, () {});
   bool _showPromoBanner = false;
   static const String _promoDismissKey = 'promo_banner_dismissed_date';
@@ -49,6 +49,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     TrackingService.requestIfNeeded();
     Future.delayed(Duration.zero, () {
       _checkUserIsDisable(_timer);
@@ -75,6 +76,14 @@ class _NavigationPageState extends State<NavigationPage> {
     });
 
     super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (state == AppLifecycleState.resumed && Platform.isIOS) {
+      Provider.of<SubscriptionProvider>(context, listen: false).checkPastPurchases();
+    }
   }
 
   Future<void> _checkRateUsPopup() async {
@@ -172,8 +181,10 @@ class _NavigationPageState extends State<NavigationPage> {
   }
 
   void _checkUserIsDisable(Timer timer) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
     try {
-      FirebaseAuth.instance.currentUser!.reload();
+      user.reload();
     } catch (error) {
       logger.e(error);
     }

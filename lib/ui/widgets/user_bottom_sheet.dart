@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/oauth/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -12,9 +13,10 @@ class UserBottomSheet extends StatelessWidget {
       launch("https://play.google.com/store/apps/dev?id=5668598285863173548");
 
   void _settings(BuildContext context) {
-    Navigator.of(context).pop();
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+    final navigator = Navigator.of(context, rootNavigator: true);
+    navigator.pop();
+    navigator.push(
+        MaterialPageRoute(builder: (context) => const SettingsPage()));
   }
 
   void launch(String url) =>
@@ -41,10 +43,11 @@ class UserBottomSheet extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 25.0),
             child: Consumer<AuthProvider>(
               builder: (context, provider, _) {
-                final String name = provider.user.displayName ?? provider.user.email?.split('@').first ?? "User";
+                final String name = provider.isLoggedIn ? provider.displayName : "Guest User";
+                final String photoUrl = provider.photoUrl;
                 return Row(children: [
                   PremiumAvatar(
-                    imageUrl: provider.user.photoURL ?? '',
+                    imageUrl: photoUrl,
                     radius: 30,
                   ),
                   const SizedBox(width: 20),
@@ -91,8 +94,8 @@ class UserBottomSheet extends StatelessWidget {
           PrimaryBtnWidget(btnText: 'MORE APPS', onTap: moreApps),
           Consumer<AuthProvider>(builder: (context, provider, _) {
             return provider.isLoading
-                ? ShimmerWidget.withWidget(_buildSignOutBtn(context), context)
-                : _buildSignOutBtn(context);
+                ? ShimmerWidget.withWidget(_buildAuthBtn(context, provider), context)
+                : _buildAuthBtn(context, provider);
           }),
         ],
       ),
@@ -102,18 +105,32 @@ class UserBottomSheet extends StatelessWidget {
     );
   }
 
-  PrimaryBtnWidget _buildSignOutBtn(BuildContext context) {
+  Widget _buildAuthBtn(BuildContext context, AuthProvider authProvider) {
+    if (!authProvider.isLoggedIn) {
+      return PrimaryBtnWidget(
+        btnText: 'SIGN IN',
+        onTap: () {
+          final navigator = Navigator.of(context, rootNavigator: true);
+          navigator.pop();
+          navigator.push(
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        },
+      );
+    }
     return PrimaryBtnWidget(
         btnText: 'LOG OUT',
         onTap: () async {
           final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
           
           subProvider.clearData();
           await authProvider.signOut();
           
           if (context.mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+              (route) => false,
+            );
           }
         });
   }

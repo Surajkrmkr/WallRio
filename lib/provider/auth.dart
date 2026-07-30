@@ -12,24 +12,29 @@ class AuthProvider with ChangeNotifier {
 
   User? _user;
 
-  User get user => _user!;
+  User? get user => _user;
+  bool get isLoggedIn => _user != null;
+  String get displayName => _user?.displayName ?? _user?.email?.split('@').first ?? "Guest User";
+  String get email => _user?.email ?? "";
+  String get photoUrl => _user?.photoURL ?? "";
 
   set setIsLoading(bool val) {
     isLoading = val;
     notifyListeners();
   }
 
-  set setSignedInUser(User user) {
+  set setSignedInUser(User? user) {
     _user = user;
+    notifyListeners();
   }
 
   AuthProvider() {
     if (FirebaseAuth.instance.currentUser != null) {
-      setSignedInUser = FirebaseAuth.instance.currentUser!;
+      _user = FirebaseAuth.instance.currentUser;
     }
   }
 
-  Future<void> signIn() async {
+  Future<bool> signIn() async {
     setIsLoading = true;
     try {
       if (!_googleSignInInitialized) {
@@ -52,15 +57,19 @@ class AuthProvider with ChangeNotifier {
         setSignedInUser = firebaseAuth.currentUser!;
         await FirebaseAnalytics.instance
             .logLogin(loginMethod: 'google');
+        ToastWidget.showToast("Logged in as ${firebaseAuth.currentUser!.email}");
+        return true;
       }
-      ToastWidget.showToast("Logged in as ${firebaseAuth.currentUser!.email}");
+      return false;
     } on Exception catch (exception) {
       logger.e(exception.toString());
       signOut();
       ToastWidget.showToast('Something went wrong');
+      return false;
     } catch (error) {
       logger.e(error.toString());
       ToastWidget.showToast('Unexpected error occurred');
+      return false;
     } finally {
       setIsLoading = false;
     }
@@ -71,6 +80,7 @@ class AuthProvider with ChangeNotifier {
     try {
       await FirebaseAuth.instance.signOut();
       await googleSignIn.disconnect();
+      _user = null;
       FirebaseAnalytics.instance.logEvent(name: 'user_sign_out');
       ToastWidget.showToast("Logged Out");
     } on Exception catch (exception) {
@@ -82,7 +92,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> signInWithApple() async {
+  Future<bool> signInWithApple() async {
     setIsLoading = true;
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
@@ -102,15 +112,19 @@ class AuthProvider with ChangeNotifier {
       if (firebaseAuth.currentUser != null) {
         setSignedInUser = firebaseAuth.currentUser!;
         await FirebaseAnalytics.instance.logLogin(loginMethod: 'apple');
+        ToastWidget.showToast("Logged in successfully");
+        return true;
       }
-      ToastWidget.showToast("Logged in successfully");
+      return false;
     } on Exception catch (exception) {
       logger.e(exception.toString());
       signOut();
       ToastWidget.showToast('Something went wrong');
+      return false;
     } catch (error) {
       logger.e(error.toString());
       ToastWidget.showToast('Unexpected error occurred');
+      return false;
     } finally {
       setIsLoading = false;
     }

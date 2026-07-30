@@ -205,7 +205,7 @@ class SliverAppBarWidget extends StatelessWidget {
                     icon: Consumer<AuthProvider>(
                       builder: (context, provider, _) {
                         return PremiumAvatar(
-                          imageUrl: provider.user.photoURL ?? '',
+                          imageUrl: provider.photoUrl,
                           radius: 18,
                           onTap: () => _hapticTap(() => _onLongPressHandler(context)),
                         );

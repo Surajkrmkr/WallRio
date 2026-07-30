@@ -32,4 +32,5 @@ export 'premium_collection_card.dart';
 export 'scrollable_wallpaper_stack.dart';
 export 'wallpaper_preview_tile.dart';
 export 'rate_us_dialog_widget.dart';
+export 'social_icon_button.dart';
 

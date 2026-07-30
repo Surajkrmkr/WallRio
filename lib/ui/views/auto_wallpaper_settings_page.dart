@@ -36,6 +36,7 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
     if (state == AppLifecycleState.resumed) {
       _checkSystemStatus();
     }

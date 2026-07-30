@@ -133,73 +133,103 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "Wall",
-                  style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                        fontSize: 46,
-                        color: whiteColor,
-                        height: 1.1,
-                      ),
-                ),
-                GradientText(
-                  "Rio",
-                  style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                        fontSize: 46,
-                        height: 1.1,
-                      ),
-                  colors: gradientColorMap[GradientAccentType.defaultType]!,
-                ),
-              ],
-            ),
-            Text(
-              "By Team Shadow",
-              style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: whiteColor.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.0,
-                  ),
-            ),
-            const SizedBox(height: 22),
-            Consumer<AuthProvider>(
-              builder: (context, authProvider, _) {
-                Widget buildButtons() {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _SignInButton(
-                        isLoading: authProvider.isLoading,
-                        onTap: authProvider.signIn,
-                        label: Platform.isIOS ? "Sign In with Google" : "Sign In",
-                        icon: Image.asset("assets/google_logo.png", height: 22),
-                      ),
-                      if (Platform.isIOS) ...[
-                        const SizedBox(height: 12),
-                        _SignInButton(
-                          isLoading: authProvider.isLoading,
-                          onTap: authProvider.signInWithApple,
-                          label: "Sign In with Apple",
-                          icon: const Icon(Icons.apple, color: Colors.black87, size: 24),
+        padding: const EdgeInsets.fromLTRB(28, 8, 28, 0),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Wall",
+                    style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                          fontSize: 46,
+                          color: whiteColor,
+                          height: 1.1,
                         ),
+                  ),
+                  GradientText(
+                    "Rio",
+                    style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                          fontSize: 46,
+                          height: 1.1,
+                        ),
+                    colors: gradientColorMap[GradientAccentType.defaultType]!,
+                  ),
+                ],
+              ),
+              Text(
+                "By Team Shadow",
+                style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                      color: whiteColor.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.0,
+                    ),
+              ),
+              const SizedBox(height: 18),
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  Widget buildButtons() {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SocialIconButton(
+                              onTap: authProvider.isLoading
+                                  ? null
+                                  : () async {
+                                      final ok = await authProvider.signIn();
+                                      if (ok) widget.onSignedIn();
+                                    },
+                              icon: Image.asset("assets/google_logo.png", height: 26),
+                              tooltip: "Sign In with Google",
+                            ),
+                            if (Platform.isIOS) ...[
+                              const SizedBox(width: 20),
+                              SocialIconButton(
+                                onTap: authProvider.isLoading
+                                    ? null
+                                    : () async {
+                                        final ok = await authProvider.signInWithApple();
+                                        if (ok) widget.onSignedIn();
+                                      },
+                                icon: const Icon(Icons.apple, color: Colors.black, size: 30),
+                                tooltip: "Sign In with Apple",
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (Platform.isIOS) ...[
+                          const SizedBox(height: 10),
+                          TextButton(
+                            onPressed: widget.onSignedIn,
+                            child: const Text(
+                              "Continue as Guest",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  );
-                }
+                    );
+                  }
 
-                return authProvider.isLoading
-                    ? ShimmerWidget.withWidget(buildButtons(), context)
-                    : buildButtons();
-              },
-            ),
-          ],
+                  return authProvider.isLoading
+                      ? ShimmerWidget.withWidget(buildButtons(), context)
+                      : buildButtons();
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -235,55 +265,6 @@ class _PhoneFrame extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SignInButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onTap;
-  final String label;
-  final Widget icon;
-
-  const _SignInButton({
-    required this.isLoading,
-    required this.onTap,
-    required this.label,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton.icon(
-        onPressed: isLoading ? null : onTap,
-        icon: Container(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: icon,
-        ),
-        label: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-            ),
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          disabledBackgroundColor: Colors.white70,
-          elevation: 4,
-          shadowColor: Colors.black45,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
       ),
     );
   }

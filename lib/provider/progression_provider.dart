@@ -276,6 +276,13 @@ class ProgressionProvider extends ChangeNotifier {
     return true;
   }
 
+  Future<void> clearUnlockedCollections() async {
+    if (_progression == null) return;
+    _progression!.redeemedCollections.clear();
+    await _persistLocal();
+    notifyListeners();
+  }
+
   Future<void> _persistLocal() async {
     if (_progression == null) return;
     try {

@@ -511,17 +511,40 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             ),
             const SizedBox(height: 8),
             _buildTrustRow(),
-            TextButton(
-              onPressed: widget.onComplete,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                "Continue with free",
-                style: TextStyle(color: _subColor, fontSize: 13),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => subProvider.restorePurchases(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    "Restore Purchases",
+                    style: TextStyle(
+                      color: _subColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                Text("•", style: TextStyle(color: _subColor, fontSize: 13)),
+                TextButton(
+                  onPressed: widget.onComplete,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    "Continue with free",
+                    style: TextStyle(color: _subColor, fontSize: 13),
+                  ),
+                ),
+              ],
             ),
           ],
         );

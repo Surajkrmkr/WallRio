@@ -43,11 +43,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need access to save wallpapers to your photo library.</string>
+	<string>WallRio saves wallpapers you download to your Photos library so you can set them as your device wallpaper.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to save wallpapers.</string>
+	<string>WallRio accesses your Photos library only when you choose to select an image for your profile or other app features.</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver personalized ads to you.</string>
+	<string>Allow tracking to receive more relevant ads and help support the free version of WallRio.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

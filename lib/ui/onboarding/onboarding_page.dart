@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
@@ -27,7 +28,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         Provider.of<OnboardingProvider>(context, listen: false);
 
     int startPage = onboardingProvider.currentStep.clamp(0, 3);
-    if (FirebaseAuth.instance.currentUser != null && startPage == 0) {
+    if (Platform.isAndroid && FirebaseAuth.instance.currentUser != null && startPage == 0) {
       startPage = 1;
     }
     _pageController = PageController(initialPage: startPage);

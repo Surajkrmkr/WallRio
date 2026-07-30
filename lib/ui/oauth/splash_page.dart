@@ -39,13 +39,28 @@ class _SplashPageState extends State<SplashPage> {
         Provider.of<SubscriptionProvider>(context, listen: false);
     final onboardingProvider =
         Provider.of<OnboardingProvider>(context, listen: false);
+    final progressionProvider =
+        Provider.of<ProgressionProvider>(context, listen: false);
+    final personalizationProvider =
+        Provider.of<PersonalizationProvider>(context, listen: false);
 
     Future.delayed(Duration.zero, () async {
+      await onboardingProvider.loadState();
+      if (!onboardingProvider.isCompleted && Platform.isIOS && firebaseAuth.currentUser != null) {
+        try {
+          await firebaseAuth.signOut();
+          await GoogleSignIn.instance.signOut();
+        } catch (_) {}
+      }
+
       subProvider.checkSupportForIAP();
-      if (firebaseAuth.currentUser != null) {
+      if (Platform.isIOS) {
+        subProvider.checkPastPurchases();
+        progressionProvider.fetchProgression();
+        personalizationProvider.fetchPersonalization();
+      } else if (firebaseAuth.currentUser != null) {
         _checkSubscription(firebaseAuth.currentUser!.email!);
       }
-      await onboardingProvider.loadState();
       if (mounted) setState(() => _onboardingLoaded = true);
     });
     FlutterNativeSplash.remove();
@@ -155,9 +170,12 @@ class _SplashPageState extends State<SplashPage> {
               return const OnboardingPage();
             }
 
-            // Onboarding done — normal login/home flow
-            if (isLoggedIn) {
+            if (snapshot.hasData) {
               UserProfile.setUserData(snapshot.data!);
+            }
+
+            // On iOS, onboarding completion leads straight to Home/Navigation
+            if (Platform.isIOS || isLoggedIn) {
               return Consumer<SubscriptionProvider>(
                 builder: (context, provider, _) {
                   return provider.isSubscriptionLoading

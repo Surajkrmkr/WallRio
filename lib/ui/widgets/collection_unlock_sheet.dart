@@ -26,6 +26,14 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
       final progProvider = Provider.of<ProgressionProvider>(context, listen: false);
+
+      final String shortId = widget.collection.productId.split('.').last;
+      final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
+          ? widget.collection.productId
+          : 'com.wallrio.collection.${widget.collection.productId}';
+
+      subProvider.fetchProducts({fullProductId, shortId, widget.collection.productId});
+
       _purchaseSub = subProvider.successPurchasedStream.listen((success) {
         if (success) {
           progProvider.unlockCollectionIAP(widget.collection.productId);
@@ -40,6 +48,7 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
               setState(() {
                 _isProcessingPurchase = false;
               });
+              Navigator.pop(context);
             }
           }
         }
@@ -61,12 +70,14 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final subColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
 
+    final String shortId = widget.collection.productId.split('.').last;
     final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
         ? widget.collection.productId
         : 'com.wallrio.collection.${widget.collection.productId}';
+
     final product = subProvider.products
         .cast<dynamic>()
-        .firstWhere((p) => p.id == fullProductId, orElse: () => null);
+        .firstWhere((p) => p != null && (p.id == fullProductId || p.id == shortId || p.id.endsWith(shortId)), orElse: () => null);
 
     final wallCount = widget.collection.walls?.length ?? 0;
     // Matches Profile's bottom sheet background color token
@@ -145,8 +156,21 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
               child: ElevatedButton(
                 onPressed: _isProcessingPurchase
                     ? null
-                    : () {
-                        if (product == null) {
+                    : () async {
+                        var targetProduct = product;
+                        if (targetProduct == null) {
+                          setState(() {
+                            _isProcessingPurchase = true;
+                          });
+                          await subProvider.fetchProducts({fullProductId, shortId, widget.collection.productId});
+                          targetProduct = subProvider.products
+                              .cast<dynamic>()
+                              .firstWhere((p) => p != null && (p.id == fullProductId || p.id == shortId || p.id.endsWith(shortId)), orElse: () => null);
+                        }
+                        if (targetProduct == null) {
+                          setState(() {
+                            _isProcessingPurchase = false;
+                          });
                           ToastWidget.showToast(
                               'Purchase currently unavailable. Try again later.');
                           return;
@@ -154,7 +178,16 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
                         setState(() {
                           _isProcessingPurchase = true;
                         });
-                        subProvider.buyProduct(product);
+                        try {
+                          await subProvider.buyProduct(targetProduct);
+                        } catch (e) {
+                          if (context.mounted) {
+                            setState(() {
+                              _isProcessingPurchase = false;
+                            });
+                            Navigator.pop(context);
+                          }
+                        }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: bgDarkAccentColor,
