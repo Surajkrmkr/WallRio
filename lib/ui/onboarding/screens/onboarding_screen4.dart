@@ -129,34 +129,71 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   Widget _buildContent(BuildContext context, List<SubscriptionPlan> plans, List<Walls> allWalls) {
     return SafeArea(
-      child: Column(
+      child: Stack(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _SubscriptionTopAnimatedBanner(allWalls: allWalls),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        _buildFeatureList(),
-                        const SizedBox(height: 16),
-                        _buildLifetimeCard(plans),
-                        const SizedBox(height: 8),
-                        _buildOtherPlans(plans),
-                      ],
-                    ),
+          Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _SubscriptionTopAnimatedBanner(allWalls: allWalls),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: [
+                            _buildFeatureList(),
+                            const SizedBox(height: 16),
+                            _buildLifetimeCard(plans),
+                            const SizedBox(height: 8),
+                            _buildOtherPlans(plans),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
+                child: _buildCTA(),
+              ),
+            ],
+          ),
+          Positioned(
+            top: 10,
+            right: 16,
+            child: Material(
+              color: Colors.black,
+              elevation: 4,
+              shadowColor: Colors.black.withValues(alpha: 0.5),
+              shape: const StadiumBorder(),
+              child: InkWell(
+                onTap: widget.onComplete,
+                customBorder: const StadiumBorder(),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Skip",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.close_rounded, color: Colors.white, size: 16),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
-            child: _buildCTA(),
           ),
         ],
       ),
@@ -518,17 +555,18 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 TextButton(
                   onPressed: () => subProvider.restorePurchases(),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: Text(
-                    "Restore",
+                  child: const Text(
+                    "Restore Purchases",
                     style: TextStyle(
-                      color: _subColor,
+                      color: bgDarkAccentColor,
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       decoration: TextDecoration.underline,
+                      decorationColor: bgDarkAccentColor,
                     ),
                   ),
                 ),
@@ -536,7 +574,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 TextButton(
                   onPressed: () => LaunchUrlWidget.launch('https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -549,25 +587,12 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 TextButton(
                   onPressed: () => LaunchUrlWidget.launch('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
                     "Terms",
-                    style: TextStyle(color: _subColor, fontSize: 12),
-                  ),
-                ),
-                Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
-                TextButton(
-                  onPressed: widget.onComplete,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    "Skip",
                     style: TextStyle(color: _subColor, fontSize: 12),
                   ),
                 ),
