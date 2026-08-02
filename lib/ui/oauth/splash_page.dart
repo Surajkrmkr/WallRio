@@ -163,18 +163,17 @@ class _SplashPageState extends State<SplashPage> {
               return _getShimmer(size);
             }
 
-            final isLoggedIn = snapshot.hasData && !snapshot.hasError;
-
             // Route to onboarding if not yet completed
             if (!onboarding.isCompleted) {
               return const OnboardingPage();
             }
 
+            final isLoggedIn = snapshot.hasData && !snapshot.hasError;
+
             if (snapshot.hasData) {
               UserProfile.setUserData(snapshot.data!);
             }
 
-            // On iOS, onboarding completion leads straight to Home/Navigation
             if (Platform.isIOS || isLoggedIn) {
               return Consumer<SubscriptionProvider>(
                 builder: (context, provider, _) {

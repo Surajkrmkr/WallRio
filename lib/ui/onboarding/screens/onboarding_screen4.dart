@@ -73,13 +73,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   }
 
   /// The product id encodes its duration as a trailing `_days` segment
-  /// (e.g. com.wallrio.yearly_365) — reused here to anchor a per-day price.
   int? _daysForProduct(String productId) {
     final suffix = productId.split('_').last;
     return int.tryParse(suffix);
   }
 
   String? _perDayPrice(ProductDetails product) {
+    if (Platform.isIOS) return null;
     final days = _daysForProduct(product.id);
     if (days == null || days <= 0) return null;
     final symbol = product.price.replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
@@ -87,16 +87,35 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return '$symbol${perDay.toStringAsFixed(perDay < 10 ? 1 : 0)}/day';
   }
 
+  String _billingPeriodText(String id, List<ProductDetails> products) {
+    final match = products.cast<dynamic>().firstWhere(
+        (p) => p.id == id,
+        orElse: () => null);
+    final priceStr = match?.price ?? '';
+    if (id == SubscriptionProvider.yearlyProductId) return '$priceStr every year';
+    if (id == SubscriptionProvider.quaterlyProductId) return '$priceStr every 3 months';
+    if (id == SubscriptionProvider.monthlyProductId) return '$priceStr every month';
+    return '$priceStr per period';
+  }
+
   String _ctaLabel(List<ProductDetails> products) {
     if (_selectedProductId == null) return 'Continue';
-    if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
-      return 'Get Lifetime Access';
-    }
     final match = products.cast<dynamic>().firstWhere(
         (p) => p.id == _selectedProductId,
         orElse: () => null);
     if (match == null) return 'Continue';
-    return 'Continue • ${match.price}';
+
+    if (!Platform.isIOS) {
+      if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
+        return 'Get Lifetime Access';
+      }
+      return 'Continue • ${match.price}';
+    }
+
+    if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
+      return 'Get Lifetime Access • ${match.price}';
+    }
+    return 'Subscribe • ${match.price}';
   }
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
@@ -505,7 +524,11 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                               ),
                             Text(
                               product.price,
-                              style: TextStyle(color: labelColor, fontWeight: FontWeight.w700, fontSize: 14),
+                              style: TextStyle(
+                                color: labelColor,
+                                fontWeight: Platform.isIOS ? FontWeight.w900 : FontWeight.w700,
+                                fontSize: Platform.isIOS ? 17 : 14,
+                              ),
                             ),
                           ],
                         ),
@@ -513,7 +536,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                           const SizedBox(height: 3),
                           _buildDiscountChip(discount),
                         ],
-                        if (_perDayPrice(product) != null) ...[
+                        if (!Platform.isIOS && _perDayPrice(product) != null) ...[
                           const SizedBox(height: 3),
                           Text(
                             'just ${_perDayPrice(product)}',
@@ -564,6 +587,15 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                       ),
               ),
             ),
+            if (_selectedProductId != null && _selectedProductId != SubscriptionProvider.lifetimeProductId)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Auto-renewable subscription. Billed ${_billingPeriodText(_selectedProductId!, subProvider.products)} until canceled in App Store settings.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _subColor, fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+              ),
             const SizedBox(height: 8),
             _buildTrustRow(),
             Row(
