@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/packages/export.dart';
@@ -160,6 +161,7 @@ class ProgressionProvider extends ChangeNotifier {
         reason = "Ad Reward";
         break;
       case ActionType.rateApp:
+        if (Platform.isIOS) break;
         if (!_progression!.completedMilestones.contains('rated_5_stars')) {
           _progression!.completedMilestones.add('rated_5_stars');
           reward = 20;

@@ -74,14 +74,14 @@ class SettingsPage extends StatelessWidget {
           _tile(context,
               icon: Icons.star_rounded,
               title: 'Rate WallRio',
-              subtitle: 'Rate us on Google Play',
+              subtitle: Platform.isIOS ? 'Help us improve WallRio' : 'Rate us on Google Play',
               onTap: () {
                 showDialog(
                   context: context,
                   builder: (dialogContext) => RateUsDialog(
                     onRateNow: () {
                       Navigator.pop(dialogContext);
-                      if (!hasSub) {
+                      if (!Platform.isIOS && !hasSub) {
                         Provider.of<ProgressionProvider>(context, listen: false)
                             .trackAction(ActionType.rateApp);
                       }

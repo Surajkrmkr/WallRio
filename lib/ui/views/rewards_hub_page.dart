@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
@@ -372,21 +373,27 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.star_rate_rounded,
           title: 'Rate App',
-          subtitle: 'Instant 20 💎',
-          progressText: progression.completedMilestones.contains('rated_5_stars') ? 'Done' : 'Collect',
+          subtitle: Platform.isIOS ? 'Help us improve WallRio' : 'Instant 20 💎',
+          progressText: Platform.isIOS
+              ? null
+              : (progression.completedMilestones.contains('rated_5_stars') ? 'Done' : 'Collect'),
           isDarkMode: isDarkMode,
           onTap: () async {
             if (_isRating) return;
-            if (progression.completedMilestones.contains('rated_5_stars')) return;
+            if (!Platform.isIOS && progression.completedMilestones.contains('rated_5_stars')) return;
             
             _isRating = true;
             try {
-              const url = 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
+              final String url = Platform.isIOS
+                  ? 'https://apps.apple.com/app/wallrio/id6789848688'
+                  : 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
               final launched = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
               if (launched) {
-                provider.trackAction(ActionType.rateApp);
+                if (!Platform.isIOS) {
+                  provider.trackAction(ActionType.rateApp);
+                }
               } else {
-                ToastWidget.showToast("Could not open Play Store.");
+                ToastWidget.showToast(Platform.isIOS ? "Could not open App Store." : "Could not open Play Store.");
               }
             } finally {
               _isRating = false;
@@ -430,7 +437,7 @@ class RewardsHubPage extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
-    required String progressText,
+    String? progressText,
     required bool isDarkMode,
     required VoidCallback onTap,
     bool isActionable = true,
@@ -470,24 +477,25 @@ class RewardsHubPage extends StatelessWidget {
                   Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
                 ],
               ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    progressText, 
-                    style: TextStyle(
-                      fontSize: 11, 
-                      fontWeight: FontWeight.w800, 
-                      color: isActionable ? (isDarkMode ? Colors.white70 : Colors.black87) : Colors.grey
-                    )
+              if (progressText != null && progressText.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      progressText, 
+                      style: TextStyle(
+                        fontSize: 11, 
+                        fontWeight: FontWeight.w800, 
+                        color: isActionable ? (isDarkMode ? Colors.white70 : Colors.black87) : Colors.grey
+                      )
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

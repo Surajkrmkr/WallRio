@@ -137,7 +137,7 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
               : "https://apps.apple.com/app/wallrio/id6789848688";
           launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
-          if (!UserProfile.plusMember) {
+          if (!Platform.isIOS && !UserProfile.plusMember) {
             progProvider.trackAction(ActionType.rateApp);
           }
         },
