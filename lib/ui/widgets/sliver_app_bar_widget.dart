@@ -114,14 +114,16 @@ class SliverAppBarWidget extends StatelessWidget {
         }
 
         return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OnboardingScreen4(
-                onComplete: () => Navigator.pop(context),
+          onTap: () {
+            final nav = Navigator.of(context);
+            nav.push(
+              MaterialPageRoute(
+                builder: (_) => OnboardingScreen4(
+                  onComplete: () => nav.pop(),
+                ),
               ),
-            ),
-          ),
+            );
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
             decoration: BoxDecoration(
