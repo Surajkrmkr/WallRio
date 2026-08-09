@@ -128,6 +128,8 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   }
 
   Widget _buildContent(BuildContext context, List<SubscriptionPlan> plans, List<Walls> allWalls) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+
     return SafeArea(
       child: Stack(
         children: [
@@ -142,23 +144,37 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                       const SizedBox(height: 16),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: [
-                            _buildFeatureList(),
-                            const SizedBox(height: 16),
-                            _buildLifetimeCard(plans),
-                            const SizedBox(height: 8),
-                            _buildOtherPlans(plans),
-                          ],
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: isTablet ? 620 : double.infinity,
+                            ),
+                            child: Column(
+                              children: [
+                                _buildFeatureList(),
+                                const SizedBox(height: 16),
+                                _buildLifetimeCard(plans),
+                                const SizedBox(height: 8),
+                                _buildOtherPlans(plans),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
-                child: _buildCTA(),
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isTablet ? 620 : double.infinity,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
+                    child: _buildCTA(),
+                  ),
+                ),
               ),
             ],
           ),
@@ -790,6 +806,9 @@ class _SubscriptionTopAnimatedBannerState
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     final allToUse = _bannerWalls.isNotEmpty
         ? _bannerWalls
         : widget.allWalls.where((w) => w.isPremium).toList().take(20).toList();
@@ -799,8 +818,12 @@ class _SubscriptionTopAnimatedBannerState
         ? allToUse.skip(10).take(10).toList()
         : row1ToUse.reversed.toList();
 
+    final double bannerHeight = isTablet ? (isLandscape ? 360.0 : 310.0) : 230.0;
+    final double cardHeight = isTablet ? 140.0 : 104.0;
+    final double cardWidth = isTablet ? 110.0 : 82.0;
+
     return SizedBox(
-      height: 230,
+      height: bannerHeight,
       child: Stack(
         children: [
           // 1. Dual-Row Marquee Tracks animating in opposite directions
@@ -814,11 +837,10 @@ class _SubscriptionTopAnimatedBannerState
                       children: [
                         // Top Row: Animates Left-to-Right
                         SizedBox(
-                          height: 104,
+                          height: cardHeight,
                           child: AnimatedBuilder(
                             animation: _animController,
                             builder: (context, child) {
-                              const cardWidth = 82.0;
                               const cardMargin = 8.0;
                               final totalWidth =
                                   row1ToUse.length * (cardWidth + cardMargin);
@@ -838,12 +860,12 @@ class _SubscriptionTopAnimatedBannerState
                                 child: OverflowBox(
                                   minWidth: 0,
                                   maxWidth: double.infinity,
-                                  minHeight: 104,
-                                  maxHeight: 104,
+                                  minHeight: cardHeight,
+                                  maxHeight: cardHeight,
                                   alignment: Alignment.centerLeft,
                                   child: Row(
                                     children: doubleWalls
-                                        .map((w) => _buildCard(w, cardWidth, 104))
+                                        .map((w) => _buildCard(w, cardWidth, cardHeight))
                                         .toList(),
                                   ),
                                 ),
@@ -854,11 +876,10 @@ class _SubscriptionTopAnimatedBannerState
                         const SizedBox(height: 8),
                         // Bottom Row: Animates in OPPOSITE Direction (Right-to-Left)
                         SizedBox(
-                          height: 104,
+                          height: cardHeight,
                           child: AnimatedBuilder(
                             animation: _animController,
                             builder: (context, child) {
-                              const cardWidth = 82.0;
                               const cardMargin = 8.0;
                               final totalWidth =
                                   row2ToUse.length * (cardWidth + cardMargin);
@@ -879,12 +900,12 @@ class _SubscriptionTopAnimatedBannerState
                                 child: OverflowBox(
                                   minWidth: 0,
                                   maxWidth: double.infinity,
-                                  minHeight: 104,
-                                  maxHeight: 104,
+                                  minHeight: cardHeight,
+                                  maxHeight: cardHeight,
                                   alignment: Alignment.centerLeft,
                                   child: Row(
                                     children: doubleWalls
-                                        .map((w) => _buildCard(w, cardWidth, 104))
+                                        .map((w) => _buildCard(w, cardWidth, cardHeight))
                                         .toList(),
                                   ),
                                 ),
@@ -923,8 +944,8 @@ class _SubscriptionTopAnimatedBannerState
                 RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 26,
+                    style: TextStyle(
+                      fontSize: isTablet ? 34 : 26,
                       fontWeight: FontWeight.w900,
                       height: 1.1,
                     ),

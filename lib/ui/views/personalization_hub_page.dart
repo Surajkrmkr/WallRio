@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/provider/export.dart';
-import 'package:wallrio/services/theme_data.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -110,18 +110,20 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
   }
 
   double _calculateTabHeight(BuildContext context, PersonalizationProvider provider) {
+    final isTablet = ResponsiveHelper.isTablet(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final gridWidth = screenWidth - 40; // 20 padding on each side
     
-    // Icons: 20 items in 4 columns = 5 rows
-    final iconCardWidth = (gridWidth - (3 * 16)) / 4;
-    // Aspect ratio 1.0, cardHeight = iconCardWidth
-    final iconsHeight = (5 * (iconCardWidth + 16)) + 120;
+    final iconCols = isTablet ? 6 : 4;
+    final iconRows = (20 / iconCols).ceil();
+    final iconCardWidth = (gridWidth - ((iconCols - 1) * 16)) / iconCols;
+    final iconsHeight = (iconRows * (iconCardWidth + 16)) + 120;
     
-    // Frames: 8 items in 3 columns = 3 rows
-    final frameCardWidth = (gridWidth - (2 * 14)) / 3;
+    final frameCols = isTablet ? 5 : 3;
+    final frameRows = (8 / frameCols).ceil();
+    final frameCardWidth = (gridWidth - ((frameCols - 1) * 14)) / frameCols;
     final frameCardHeight = frameCardWidth / 0.72;
-    final framesHeight = (3 * (frameCardHeight + 14)) + 120;
+    final framesHeight = (frameRows * (frameCardHeight + 14)) + 120;
     
     final maxHeight = iconsHeight > framesHeight ? iconsHeight : framesHeight;
     return maxHeight;
@@ -394,8 +396,8 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: ResponsiveHelper.isTablet(context) ? 6 : 4,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               childAspectRatio: 1.0,
@@ -510,8 +512,8 @@ class _PersonalizationHubPageState extends State<PersonalizationHubPage>
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: ResponsiveHelper.isTablet(context) ? 5 : 3,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
               childAspectRatio: 0.72,

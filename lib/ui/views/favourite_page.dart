@@ -138,16 +138,17 @@ class FavouritePage extends StatelessWidget {
 
   Widget _buildListUI(BuildContext context) {
     return Consumer<FavouriteProvider>(builder: (context, provider, _) {
+      final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
       if (provider.isLoading) {
         return SliverPadding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 15),
             sliver: SliverGrid.count(
-                crossAxisCount: 3,
+                crossAxisCount: columnsCount,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 0.5,
+                childAspectRatio: 0.55,
                 children: List.generate(
-                    8,
+                    columnsCount * 3,
                     (index) => const ShimmerWidget(
                           height: 100,
                           width: double.infinity,
@@ -167,11 +168,11 @@ class FavouritePage extends StatelessWidget {
       return SliverPadding(
           padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
           sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columnsCount,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 0.5),
+                  childAspectRatio: 0.55),
               delegate: SliverChildBuilderDelegate(
                   childCount: walls.length,
                   (context, index) => Hero(

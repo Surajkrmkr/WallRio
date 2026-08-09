@@ -26,13 +26,13 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
 
     _staggerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1500),
     );
 
-    // Slow ping-pong scroll — 9s down, 9s back up
+    // Slow ping-pong scroll — slowed down by 25% (11.25s down, 11.25s back up)
     _scrollAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 9),
+      duration: const Duration(milliseconds: 11250),
     );
 
     _scrollAnimController.addListener(() {
@@ -64,66 +64,89 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+
     return Consumer<WallRio>(builder: (context, wallRio, _) {
       final hasWalls = wallRio.originalWallList.isNotEmpty;
       final walls =
-          hasWalls ? wallRio.originalWallList.take(18).toList() : <Walls>[];
+          hasWalls ? wallRio.originalWallList.take(24).toList() : <Walls>[];
 
       return Container(
         color: Colors.black,
         child: Column(
           children: [
-            Expanded(flex: 62, child: _buildGridSection(walls, hasWalls)),
-            Expanded(flex: 38, child: _buildBottomSection(context)),
+            Expanded(
+              flex: isTablet ? 70 : 62,
+              child: _buildGridSection(walls, hasWalls, context),
+            ),
+            Expanded(
+              flex: isTablet ? 30 : 38,
+              child: _buildBottomSection(context),
+            ),
           ],
         ),
       );
     });
   }
 
-  Widget _buildGridSection(List<Walls> walls, bool hasWalls) {
-    final itemCount = hasWalls ? walls.length : 18;
+  Widget _buildGridSection(List<Walls> walls, bool hasWalls, BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final int crossAxisCount = isTablet ? (isLandscape ? 6 : 5) : 3;
+    final itemCount = hasWalls ? walls.length : 24;
+
+    final double gridScaleY = isTablet ? (isLandscape ? 1.30 : 1.24) : 1.0;
+    final double perspectiveEntry = isTablet ? 0.0016 : 0.0025;
+    final double tiltAngle = isTablet ? -0.24 : -0.32;
+
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        // Clip → Transform (tilt) → scroll → grid
+        // Clip → Transform (tilt + scale to fill status bar and top-left/right corners) → scroll → grid
         ClipRect(
           child: Transform(
             transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0025)   // perspective depth
-              ..rotateX(-0.32),           // ~18° backward tilt — clearly visible
+              ..setEntry(3, 2, perspectiveEntry) // perspective depth
+              ..rotateX(tiltAngle),               // backward tilt
             alignment: Alignment.center,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              physics: const NeverScrollableScrollPhysics(),
-              child: MasonryGridView.count(
-                shrinkWrap: true,
+            child: Transform.scale(
+              scaleX: isTablet ? (isLandscape ? 1.25 : 1.18) : 1.0,
+              scaleY: gridScaleY,
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                controller: _scrollController,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 5,
-                crossAxisSpacing: 5,
-                padding: EdgeInsets.zero,
-                itemCount: itemCount,
-                itemBuilder: (context, index) => _buildAnimatedTile(
-                  hasWalls ? walls[index] : null,
-                  index,
-                  itemCount,
+                child: MasonryGridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  padding: EdgeInsets.zero,
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) => _buildAnimatedTile(
+                    hasWalls ? walls[index] : null,
+                    index,
+                    itemCount,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        // Gradient fade into the dark bottom section
+        // Gradient fade into the dark bottom section - reduced height to let grid extend further down
         Positioned(
-          bottom: 0,
+          bottom: -8,
           left: 0,
           right: 0,
+          height: isTablet ? 110 : 150,
           child: Container(
-            height: 150,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black],
+                colors: [Colors.transparent, Colors.black, Colors.black],
+                stops: [0.0, 0.70, 1.0],
               ),
             ),
           ),
@@ -157,8 +180,12 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
   }
 
   Widget _buildTile(Walls? wall, int index) {
-    // Alternate tile heights for natural masonry rhythm
-    final aspectRatio = index % 4 == 1 ? 0.72 : 0.60;
+    final isTablet = ResponsiveHelper.isTablet(context);
+    // On iPad, use authentic iPad card aspect ratios (735/1024 = 0.72) instead of narrow phone ratios
+    final aspectRatio = isTablet
+        ? (index % 3 == 1 ? 0.82 : 0.73)
+        : (index % 4 == 1 ? 0.72 : 0.60);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(

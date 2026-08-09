@@ -42,6 +42,9 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Consumer<WallRio>(builder: (context, wallRio, _) {
       final walls = wallRio.originalWallList.isEmpty
           ? <Walls>[]
@@ -51,35 +54,57 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
         color: Colors.black,
         child: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              Expanded(
-                flex: 68,
-                child: _buildCarouselSection(context, walls),
-              ),
-              Expanded(
-                flex: 32,
-                child: _buildBottomSection(context),
-              ),
-            ],
-          ),
+          child: isTablet && isLandscape
+              ? Row(
+                  children: [
+                    Expanded(
+                      flex: 58,
+                      child: _buildCarouselSection(context, walls),
+                    ),
+                    Expanded(
+                      flex: 42,
+                      child: _buildBottomSection(context),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      flex: isTablet ? 65 : 68,
+                      child: _buildCarouselSection(context, walls),
+                    ),
+                    Expanded(
+                      flex: isTablet ? 35 : 32,
+                      child: _buildBottomSection(context),
+                    ),
+                  ],
+                ),
         ),
       );
     });
   }
 
   Widget _buildCarouselSection(BuildContext context, List<Walls> walls) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     if (walls.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
           child: _PhoneFrame(
+            isCenter: true,
             child: ShimmerWidget(
-                height: double.infinity, width: double.infinity, radius: 34),
+                height: double.infinity, width: double.infinity, radius: isTablet ? 20 : 34),
           ),
         ),
       );
     }
+
+    final double viewportFraction = isTablet
+        ? (isLandscape ? 0.45 : 0.60)
+        : 0.70;
+    final double enlargeFactor = isTablet ? 0.22 : 0.36;
 
     return Padding(
       padding: const EdgeInsets.only(top: 16),
@@ -88,13 +113,13 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
           itemCount: walls.length,
           options: CarouselOptions(
             height: constraints.maxHeight,
-            viewportFraction: 0.70,
+            viewportFraction: viewportFraction,
             autoPlay: true,
             autoPlayInterval: const Duration(seconds: 3),
             autoPlayAnimationDuration: const Duration(milliseconds: 700),
             autoPlayCurve: Curves.easeInOut,
             enlargeCenterPage: true,
-            enlargeFactor: 0.36,
+            enlargeFactor: enlargeFactor,
             onPageChanged: (index, _) => setState(() => _activeIndex = index),
           ),
           itemBuilder: (context, index, _) {
@@ -107,24 +132,17 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
   }
 
   Widget _buildCarouselItem(Walls wall, bool isCenter) {
-    final img = ClipRRect(
-      borderRadius: BorderRadiusGeometry.circular(60),
-      child: CachedNetworkImage(
-        imageUrl: wall.url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        placeholder: (_, __) => Container(color: bgDark2Color),
-        errorWidget: (_, __, ___) => Container(color: bgDark2Color),
-      ),
+    final img = CachedNetworkImage(
+      imageUrl: wall.url,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      placeholder: (_, __) => Container(color: bgDark2Color),
+      errorWidget: (_, __, ___) => Container(color: bgDark2Color),
     );
 
-    if (isCenter) {
-      return _PhoneFrame(child: img);
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+    return _PhoneFrame(
+      isCenter: isCenter,
       child: img,
     );
   }
@@ -238,33 +256,69 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
 
 class _PhoneFrame extends StatelessWidget {
   final Widget child;
-  const _PhoneFrame({required this.child});
+  final bool isCenter;
+  const _PhoneFrame({required this.child, this.isCenter = true});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(36),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.65),
-            blurRadius: 32,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Wallpaper fills the frame area
-          Positioned.fill(child: child),
-          // frame.png overlay — transparent screen lets wallpaper show through
-          Positioned.fill(
-            child: Image.asset(
-              "assets/frame.png",
-              fit: BoxFit.fill,
+    final bool isTablet = ResponsiveHelper.isTablet(context);
+    final String frameAsset = isTablet ? "assets/frame_ipad.png" : "assets/frame.png";
+    final double targetAspectRatio = isTablet ? (735 / 1024) : (217 / 450);
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 300),
+      opacity: isCenter ? 1.0 : 0.60,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: targetAspectRatio,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isTablet ? 20 : 36),
+              boxShadow: isCenter
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        blurRadius: 32,
+                        offset: const Offset(0, 14),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Precise padding to ensure wallpaper stays strictly inside inner transparent screen bounds of frame asset
+                final double padLeft = isTablet ? constraints.maxWidth * 0.049 : constraints.maxWidth * 0.04;
+                final double padTop = isTablet ? constraints.maxHeight * 0.039 : constraints.maxHeight * 0.02;
+                final double padRight = isTablet ? constraints.maxWidth * 0.053 : constraints.maxWidth * 0.04;
+                final double padBottom = isTablet ? constraints.maxHeight * 0.038 : constraints.maxHeight * 0.02;
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Wallpaper positioned strictly inside bezel bounds
+                    Positioned(
+                      left: padLeft,
+                      top: padTop,
+                      right: padRight,
+                      bottom: padBottom,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(isTablet ? 16 : 30),
+                        child: child,
+                      ),
+                    ),
+                    // Mockup frame overlay on top
+                    Positioned.fill(
+                      child: Image.asset(
+                        frameAsset,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-        ],
+        ),
       ),
     );
   }

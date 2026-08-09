@@ -111,35 +111,35 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   Widget _buildVideoBackground() {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      width: double.infinity,
-      child: _isVideoInitialized && _videoController != null && !_hasVideoError
-          ? FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _videoController!.value.size.width,
-                height: _videoController!.value.size.height,
-                child: VideoPlayer(_videoController!),
-              ),
-            )
-          : Stack(
-              fit: StackFit.expand,
-              children: [
-                CNImage(imageUrl: widget.wall.thumbnail, isOriginalImg: true),
-                if (!_hasVideoError)
-                  const Center(
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: bgDarkAccentColor,
+    return Positioned.fill(
+      child: SizedBox.expand(
+        child: _isVideoInitialized && _videoController != null && !_hasVideoError
+            ? FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController!.value.size.width,
+                  height: _videoController!.value.size.height,
+                  child: VideoPlayer(_videoController!),
+                ),
+              )
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  CNImage(imageUrl: widget.wall.thumbnail, isOriginalImg: true),
+                  if (!_hasVideoError)
+                    const Center(
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: bgDarkAccentColor,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -176,36 +176,45 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   Widget _buildBottomUI() {
+    Widget bottomContent = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTagsUI(),
+                  const SizedBox(height: 10),
+                  _buildDetailsUI(),
+                ],
+              ),
+            ),
+            _buildUtilsUI(),
+          ],
+        ),
+        _buildActionBtnUI(),
+        const AdsWidget(clearNavBar: false, bottomPadding: 0),
+      ],
+    );
+
+    if (ResponsiveHelper.isTablet(context)) {
+      bottomContent = ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: bottomContent,
+      );
+    }
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTagsUI(),
-                        const SizedBox(height: 10),
-                        _buildDetailsUI(),
-                      ],
-                    ),
-                  ),
-                  _buildUtilsUI(),
-                ],
-              ),
-              _buildActionBtnUI(),
-              const AdsWidget(clearNavBar: false, bottomPadding: 0),
-            ],
-          ),
+          child: bottomContent,
         ),
       ),
     );

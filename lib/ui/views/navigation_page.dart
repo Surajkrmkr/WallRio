@@ -326,36 +326,58 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
   }
 
   Widget _buildCupertinoTabBar(Navigation provider, bool isDarkMode) {
-    return CNTabBar(
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final double iconSize = isTablet ? 25.0 : 20.0;
+    Widget bar = CNTabBar(
       currentIndex: provider.index,
       onTap: (index) => provider.setIndex = index,
       tint: bgDarkAccentColor,
-      items: const [
-        CNTabBarItem(icon: CNSymbol('safari.fill', size: 20)),
-        CNTabBarItem(icon: CNSymbol('livephoto', size: 20)),
-        CNTabBarItem(icon: CNSymbol('square.grid.2x2.fill', size: 20)),
-        CNTabBarItem(icon: CNSymbol('list.bullet', size: 20)),
-        CNTabBarItem(icon: CNSymbol('heart.fill', size: 20)),
+      items: [
+        CNTabBarItem(icon: CNSymbol('safari.fill', size: iconSize)),
+        CNTabBarItem(icon: CNSymbol('livephoto', size: iconSize)),
+        CNTabBarItem(icon: CNSymbol('square.grid.2x2.fill', size: iconSize)),
+        CNTabBarItem(icon: CNSymbol('list.bullet', size: iconSize)),
+        CNTabBarItem(icon: CNSymbol('heart.fill', size: iconSize)),
       ],
     );
+
+    if (isTablet) {
+      final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+      final double maxW = isLandscape ? 720.0 : 640.0;
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxW),
+          child: bar,
+        ),
+      );
+    }
+    return bar;
   }
 
   Widget _buildCustomTabBar(Navigation provider, bool isDarkMode) {
-    return Padding(
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final double barHeight = isTablet ? (isLandscape ? 72.0 : 68.0) : 61.0;
+    final double pillHeight = isTablet ? (isLandscape ? 54.0 : 50.0) : 45.0;
+    final double maxW = isTablet ? (isLandscape ? 720.0 : 640.0) : 560.0;
+
+    Widget barContent = Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 0, 20, MediaQuery.of(context).padding.bottom + 16),
+          20, 0, 20, MediaQuery.of(context).padding.bottom + (isTablet ? 20 : 16)),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(40),
+        borderRadius: BorderRadius.circular(44),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-            height: 61,
+            height: barHeight,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
               color: isDarkMode
                   ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
                   : Colors.white.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(44),
               border: Border.all(
                 color: isDarkMode
                     ? Colors.white.withValues(alpha: 0.08)
@@ -383,12 +405,12 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
                   child: FractionallySizedBox(
                     widthFactor: 0.2,
                     child: Container(
-                      height: 45,
+                      height: pillHeight,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
                         color:
                             isDarkMode ? const Color(0xFF121212) : Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(34),
                         border: Border.all(
                           color: isDarkMode
                               ? Colors.white.withValues(alpha: 0.05)
@@ -424,10 +446,24 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
         ),
       ),
     );
+
+    if (isTablet) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxW),
+          child: barContent,
+        ),
+      );
+    }
+
+    return barContent;
   }
 
   Widget _buildNavItem(
       int index, String iconName, Navigation provider, bool isDarkMode) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final double iconHeight = isTablet ? 25.0 : 18.5;
     bool isSelected = provider.index == index;
     return Expanded(
       child: GestureDetector(
@@ -436,7 +472,7 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
         child: Center(
           child: SvgPicture.asset(
             'assets/icons/$iconName.svg',
-            height: 18.5,
+            height: iconHeight,
             colorFilter: ColorFilter.mode(
               isSelected
                   ? (isDarkMode ? Colors.white : Colors.black)

@@ -27,7 +27,7 @@ class UserBottomSheet extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final sheetColor = isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7);
 
-    return glassSheetBackground(
+    Widget sheetContent = glassSheetBackground(
       Container(
         decoration: BoxDecoration(
           color: supportsGlassSheet ? Colors.transparent : sheetColor,
@@ -103,6 +103,18 @@ class UserBottomSheet extends StatelessWidget {
       ),
       tint: sheetColor,
     );
+
+    if (ResponsiveHelper.isTablet(context)) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 540),
+          child: sheetContent,
+        ),
+      );
+    }
+
+    return sheetContent;
   }
 
   Widget _buildAuthBtn(BuildContext context, AuthProvider authProvider) {

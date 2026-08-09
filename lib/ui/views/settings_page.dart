@@ -184,10 +184,16 @@ class SettingsPage extends StatelessWidget {
                 text: 'Settings'),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  childCount: sections.length,
-                  (context, i) => sections[i],
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: ResponsiveHelper.getMaxContentWidth(context),
+                    ),
+                    child: Column(
+                      children: sections,
+                    ),
+                  ),
                 ),
               ),
             ),

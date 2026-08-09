@@ -29,17 +29,23 @@ class _ScrollableWallpaperStackState extends State<ScrollableWallpaperStack> {
   double _page = 0;
   Timer? _autoTimer;
   late int _itemCount;
+  late int _initialPage;
 
   @override
   void initState() {
     super.initState();
-    _itemCount = widget.walls.take(6).length;
+    final previewWalls = widget.walls.take(6).toList();
+    _itemCount = previewWalls.length;
+    // Start at a large multiple of _itemCount so scrolling can move infinitely forward and backward
+    _initialPage = _itemCount > 0 ? 1000 - (1000 % _itemCount) : 0;
+    _page = _initialPage.toDouble();
+
     _controller = PageController(
-      initialPage: 0,
+      initialPage: _initialPage,
       viewportFraction: widget.viewportFraction,
     );
     _controller.addListener(() {
-      if (mounted) setState(() => _page = _controller.page ?? 0);
+      if (mounted) setState(() => _page = _controller.page ?? _initialPage.toDouble());
     });
     _startAutoRotate();
   }
@@ -49,9 +55,9 @@ class _ScrollableWallpaperStackState extends State<ScrollableWallpaperStack> {
     _autoTimer?.cancel();
     _autoTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || !_controller.hasClients) return;
-      final next = ((_controller.page ?? 0).round() + 1) % _itemCount;
+      final current = (_controller.page ?? _initialPage.toDouble()).round();
       _controller.animateToPage(
-        next,
+        current + 1,
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
       );
@@ -95,15 +101,15 @@ class _ScrollableWallpaperStackState extends State<ScrollableWallpaperStack> {
         child: PageView.builder(
           controller: _controller,
           padEnds: false,
-          itemCount: previewWalls.length,
           itemBuilder: (context, index) {
+            final wallIndex = index % previewWalls.length;
             final delta = (_page - index).clamp(-1.0, 1.0);
             final scale = 1 - (delta.abs() * 0.05);
             return Padding(
               padding: const EdgeInsets.only(right: 10),
               child: Transform.scale(
                 scale: scale,
-                child: WallpaperPreviewTile(wall: previewWalls[index]),
+                child: WallpaperPreviewTile(wall: previewWalls[wallIndex]),
               ),
             );
           },

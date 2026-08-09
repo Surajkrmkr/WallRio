@@ -129,14 +129,14 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
-  List<dynamic> _buildItemList(List<Walls?> walls) {
+  List<dynamic> _buildItemList(List<Walls?> walls, int columnsCount) {
     final items = <dynamic>[];
     int wallIndex = 0;
     int rowCount = 0;
     while (wallIndex < walls.length) {
-      final end = (wallIndex + 3).clamp(0, walls.length);
+      final end = (wallIndex + columnsCount).clamp(0, walls.length);
       items.add(walls.sublist(wallIndex, end));
-      wallIndex += 3;
+      wallIndex += columnsCount;
       rowCount++;
       if (rowCount % 3 == 0 && wallIndex < walls.length) {
         items.add(true);
@@ -146,6 +146,7 @@ class _GridPageState extends State<GridPage> {
   }
 
   Widget _buildListUI(BuildContext context) {
+    final columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
     return SliverPadding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
       sliver: Consumer<WallRio>(builder: (context, provider, _) {
@@ -157,14 +158,14 @@ class _GridPageState extends State<GridPage> {
             ? walls.sublist(0, provider.visibleCount)
             : walls;
 
-        final items = _buildItemList(pagedWalls);
+        final items = _buildItemList(pagedWalls, columnsCount);
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: items.length,
             (context, index) {
               final item = items[index];
               if (item is bool) return _buildAdRow();
-              return _buildWallRow(item as List<Walls?>, context);
+              return _buildWallRow(item as List<Walls?>, columnsCount, context);
             },
           ),
         );
@@ -172,18 +173,18 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
-  Widget _buildWallRow(List<Walls?> rowWalls, BuildContext context) {
+  Widget _buildWallRow(List<Walls?> rowWalls, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (int i = 0; i < 3; i++) ...[
+          for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
               child: i < rowWalls.length && rowWalls[i] != null
                   ? AspectRatio(
-                      aspectRatio: 0.5,
+                      aspectRatio: 0.55,
                       child: _buildCard(rowWalls[i]!, context),
                     )
                   : const SizedBox(),

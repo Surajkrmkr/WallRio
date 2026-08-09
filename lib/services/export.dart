@@ -7,3 +7,4 @@ export 'premium/ios_premium_service.dart';
 export 'premium/premium_service.dart';
 export 'theme_data.dart';
 export 'tracking_service.dart';
+export 'responsive.dart';

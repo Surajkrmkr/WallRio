@@ -8,6 +8,8 @@ import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/widgets/collection_unlock_sheet.dart';
 import 'package:wallrio/ui/widgets/scrollable_wallpaper_stack.dart';
 
+import 'package:wallrio/services/export.dart';
+
 /// Premium showcase card for a single collection: a horizontally scrollable
 /// wallpaper stack up front, with the collection's name/designer/wallpaper
 /// count below. Reuses the existing premium-access check only for the lock
@@ -53,72 +55,75 @@ class PremiumCollectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final hasAccess = _hasAccessToCollection(context);
     final unlockPrice = hasAccess ? null : _unlockPrice(context);
     final walls = collection.walls ?? [];
-    // Matches the "card on white scaffold" token used elsewhere (settings_page.dart) —
-    // plain white here would be invisible against the light-theme scaffold background.
     final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final double stackHeight = isTablet ? 270.0 : 320.0;
 
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 28),
+        padding: EdgeInsets.only(bottom: isTablet ? 0 : 28),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: sheetColor,
             borderRadius: BorderRadius.circular(28),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ScrollableWallpaperStack(walls: walls, height: 320),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            collection.name,
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              color: isDarkMode ? whiteColor : blackColor,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ScrollableWallpaperStack(walls: walls, height: stackHeight),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              collection.name,
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                color: isDarkMode ? whiteColor : blackColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${walls.length} Wallpapers',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: (isDarkMode ? whiteColor : blackColor).withValues(alpha: 0.35),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${walls.length} Wallpapers',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: (isDarkMode ? whiteColor : blackColor).withValues(alpha: 0.35),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (hasAccess)
-                      _buildUnlockedBadge(isDarkMode)
-                    else if (unlockPrice != null)
-                      GestureDetector(
-                        onTap: () => _showUnlockSheet(context),
-                        child: _buildBadge(unlockPrice),
-                      ),
-                  ],
+                      const SizedBox(width: 12),
+                      if (hasAccess)
+                        _buildUnlockedBadge(isDarkMode)
+                      else if (unlockPrice != null)
+                        GestureDetector(
+                          onTap: () => _showUnlockSheet(context),
+                          child: _buildBadge(unlockPrice),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

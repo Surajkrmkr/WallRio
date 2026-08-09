@@ -59,16 +59,16 @@ class TrendingWallGridWidget extends StatelessWidget {
   }
 
   // Returns a list where each element is either List<Walls> (a row) or true (ad marker).
-  List<dynamic> _buildItemList(List<Walls> walls) {
+  List<dynamic> _buildItemList(List<Walls> walls, int columnsCount) {
     final items = <dynamic>[];
     int wallIndex = 0;
     int rowCount = 0;
     while (wallIndex < walls.length) {
-      final end = (wallIndex + 3).clamp(0, walls.length);
+      final end = (wallIndex + columnsCount).clamp(0, walls.length);
       items.add(walls.sublist(wallIndex, end));
-      wallIndex += 3;
+      wallIndex += columnsCount;
       rowCount++;
-      // Insert ad after every 3 rows (9 walls), but not at the very end
+      // Insert ad after every 3 rows, but not at the very end
       if (rowCount % 3 == 0 && wallIndex < walls.length) {
         items.add(true);
       }
@@ -78,17 +78,19 @@ class TrendingWallGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
+
     return Consumer<WallRio>(builder: (context, provider, _) {
       if (provider.isLoading) {
         return SliverPadding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 15),
           sliver: SliverGrid.count(
-            crossAxisCount: 3,
+            crossAxisCount: columnsCount,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 0.5,
+            childAspectRatio: 0.55,
             children: List.generate(
-              9,
+              columnsCount * 3,
               (_) => const ShimmerWidget(
                   height: 100, width: double.infinity, radius: 16),
             ),
@@ -107,7 +109,7 @@ class TrendingWallGridWidget extends StatelessWidget {
           ),
         );
       }
-      final items = _buildItemList(walls);
+      final items = _buildItemList(walls, columnsCount);
       return SliverPadding(
         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         sliver: SliverList(
@@ -117,12 +119,12 @@ class TrendingWallGridWidget extends StatelessWidget {
               final item = items[index];
               if (item is bool) return _buildAdRow();
               
-              // Only apply featured layout for the first row of "All" filter in main grid
-              if (index == 0 && !isActionGrid && filterIndex == 0 && (item as List<Walls>).length == 3) {
+              // Only apply featured layout for the first row of "All" filter in main grid on phones
+              if (index == 0 && !isActionGrid && filterIndex == 0 && (item as List<Walls>).length == 3 && !ResponsiveHelper.isTablet(context)) {
                 return _buildFeaturedRow(item, context);
               }
               
-              return _buildWallRow(item as List<Walls>, context);
+              return _buildWallRow(item as List<Walls>, columnsCount, context);
             },
           ),
         ),
@@ -174,13 +176,13 @@ class TrendingWallGridWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildWallRow(List<Walls> rowWalls, BuildContext context) {
+  Widget _buildWallRow(List<Walls> rowWalls, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (int i = 0; i < 3; i++) ...[
+          for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
               child: i < rowWalls.length

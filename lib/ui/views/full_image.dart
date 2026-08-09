@@ -153,11 +153,9 @@ class _FullImageState extends State<FullImage> {
     );
   }
 
-  SizedBox _buildImageUI() {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      child: GestureDetector(
-        onTap: () => Navigator.pop(context),
+  Widget _buildImageUI() {
+    return Positioned.fill(
+      child: SizedBox.expand(
         child: CNImage(
           imageUrl: widget.wallModel.url,
           isOriginalImg: true,
@@ -167,38 +165,47 @@ class _FullImageState extends State<FullImage> {
   }
 
   Widget _buildBottomUI() {
+    Widget bottomContent = SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildTagsUI(),
+                    const SizedBox(height: 10),
+                    _buildDetailsUI(),
+                  ],
+                ),
+              ),
+              _buildUtilsUI(),
+            ],
+          ),
+          _buildActionBtnUI(),
+          const AdsWidget(clearNavBar: false, bottomPadding: 0),
+        ],
+      ),
+    );
+
+    if (ResponsiveHelper.isTablet(context)) {
+      bottomContent = ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: bottomContent,
+      );
+    }
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 30),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildTagsUI(),
-                          SizedBox(height: 10),
-                          _buildDetailsUI(),
-                        ],
-                      ),
-                    ),
-                    _buildUtilsUI(),
-                  ],
-                ),
-                _buildActionBtnUI(),
-                const AdsWidget(clearNavBar: false, bottomPadding: 0),
-              ],
-            ),
-          ),
+          child: bottomContent,
         ),
       ),
     );

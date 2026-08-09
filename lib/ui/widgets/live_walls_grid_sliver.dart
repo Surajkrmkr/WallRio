@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/views/live_detail_page.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -10,18 +11,19 @@ class LiveWallsGridSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
     return Consumer<LiveWallpaperProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return SliverPadding(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 15),
             sliver: SliverGrid.count(
-              crossAxisCount: 3,
+              crossAxisCount: columnsCount,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: 0.5,
+              childAspectRatio: 0.55,
               children: List.generate(
-                9,
+                columnsCount * 3,
                 (_) => const ShimmerWidget(
                     height: 100, width: double.infinity, radius: 16),
               ),
@@ -58,7 +60,7 @@ class LiveWallsGridSliver extends StatelessWidget {
           );
         }
 
-        final items = _buildItemList(provider.wallList);
+        final items = _buildItemList(provider.wallList, columnsCount);
         return SliverPadding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
           sliver: SliverList(
@@ -73,7 +75,7 @@ class LiveWallsGridSliver extends StatelessWidget {
                         child: AdsWidget(size: AdSize.mediumRectangle)),
                   );
                 }
-                return _buildWallRow(item as List<LiveWallpaper>, context);
+                return _buildWallRow(item as List<LiveWallpaper>, columnsCount, context);
               },
             ),
           ),
@@ -82,32 +84,32 @@ class LiveWallsGridSliver extends StatelessWidget {
     );
   }
 
-  List<dynamic> _buildItemList(List<LiveWallpaper> walls) {
+  List<dynamic> _buildItemList(List<LiveWallpaper> walls, int columnsCount) {
     final items = <dynamic>[];
     int wallIndex = 0;
     int rowCount = 0;
     while (wallIndex < walls.length) {
-      final end = (wallIndex + 3).clamp(0, walls.length);
+      final end = (wallIndex + columnsCount).clamp(0, walls.length);
       items.add(walls.sublist(wallIndex, end));
-      wallIndex += 3;
+      wallIndex += columnsCount;
       rowCount++;
       if (rowCount % 3 == 0 && wallIndex < walls.length) items.add(true);
     }
     return items;
   }
 
-  Widget _buildWallRow(List<LiveWallpaper> rowWalls, BuildContext context) {
+  Widget _buildWallRow(List<LiveWallpaper> rowWalls, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (int i = 0; i < 3; i++) ...[
+          for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
               child: i < rowWalls.length
                   ? AspectRatio(
-                      aspectRatio: 0.5,
+                      aspectRatio: 0.55,
                       child: Hero(
                         tag: 'live_${rowWalls[i].id}',
                         child: LiveWallCard(

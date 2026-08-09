@@ -97,6 +97,40 @@ class _OnboardingScreen3State extends State<OnboardingScreen3> {
       );
     }
     final names = categories.keys.toList();
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    if (isTablet) {
+      final int crossAxisCount = isLandscape ? 4 : 3;
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 1.40,
+            ),
+            itemCount: names.length,
+            itemBuilder: (context, index) {
+              final name = names[index];
+              final thumbnail = (categories[name]?.isNotEmpty ?? false)
+                  ? categories[name]!.first?.thumbnail ?? ''
+                  : '';
+              return _buildCategoryCard(
+                context,
+                name,
+                thumbnail,
+                _selectedVibes.contains(name),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
     final rowCount = _rowCount(names.length);
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),

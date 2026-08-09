@@ -50,14 +50,27 @@ class BannerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = ResponsiveHelper.isTablet(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final double carouselHeight = isTablet
+        ? (isLandscape ? 340.0 : 300.0)
+        : 200.0;
+    final double totalHeight = isTablet
+        ? (isLandscape ? 390.0 : 350.0)
+        : 250.0;
+    final double viewportFraction = isTablet
+        ? (isLandscape ? 0.82 : 0.88)
+        : 0.80;
+
     return Consumer<WallRio>(builder: (context, provider, _) {
       if (provider.isLoading || provider.bannerList.isEmpty) {
         return Padding(
-          padding: EdgeInsets.only(bottom: 20),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: ShimmerWidget(
-              height: 220,
+              height: carouselHeight,
               width: double.infinity,
               radius: 25,
             ),
@@ -65,14 +78,15 @@ class BannerWidget extends StatelessWidget {
         );
       }
       return SizedBox(
-        height: 250,
+        height: totalHeight,
         child: Column(
           children: [
             Expanded(
               child: CarouselSlider(
                 carouselController: carouselController,
                 options: CarouselOptions(
-                  height: 200.0,
+                  height: carouselHeight,
+                  viewportFraction: viewportFraction,
                   autoPlay: true,
                   autoPlayInterval: const Duration(seconds: 8),
                   enlargeCenterPage: true,
