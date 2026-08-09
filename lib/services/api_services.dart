@@ -52,4 +52,47 @@ class ApiServices {
       return WallRioCollection(collections: []);
     }
   }
+
+  static List<dynamic> _flattenList(dynamic item) {
+    if (item is! List) return [];
+    List<dynamic> result = [];
+    for (var element in item) {
+      if (element is List) {
+        result.addAll(_flattenList(element));
+      } else if (element is Map<String, dynamic> || element is Map) {
+        result.add(element);
+      }
+    }
+    return result;
+  }
+
+  static Future<List<Walls>> getDesktopData() async {
+    final client = Dio();
+    String url =
+        'https://gitlab.com/teamshadowsupp/wallriojson/-/raw/main/desktop.json';
+
+    try {
+      final response = await client.get(url);
+
+      if (response.statusCode == 200) {
+        final dynamic decoded = response.data is String
+            ? json.decode(response.data)
+            : response.data;
+        List<dynamic> rawList = [];
+        if (decoded is Map<String, dynamic> && decoded.containsKey('walls')) {
+          rawList = _flattenList(decoded['walls']);
+        } else if (decoded is List) {
+          rawList = _flattenList(decoded);
+        }
+        return rawList
+            .map((v) => Walls.fromJson(Map<String, dynamic>.from(v)))
+            .toList();
+      } else {
+        return [];
+      }
+    } catch (error) {
+      debugPrint('getDesktopData error: $error');
+      return [];
+    }
+  }
 }

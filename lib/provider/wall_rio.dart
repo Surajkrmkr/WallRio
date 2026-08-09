@@ -9,7 +9,9 @@ import 'package:wallrio/services/packages/export.dart';
 
 class WallRio extends ChangeNotifier {
   List<Walls> originalWallList = [];
+  List<Walls> desktopWallList = [];
   List<Walls> actionWallList = [];
+
   List<Walls> queryWallList = [];
   List<Banners> bannerList = [];
   List<Collections> collections = [];
@@ -132,6 +134,18 @@ class WallRio extends ChangeNotifier {
     setCurrentVersion = version;
   }
 
+  Future<void> fetchDesktopWallpapers() async {
+    try {
+      final walls = await ApiServices.getDesktopData();
+      if (walls.isNotEmpty) {
+        desktopWallList = walls;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('fetchDesktopWallpapers error: $e');
+    }
+  }
+
   void getListFromAPI(BuildContext context) async {
     final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
     setIsLoading = true;
@@ -141,6 +155,7 @@ class WallRio extends ChangeNotifier {
     setBannerList = [];
     setCollections = [];
     setSearchData = const Search();
+    await fetchDesktopWallpapers();
     WallRioModel model = await ApiServices.getData();
     if (model.error.isEmpty) {
       setWallList = model.walls;

@@ -165,22 +165,54 @@ class _AdsWidgetState extends State<AdsWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isBannerLoading || UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
-      return Container();
+      return const SizedBox.shrink();
     }
 
-    // Increased padding to clear the custom floating navigation bar
-    // Height: 61 (bar) + 16 (bottom margin) + 16 (safe area approx)
-    final double navBarClearance = (widget.size == AdSize.banner && widget.clearNavBar) ? 85.0 : 0.0;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final double navBarClearance = (widget.size == AdSize.banner && widget.clearNavBar) ? 80.0 : 0.0;
+
+    final double adWidth = bannerAd!.size.width.toDouble();
+    final double adHeight = bannerAd!.size.height.toDouble().clamp(48.0, 60.0);
+
+    Widget adContent = ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? const Color(0xDD1E1E28)
+              : Colors.white.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.08),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: adWidth,
+          height: adHeight,
+          child: AdWidget(ad: bannerAd!),
+        ),
+      ),
+    );
 
     Widget adContainer = Container(
-      color: Colors.transparent,
       margin: EdgeInsets.only(
         bottom: widget.bottomPadding + navBarClearance,
-        top: 10,
+        top: 0,
+        left: 16,
+        right: 16,
       ),
-      width: bannerAd!.size.width.toDouble(),
-      height: bannerAd!.size.height.toDouble(),
-      child: AdWidget(ad: bannerAd!),
+      child: Center(child: adContent),
     );
 
     if (widget.size == AdSize.banner && !widget.clearNavBar) {

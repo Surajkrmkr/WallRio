@@ -47,6 +47,9 @@ class RewardsHubPage extends StatelessWidget {
                         _buildDiamondBalanceCard(progression.diamondsBalance, isDarkMode),
                         const SizedBox(height: 12),
                         _buildDataWarning(isDarkMode),
+                        const SizedBox(height: 24),
+                        _sectionTitle(context, 'What Diamonds Unlock'),
+                        _buildUnlockExamplesRow(context, isDarkMode),
                         const SizedBox(height: 32),
                         _sectionTitle(context, 'Earn Diamonds'),
                         _buildQuestsList(context, progressionProvider, isDarkMode),
@@ -259,12 +262,68 @@ class RewardsHubPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Use diamonds to unlock premium collections for free.',
+            'Use diamonds to unlock premium wallpapers & dynamic live content.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUnlockExamplesRow(BuildContext context, bool isDarkMode) {
+    Widget exampleItem(String iconStr, String title, String costStr) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          decoration: BoxDecoration(
+            color: isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.05),
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(iconStr, style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: bgDarkAccentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  costStr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: bgDarkAccentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        exampleItem('🖼️', 'Static Wallpaper', '20 💎'),
+        const SizedBox(width: 10),
+        exampleItem('🎥', 'Live Wallpaper', '30 💎'),
+        const SizedBox(width: 10),
+        exampleItem('📦', 'Collection Pack', 'Pro / IAP'),
+      ],
     );
   }
 

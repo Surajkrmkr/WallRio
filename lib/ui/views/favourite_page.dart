@@ -34,25 +34,20 @@ class FavouritePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    return Stack(
-      children: [
-        CustomScrollView(
-          primary: false,
-          slivers: [
-            const SliverAppBarWidget(
-                showLogo: false,
-                showSearchBtn: true,
-                text: "Favourites",
-                secondaryText: "",
-                userProfileIconRight: false,
-                showUserProfileIcon: true),
-            if (!authProvider.isLoggedIn)
-              _buildGuestUI(context)
-            else
-              _buildListUI(context)
-          ],
-        ),
-        const AdsWidget()
+    return CustomScrollView(
+      primary: false,
+      slivers: [
+        const SliverAppBarWidget(
+            showLogo: false,
+            showSearchBtn: true,
+            text: "Favourites",
+            secondaryText: "",
+            userProfileIconRight: false,
+            showUserProfileIcon: true),
+        if (!authProvider.isLoggedIn)
+          _buildGuestUI(context)
+        else
+          _buildListUI(context)
       ],
     );
   }
@@ -136,6 +131,40 @@ class FavouritePage extends StatelessWidget {
     );
   }
 
+  List<List<dynamic>> _buildItemList(List<Walls> walls, int columnsCount) {
+    final allGridItems = <dynamic>[];
+    int wallCounter = 0;
+
+    for (int i = 0; i < walls.length; i++) {
+      allGridItems.add(walls[i]);
+      wallCounter++;
+
+      if (wallCounter == 6 && (i + 1) < walls.length) {
+        allGridItems.add('AD_TILE');
+        wallCounter = 0;
+      }
+    }
+
+    final rows = <List<dynamic>>[];
+    for (int i = 0; i < allGridItems.length; i += columnsCount) {
+      final end = (i + columnsCount).clamp(0, allGridItems.length);
+      rows.add(allGridItems.sublist(i, end));
+    }
+    return rows;
+  }
+
+  List<dynamic> _buildFeedItems(List<Walls> walls, int columnsCount) {
+    final rows = _buildItemList(walls, columnsCount);
+    final feed = <dynamic>[];
+    for (int i = 0; i < rows.length; i++) {
+      feed.add(rows[i]);
+      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+        feed.add('INLINE_BANNER_AD');
+      }
+    }
+    return feed;
+  }
+
   Widget _buildListUI(BuildContext context) {
     return Consumer<FavouriteProvider>(builder: (context, provider, _) {
       final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
@@ -165,34 +194,64 @@ class FavouritePage extends StatelessWidget {
         );
       }
       walls = walls.reversed.toList();
+      final feedItems = _buildFeedItems(walls, columnsCount);
+
       return SliverPadding(
-          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
-          sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columnsCount,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.55),
-              delegate: SliverChildBuilderDelegate(
-                  childCount: walls.length,
-                  (context, index) => Hero(
-                        tag: walls[index].url,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Stack(fit: StackFit.expand, children: [
-                            CNImage(imageUrl: walls[index].thumbnail),
-                            Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                    onTap: () =>
-                                        _onTapHandler(context, walls[index]),
-                                    onLongPress: () => _onLongPressHandler(
-                                        context, walls[index]),
-                                    splashColor: blackColor.withValues(alpha: 0.3))),
-                            _buildImgDetailsUI(context, walls[index]),
-                          ]),
-                        ),
-                      ))));
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: feedItems.length,
+            (context, index) {
+              final item = feedItems[index];
+              if (item == 'INLINE_BANNER_AD') {
+                return const InlineBannerAdWidget();
+              }
+              final rowItems = item as List<dynamic>;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < columnsCount; i++) ...[
+                      if (i > 0) const SizedBox(width: 10),
+                      Expanded(
+                        child: i < rowItems.length
+                            ? AspectRatio(
+                                aspectRatio: 0.55,
+                                child: rowItems[i] is Walls
+                                    ? Hero(
+                                        tag: (rowItems[i] as Walls).url,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(15),
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              CNImage(imageUrl: (rowItems[i] as Walls).thumbnail),
+                                              Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () => _onTapHandler(context, rowItems[i] as Walls),
+                                                  onLongPress: () => _onLongPressHandler(context, rowItems[i] as Walls),
+                                                  splashColor: blackColor.withValues(alpha: 0.3),
+                                                ),
+                                              ),
+                                              _buildImgDetailsUI(context, rowItems[i] as Walls),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : const SponsoredAdCard(),
+                              )
+                            : const SizedBox(),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      );
     });
   }
 

@@ -109,6 +109,27 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> buyProductById(String rawProductId) async {
+    final String shortId = rawProductId.split('.').last;
+    final String fullProductId = rawProductId.startsWith('com.wallrio.collection.')
+        ? rawProductId
+        : 'com.wallrio.collection.$rawProductId';
+
+    final idsToTry = {fullProductId, shortId, rawProductId};
+    await fetchProducts(idsToTry);
+
+    final product = products.cast<ProductDetails?>().firstWhere(
+          (p) => p != null && (idsToTry.contains(p.id) || p.id.endsWith(shortId)),
+          orElse: () => null,
+        );
+
+    if (product != null) {
+      await buyProduct(product);
+      return true;
+    }
+    return false;
+  }
+
   Future<void> restorePurchases() async {
     await _service.restorePurchases();
     notifyListeners();

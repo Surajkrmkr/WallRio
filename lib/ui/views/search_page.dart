@@ -57,31 +57,26 @@ class SearchPage extends StatelessWidget {
           Provider.of<WallRio>(context, listen: false).resetToDefault();
         },
         child: SafeArea(
-          child: Stack(
-            children: [
-              CustomScrollView(controller: scrollController, slivers: [
-                const SliverAppBarWidget(
-                    showLogo: false,
-                    showSearchBtn: false,
-                    centeredTitle: true,
-                    showBackBtn: true,
-                    clearSearchedData: true,
-                    secondaryText: "it..",
-                    text: "Search "),
-                _buildSearchBarUI(),
-                _buildBannerUI(context),
-                _buildHeaderUI("Search by colors", context),
-                _buildChipsUI(isColorType: true),
-                _buildHeaderUI("Hot Searches", context),
-                _buildChipsUI(),
-                _buildHeaderUI("Top Picks", context),
-                SliverToBoxAdapter(child: SizedBox(height: 10)),
-                const TrendingWallGridWidget(
-                    isShuffled: false, isActionGrid: true)
-              ]),
-              const AdsWidget(clearNavBar: false)
-            ],
-          ),
+          child: CustomScrollView(controller: scrollController, slivers: [
+            const SliverAppBarWidget(
+                showLogo: false,
+                showSearchBtn: false,
+                centeredTitle: true,
+                showBackBtn: true,
+                clearSearchedData: true,
+                secondaryText: "it..",
+                text: "Search "),
+            _buildSearchBarUI(),
+            _buildBannerUI(context),
+            _buildHeaderUI("Search by colors", context),
+            _buildChipsUI(isColorType: true),
+            _buildHeaderUI("Hot Searches", context),
+            _buildChipsUI(),
+            _buildHeaderUI("Top Picks", context),
+            SliverToBoxAdapter(child: SizedBox(height: 10)),
+            const TrendingWallGridWidget(
+                isShuffled: false, isActionGrid: true)
+          ]),
         ),
       ),
     );

@@ -12,3 +12,6 @@ export 'auto_wallpaper_settings_page.dart';
 export 'collection_page.dart';
 export 'rewards_hub_page.dart';
 export 'personalization_hub_page.dart';
+export 'desktop_wallpapers_page.dart';
+export 'desktop_wallpaper_detail_page.dart';
+export 'desktop_fullscreen_viewer.dart';

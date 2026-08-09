@@ -25,25 +25,18 @@ class _LivePageState extends State<LivePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: CustomScrollView(
-            primary: false,
-            slivers: [
-              const SliverAppBarWidget(
-                showLogo: false,
-                showSearchBtn: true,
-                text: 'Dynamic',
-                secondaryText: '',
-                userProfileIconRight: false,
-                showUserProfileIcon: true,
-              ),
-              const LiveWallsGridSliver(),
-            ],
-          ),
+    return CustomScrollView(
+      primary: false,
+      slivers: [
+        const SliverAppBarWidget(
+          showLogo: false,
+          showSearchBtn: true,
+          text: 'Dynamic',
+          secondaryText: '',
+          userProfileIconRight: false,
+          showUserProfileIcon: true,
         ),
-        const AdsWidget(),
+        const LiveWallsGridSliver(),
       ],
     );
   }

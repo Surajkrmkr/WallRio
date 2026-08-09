@@ -26,6 +26,7 @@ class SettingsPage extends StatelessWidget {
         label: 'Appearance',
         children: [
           _darkModeTile(context),
+          _previewQualityTile(context),
           _tile(context,
               icon: Icons.palette_rounded,
               title: 'Personalization Hub',
@@ -454,6 +455,59 @@ class SettingsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(18)),
         );
       },
+    );
+  }
+
+  Widget _previewQualityTile(BuildContext context) {
+    final mode = LivePreviewManager.instance.qualityMode;
+    final modeLabel = mode == 'high'
+        ? 'High (Always play)'
+        : (mode == 'datasaver' ? 'Data Saver (Thumbnails only)' : 'Auto (Balanced)');
+
+    return ListTile(
+      leading: _tileIcon(Icons.video_settings_rounded),
+      title: const Text('Live Preview Quality'),
+      subtitle: Text(modeLabel, style: Theme.of(context).textTheme.labelSmall),
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Live Preview Quality'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () {
+                  LivePreviewManager.instance.setQualityMode('auto');
+                  Navigator.pop(dialogContext);
+                  (context as Element).markNeedsBuild();
+                },
+                child: const Text('Auto (Balanced - Max 3 active)'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  LivePreviewManager.instance.setQualityMode('high');
+                  Navigator.pop(dialogContext);
+                  (context as Element).markNeedsBuild();
+                },
+                child: const Text('High (High quality previews)'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  LivePreviewManager.instance.setQualityMode('datasaver');
+                  Navigator.pop(dialogContext);
+                  (context as Element).markNeedsBuild();
+                },
+                child: const Text('Data Saver (Thumbnails only)'),
+              ),
+            ],
+          ),
+        );
+      },
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 13,
+        color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+      ),
     );
   }
 

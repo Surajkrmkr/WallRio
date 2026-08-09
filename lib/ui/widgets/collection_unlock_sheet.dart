@@ -189,15 +189,16 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
                 onPressed: _isProcessingPurchase
                     ? null
                     : () async {
-                        if (product != null) {
-                          setState(() => _isProcessingPurchase = true);
-                          await subProvider.buyProduct(product);
-                          if (mounted) {
-                            setState(() => _isProcessingPurchase = false);
+                        setState(() => _isProcessingPurchase = true);
+                        final success = await subProvider
+                            .buyProductById(widget.collection.productId);
+                        if (mounted) {
+                          setState(() => _isProcessingPurchase = false);
+                          if (success) {
                             Navigator.pop(context);
+                          } else {
+                            ToastWidget.showToast('Connecting to store...');
                           }
-                        } else {
-                          ToastWidget.showToast('Product store unavailable');
                         }
                       },
                 style: ElevatedButton.styleFrom(

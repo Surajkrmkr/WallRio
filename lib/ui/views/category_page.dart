@@ -32,24 +32,17 @@ class CategoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicatorWidget(
-      child: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              primary: false,
-              slivers: [
-                const SliverAppBarWidget(
-                    showLogo: false,
-                    showSearchBtn: true,
-                    text: "Categories",
-                    secondaryText: "",
-                    userProfileIconRight: false,
-                    showUserProfileIcon: true),
-                _buildCategoryUI(),
-              ],
-            ),
-          ),
-          const AdsWidget(),
+      child: CustomScrollView(
+        primary: false,
+        slivers: [
+          const SliverAppBarWidget(
+              showLogo: false,
+              showSearchBtn: true,
+              text: "Categories",
+              secondaryText: "",
+              userProfileIconRight: false,
+              showUserProfileIcon: true),
+          _buildCategoryUI(),
         ],
       ),
     );
@@ -67,7 +60,7 @@ class CategoryPage extends StatelessWidget {
         return SliverFillRemaining(child: Center(child: Text(provider.error)));
       }
       return SliverPadding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 24),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: provider.categories!.length,

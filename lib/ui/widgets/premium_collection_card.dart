@@ -1,14 +1,9 @@
-import 'dart:io' show Platform;
-
-import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
-import 'package:wallrio/services/theme_data.dart';
-import 'package:wallrio/ui/widgets/collection_unlock_sheet.dart';
 import 'package:wallrio/ui/widgets/scrollable_wallpaper_stack.dart';
-
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/widgets/toast_widget.dart';
 
 /// Premium showcase card for a single collection: a horizontally scrollable
 /// wallpaper stack up front, with the collection's name/designer/wallpaper
@@ -43,13 +38,79 @@ class PremiumCollectionCard extends StatelessWidget {
     return product?.price;
   }
 
-  void _showUnlockSheet(BuildContext context) {
-    CNBottomSheet.show(
+  void _showUnlockConfirmation(BuildContext context) {
+    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+    final String shortId = collection.productId.split('.').last;
+    final String fullProductId = collection.productId.startsWith('com.wallrio.collection.')
+        ? collection.productId
+        : 'com.wallrio.collection.${collection.productId}';
+
+    subProvider.fetchProducts({fullProductId, shortId, collection.productId});
+
+    final wallCount = collection.walls?.length ?? 0;
+    final priceStr = _unlockPrice(context) ?? 'Unlock Collection';
+
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      showDragHandle: Platform.isIOS,
-      builder: (context) => CollectionUnlockSheet(collection: collection),
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          collection.name,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Unlock full access to this pack ($wallCount Wallpapers). Permanent access with high-resolution downloads.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: bgDarkAccentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.workspace_premium_rounded, color: bgDarkAccentColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    priceStr,
+                    style: const TextStyle(
+                      color: bgDarkAccentColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: bgDarkAccentColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await subProvider.buyProductById(collection.productId);
+            },
+            child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -114,10 +175,10 @@ class PremiumCollectionCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       if (hasAccess)
                         _buildUnlockedBadge(isDarkMode)
-                      else if (unlockPrice != null)
+                      else
                         GestureDetector(
-                          onTap: () => _showUnlockSheet(context),
-                          child: _buildBadge(unlockPrice),
+                          onTap: () => _showUnlockConfirmation(context),
+                          child: _buildBadge(unlockPrice ?? 'Unlock'),
                         ),
                     ],
                   ),

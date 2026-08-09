@@ -60,22 +60,18 @@ class LiveWallsGridSliver extends StatelessWidget {
           );
         }
 
-        final items = _buildItemList(provider.wallList, columnsCount);
+        final feedItems = _buildFeedItems(provider.wallList, columnsCount);
         return SliverPadding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              childCount: items.length,
+              childCount: feedItems.length,
               (context, index) {
-                final item = items[index];
-                if (item is bool) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Center(
-                        child: AdsWidget(size: AdSize.mediumRectangle)),
-                  );
+                final item = feedItems[index];
+                if (item == 'INLINE_BANNER_AD') {
+                  return const InlineBannerAdWidget();
                 }
-                return _buildWallRow(item as List<LiveWallpaper>, columnsCount, context);
+                return _buildWallRow(item as List<dynamic>, columnsCount, context);
               },
             ),
           ),
@@ -84,21 +80,41 @@ class LiveWallsGridSliver extends StatelessWidget {
     );
   }
 
-  List<dynamic> _buildItemList(List<LiveWallpaper> walls, int columnsCount) {
-    final items = <dynamic>[];
-    int wallIndex = 0;
-    int rowCount = 0;
-    while (wallIndex < walls.length) {
-      final end = (wallIndex + columnsCount).clamp(0, walls.length);
-      items.add(walls.sublist(wallIndex, end));
-      wallIndex += columnsCount;
-      rowCount++;
-      if (rowCount % 3 == 0 && wallIndex < walls.length) items.add(true);
+  List<List<dynamic>> _buildItemList(List<LiveWallpaper> walls, int columnsCount) {
+    final allGridItems = <dynamic>[];
+    int wallCounter = 0;
+
+    for (int i = 0; i < walls.length; i++) {
+      allGridItems.add(walls[i]);
+      wallCounter++;
+
+      if (wallCounter == 6 && (i + 1) < walls.length) {
+        allGridItems.add('AD_TILE');
+        wallCounter = 0;
+      }
     }
-    return items;
+
+    final rows = <List<dynamic>>[];
+    for (int i = 0; i < allGridItems.length; i += columnsCount) {
+      final end = (i + columnsCount).clamp(0, allGridItems.length);
+      rows.add(allGridItems.sublist(i, end));
+    }
+    return rows;
   }
 
-  Widget _buildWallRow(List<LiveWallpaper> rowWalls, int columnsCount, BuildContext context) {
+  List<dynamic> _buildFeedItems(List<LiveWallpaper> walls, int columnsCount) {
+    final rows = _buildItemList(walls, columnsCount);
+    final feed = <dynamic>[];
+    for (int i = 0; i < rows.length; i++) {
+      feed.add(rows[i]);
+      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+        feed.add('INLINE_BANNER_AD');
+      }
+    }
+    return feed;
+  }
+
+  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -107,22 +123,24 @@ class LiveWallsGridSliver extends StatelessWidget {
           for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
-              child: i < rowWalls.length
+              child: i < rowItems.length
                   ? AspectRatio(
                       aspectRatio: 0.55,
-                      child: Hero(
-                        tag: 'live_${rowWalls[i].id}',
-                        child: LiveWallCard(
-                          wall: rowWalls[i],
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  LiveDetailPage(wall: rowWalls[i]),
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: rowItems[i] is LiveWallpaper
+                          ? Hero(
+                              tag: 'live_${(rowItems[i] as LiveWallpaper).id}',
+                              child: LiveWallCard(
+                                wall: rowItems[i] as LiveWallpaper,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        LiveDetailPage(wall: rowItems[i] as LiveWallpaper),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SponsoredAdCard(),
                     )
                   : const SizedBox(),
             ),

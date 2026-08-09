@@ -13,26 +13,19 @@ class CollectionPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicatorWidget(
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                primary: false,
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  const SliverAppBarWidget(
-                    showLogo: false,
-                    showSearchBtn: true,
-                    text: "Collections",
-                    secondaryText: "",
-                    userProfileIconRight: false,
-                    showUserProfileIcon: true,
-                  ),
-                  _buildCollectionUI(),
-                ],
-              ),
+        child: CustomScrollView(
+          primary: false,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            const SliverAppBarWidget(
+              showLogo: false,
+              showSearchBtn: true,
+              text: "Collections",
+              secondaryText: "",
+              userProfileIconRight: false,
+              showUserProfileIcon: true,
             ),
-            const AdsWidget(),
+            _buildCollectionUI(),
           ],
         ),
       ),
@@ -88,7 +81,7 @@ class CollectionPage extends StatelessWidget {
           isTablet ? 24 : 20,
           8,
           isTablet ? 24 : 20,
-          140,
+          24,
         ),
         sliver: isTablet
             ? SliverGrid(

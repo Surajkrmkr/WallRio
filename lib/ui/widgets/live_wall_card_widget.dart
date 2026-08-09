@@ -8,7 +8,11 @@ class LiveWallCard extends StatelessWidget {
   final LiveWallpaper wall;
   final VoidCallback onTap;
 
-  const LiveWallCard({super.key, required this.wall, required this.onTap});
+  const LiveWallCard({
+    super.key,
+    required this.wall,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

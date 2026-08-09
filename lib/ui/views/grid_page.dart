@@ -107,48 +107,63 @@ class _GridPageState extends State<GridPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            CustomScrollView(
-              controller: scrollController,
-              slivers: [
-                widget.isSearchMode
-                    ? _buildSearchBarUI()
-                    : SliverAppBarWidget(
-                        showLogo: false,
-                        showSearchBtn: false,
-                        text: widget.categoryName,
-                        showBackBtn: true),
-                _buildListUI(context)
-              ],
-            ),
-            const AdsWidget(clearNavBar: false)
+        child: CustomScrollView(
+          controller: scrollController,
+          slivers: [
+            widget.isSearchMode
+                ? _buildSearchBarUI()
+                : SliverAppBarWidget(
+                    showLogo: false,
+                    showSearchBtn: false,
+                    text: widget.categoryName,
+                    showBackBtn: true),
+            _buildListUI(context)
           ],
         ),
       ),
     );
   }
 
-  List<dynamic> _buildItemList(List<Walls?> walls, int columnsCount) {
-    final items = <dynamic>[];
-    int wallIndex = 0;
-    int rowCount = 0;
-    while (wallIndex < walls.length) {
-      final end = (wallIndex + columnsCount).clamp(0, walls.length);
-      items.add(walls.sublist(wallIndex, end));
-      wallIndex += columnsCount;
-      rowCount++;
-      if (rowCount % 3 == 0 && wallIndex < walls.length) {
-        items.add(true);
+  List<List<dynamic>> _buildItemList(List<Walls?> walls, int columnsCount) {
+    final allGridItems = <dynamic>[];
+    int wallCounter = 0;
+
+    for (int i = 0; i < walls.length; i++) {
+      if (walls[i] != null) {
+        allGridItems.add(walls[i]);
+        wallCounter++;
+
+        if (wallCounter == 6 && (i + 1) < walls.length) {
+          allGridItems.add('AD_TILE');
+          wallCounter = 0;
+        }
       }
     }
-    return items;
+
+    final rows = <List<dynamic>>[];
+    for (int i = 0; i < allGridItems.length; i += columnsCount) {
+      final end = (i + columnsCount).clamp(0, allGridItems.length);
+      rows.add(allGridItems.sublist(i, end));
+    }
+    return rows;
+  }
+
+  List<dynamic> _buildFeedItems(List<Walls?> walls, int columnsCount) {
+    final rows = _buildItemList(walls, columnsCount);
+    final feed = <dynamic>[];
+    for (int i = 0; i < rows.length; i++) {
+      feed.add(rows[i]);
+      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+        feed.add('INLINE_BANNER_AD');
+      }
+    }
+    return feed;
   }
 
   Widget _buildListUI(BuildContext context) {
     final columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
     return SliverPadding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
       sliver: Consumer<WallRio>(builder: (context, provider, _) {
         final walls = widget.isSearchMode
             ? List<Walls?>.from(provider.queryWallList)
@@ -158,14 +173,16 @@ class _GridPageState extends State<GridPage> {
             ? walls.sublist(0, provider.visibleCount)
             : walls;
 
-        final items = _buildItemList(pagedWalls, columnsCount);
+        final feedItems = _buildFeedItems(pagedWalls, columnsCount);
         return SliverList(
           delegate: SliverChildBuilderDelegate(
-            childCount: items.length,
+            childCount: feedItems.length,
             (context, index) {
-              final item = items[index];
-              if (item is bool) return _buildAdRow();
-              return _buildWallRow(item as List<Walls?>, columnsCount, context);
+              final item = feedItems[index];
+              if (item == 'INLINE_BANNER_AD') {
+                return const InlineBannerAdWidget();
+              }
+              return _buildWallRow(item as List<dynamic>, columnsCount, context);
             },
           ),
         );
@@ -173,7 +190,7 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
-  Widget _buildWallRow(List<Walls?> rowWalls, int columnsCount, BuildContext context) {
+  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -182,24 +199,17 @@ class _GridPageState extends State<GridPage> {
           for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
-              child: i < rowWalls.length && rowWalls[i] != null
+              child: i < rowItems.length && rowItems[i] != null
                   ? AspectRatio(
                       aspectRatio: 0.55,
-                      child: _buildCard(rowWalls[i]!, context),
+                      child: rowItems[i] is Walls
+                          ? _buildCard(rowItems[i] as Walls, context)
+                          : const SponsoredAdCard(),
                     )
                   : const SizedBox(),
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildAdRow() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: AdsWidget(size: AdSize.mediumRectangle),
       ),
     );
   }

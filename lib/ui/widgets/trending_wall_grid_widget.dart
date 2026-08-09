@@ -58,22 +58,40 @@ class TrendingWallGridWidget extends StatelessWidget {
     return fullList.sublist(0, provider.visibleCount);
   }
 
-  // Returns a list where each element is either List<Walls> (a row) or true (ad marker).
-  List<dynamic> _buildItemList(List<Walls> walls, int columnsCount) {
-    final items = <dynamic>[];
-    int wallIndex = 0;
-    int rowCount = 0;
-    while (wallIndex < walls.length) {
-      final end = (wallIndex + columnsCount).clamp(0, walls.length);
-      items.add(walls.sublist(wallIndex, end));
-      wallIndex += columnsCount;
-      rowCount++;
-      // Insert ad after every 3 rows, but not at the very end
-      if (rowCount % 3 == 0 && wallIndex < walls.length) {
-        items.add(true);
+  // Builds grid rows where every element is either a Wall or an 'AD_TILE' marker occupying 1 grid slot
+  List<List<dynamic>> _buildItemList(List<Walls> walls, int columnsCount) {
+    final allGridItems = <dynamic>[];
+    int wallCounter = 0;
+
+    for (int i = 0; i < walls.length; i++) {
+      allGridItems.add(walls[i]);
+      wallCounter++;
+
+      // Insert 1 native ad tile after every 6 wallpapers
+      if (wallCounter == 6 && (i + 1) < walls.length) {
+        allGridItems.add('AD_TILE');
+        wallCounter = 0;
       }
     }
-    return items;
+
+    final rows = <List<dynamic>>[];
+    for (int i = 0; i < allGridItems.length; i += columnsCount) {
+      final end = (i + columnsCount).clamp(0, allGridItems.length);
+      rows.add(allGridItems.sublist(i, end));
+    }
+    return rows;
+  }
+
+  List<dynamic> _buildFeedItems(List<Walls> walls, int columnsCount) {
+    final rows = _buildItemList(walls, columnsCount);
+    final feed = <dynamic>[];
+    for (int i = 0; i < rows.length; i++) {
+      feed.add(rows[i]);
+      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+        feed.add('INLINE_BANNER_AD');
+      }
+    }
+    return feed;
   }
 
   @override
@@ -109,22 +127,25 @@ class TrendingWallGridWidget extends StatelessWidget {
           ),
         );
       }
-      final items = _buildItemList(walls, columnsCount);
+      final feedItems = _buildFeedItems(walls, columnsCount);
       return SliverPadding(
         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            childCount: items.length,
+            childCount: feedItems.length,
             (context, index) {
-              final item = items[index];
-              if (item is bool) return _buildAdRow();
-              
-              // Only apply featured layout for the first row of "All" filter in main grid on phones
-              if (index == 0 && !isActionGrid && filterIndex == 0 && (item as List<Walls>).length == 3 && !ResponsiveHelper.isTablet(context)) {
-                return _buildFeaturedRow(item, context);
+              final item = feedItems[index];
+              if (item == 'INLINE_BANNER_AD') {
+                return const InlineBannerAdWidget();
               }
-              
-              return _buildWallRow(item as List<Walls>, columnsCount, context);
+              final row = item as List<dynamic>;
+
+              // Only apply featured layout for the first row of "All" filter in main grid on phones if all 3 items are Walls
+              if (index == 0 && !isActionGrid && filterIndex == 0 && row.length == 3 && row.every((element) => element is Walls) && !ResponsiveHelper.isTablet(context)) {
+                return _buildFeaturedRow(row.cast<Walls>(), context);
+              }
+
+              return _buildWallRow(row, columnsCount, context);
             },
           ),
         ),
@@ -147,7 +168,7 @@ class TrendingWallGridWidget extends StatelessWidget {
                 child: _buildImgUI(rowWalls[0], context, isFeatured: true, rank: 1),
               ),
               const SizedBox(width: 10),
-              // Right: Two Small Featured (Matching standard grid items)
+              // Right: Two Small Featured
               Expanded(
                 flex: 1,
                 child: Column(
@@ -176,7 +197,7 @@ class TrendingWallGridWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildWallRow(List<Walls> rowWalls, int columnsCount, BuildContext context) {
+  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -185,24 +206,17 @@ class TrendingWallGridWidget extends StatelessWidget {
           for (int i = 0; i < columnsCount; i++) ...[
             if (i > 0) const SizedBox(width: 10),
             Expanded(
-              child: i < rowWalls.length
+              child: i < rowItems.length
                   ? AspectRatio(
                       aspectRatio: 0.55,
-                      child: _buildImgUI(rowWalls[i], context),
+                      child: rowItems[i] is Walls
+                          ? _buildImgUI(rowItems[i] as Walls, context)
+                          : const SponsoredAdCard(),
                     )
                   : const SizedBox(),
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildAdRow() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: AdsWidget(size: AdSize.mediumRectangle),
       ),
     );
   }
