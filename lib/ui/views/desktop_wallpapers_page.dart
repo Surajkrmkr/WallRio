@@ -91,7 +91,7 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
       wallCounter++;
 
       // Insert 1 native ad tile after every 8 desktop wallpapers
-      if (wallCounter == 8 && (i + 1) < walls.length) {
+      if (!UserProfile.plusMember && wallCounter == 8 && (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
         wallCounter = 0;
       }
@@ -107,7 +107,7 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
       // Insert 1 banner ad after every 4 completed rows
-      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }

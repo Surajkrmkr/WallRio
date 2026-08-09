@@ -27,92 +27,19 @@ class PremiumCollectionCard extends StatelessWidget {
     return isRedeemed || isPurchased;
   }
 
-  String? _unlockPrice(BuildContext context) {
-    final subProvider = Provider.of<SubscriptionProvider>(context);
+  String? _unlockPrice(BuildContext context, {bool listen = true}) {
+    final subProvider = Provider.of<SubscriptionProvider>(context, listen: listen);
+    final String shortId = collection.productId.split('.').last;
     final fullProductId = collection.productId.startsWith('com.wallrio.collection.')
         ? collection.productId
         : 'com.wallrio.collection.${collection.productId}';
     final product = subProvider.products
         .cast<dynamic>()
-        .firstWhere((p) => p.id == fullProductId, orElse: () => null);
+        .firstWhere((p) => p != null && (p.id == fullProductId || p.id == shortId || p.id.endsWith(shortId)), orElse: () => null);
     return product?.price;
   }
 
-  void _showUnlockConfirmation(BuildContext context) {
-    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-    final String shortId = collection.productId.split('.').last;
-    final String fullProductId = collection.productId.startsWith('com.wallrio.collection.')
-        ? collection.productId
-        : 'com.wallrio.collection.${collection.productId}';
 
-    subProvider.fetchProducts({fullProductId, shortId, collection.productId});
-
-    final wallCount = collection.walls?.length ?? 0;
-    final priceStr = _unlockPrice(context) ?? 'Unlock Collection';
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          collection.name,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Unlock full access to this pack ($wallCount Wallpapers). Permanent access with high-resolution downloads.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: bgDarkAccentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.workspace_premium_rounded, color: bgDarkAccentColor, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    priceStr,
-                    style: const TextStyle(
-                      color: bgDarkAccentColor,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: bgDarkAccentColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              await subProvider.buyProductById(collection.productId);
-            },
-            child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +104,10 @@ class PremiumCollectionCard extends StatelessWidget {
                         _buildUnlockedBadge(isDarkMode)
                       else
                         GestureDetector(
-                          onTap: () => _showUnlockConfirmation(context),
+                          onTap: () {
+                            final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+                            subProvider.buyProductById(collection.productId);
+                          },
                           child: _buildBadge(unlockPrice ?? 'Unlock'),
                         ),
                     ],

@@ -434,36 +434,40 @@ class _FullImageState extends State<FullImage> {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: colors.take(8).map((color) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: GestureDetector(
-                  onTap: () => _copyColor(color),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDarkMode
-                            ? Colors.white.withValues(alpha: 0.25)
-                            : Colors.black.withValues(alpha: 0.15),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: colors.take(8).map((color) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () => _copyColor(color),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : Colors.black.withValues(alpha: 0.15),
+                          width: 2,
                         ),
-                      ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ],
       );
@@ -701,12 +705,16 @@ class _FullImageState extends State<FullImage> {
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.download_rounded, size: 18),
                   const SizedBox(width: 6),
-                  Text(
-                    Platform.isAndroid ? "Download" : "Save",
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                  Flexible(
+                    child: Text(
+                      Platform.isAndroid ? "Download" : "Save",
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -731,15 +739,19 @@ class _FullImageState extends State<FullImage> {
             : _showPlusDialog(context, false),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.wallpaper_rounded, size: 18, color: isDarkMode ? Colors.white : bgDarkAccentColor),
             const SizedBox(width: 6),
-            Text(
-              "Apply",
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                color: isDarkMode ? Colors.white : bgDarkAccentColor,
+            Flexible(
+              child: Text(
+                "Apply",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: isDarkMode ? Colors.white : bgDarkAccentColor,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

@@ -275,7 +275,8 @@ class RewardsHubPage extends StatelessWidget {
     Widget exampleItem(String iconStr, String title, String costStr) {
       return Expanded(
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          height: 110,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
           decoration: BoxDecoration(
             color: isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7),
             borderRadius: BorderRadius.circular(18),
@@ -286,17 +287,18 @@ class RewardsHubPage extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(iconStr, style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 6),
+              Text(iconStr, style: const TextStyle(fontSize: 22)),
               Text(
                 title,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: bgDarkAccentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -304,7 +306,7 @@ class RewardsHubPage extends StatelessWidget {
                 child: Text(
                   costStr,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w900,
                     color: bgDarkAccentColor,
                   ),
@@ -319,10 +321,10 @@ class RewardsHubPage extends StatelessWidget {
     return Row(
       children: [
         exampleItem('🖼️', 'Static Wallpaper', '20 💎'),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         exampleItem('🎥', 'Live Wallpaper', '30 💎'),
-        const SizedBox(width: 10),
-        exampleItem('📦', 'Collection Pack', 'Pro / IAP'),
+        const SizedBox(width: 8),
+        exampleItem('🖥️', 'Desktop Wallpaper', '20 💎'),
       ],
     );
   }

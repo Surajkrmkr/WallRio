@@ -139,7 +139,7 @@ class FavouritePage extends StatelessWidget {
       allGridItems.add(walls[i]);
       wallCounter++;
 
-      if (wallCounter == 6 && (i + 1) < walls.length) {
+      if (!UserProfile.plusMember && wallCounter == 6 && (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
         wallCounter = 0;
       }
@@ -158,7 +158,7 @@ class FavouritePage extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if ((i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }

@@ -83,11 +83,6 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
     }
   }
 
-  void _applyImgHandler(BuildContext context) {
-    Provider.of<WallActionProvider>(context, listen: false)
-        .setWall(widget.wallModel.url, context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,31 +205,12 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
+                            horizontal: 22, vertical: 12),
                       ),
-                      icon: const Icon(Icons.download_rounded, size: 18),
+                      icon: const Icon(Icons.download_rounded, size: 20),
                       label: const Text(
-                        "Download",
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _applyImgHandler(context),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.3)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
-                      ),
-                      icon: const Icon(Icons.wallpaper_rounded, size: 18),
-                      label: const Text(
-                        "Apply",
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        "Download Wallpaper",
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                       ),
                     ),
                   ],

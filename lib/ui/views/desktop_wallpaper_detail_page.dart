@@ -73,16 +73,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     }
   }
 
-  void _applyImgHandler(BuildContext context) {
-    Provider.of<WallActionProvider>(context, listen: false)
-        .setWall(widget.wallModel.url, context);
-  }
-
-  void _showPlusDialog(BuildContext context, bool isForDownload) {
+  void _showPlusDialog(BuildContext context) {
     if (UserProfile.plusMember ||
         !widget.wallModel.isPremium ||
         _isSessionUnlocked) {
-      isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
+      _downloadHandler(context);
       return;
     }
 
@@ -100,17 +95,20 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
         onUnlocked: () {
           setState(() => _isSessionUnlocked = true);
           Navigator.pop(context);
-          isForDownload ? _downloadHandler(context) : _applyImgHandler(context);
+          _downloadHandler(context);
         },
       ),
     );
   }
 
   void _shareWallpaper() {
+    final appLink = Platform.isIOS
+        ? 'https://apps.apple.com/app/id6474136287'
+        : 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
     SharePlus.instance.share(
       ShareParams(
         text:
-            'Check out this ultra-wide desktop wallpaper "${widget.wallModel.name}" on WallRio! ${widget.wallModel.url}',
+            'Check out "${widget.wallModel.name}" desktop wallpaper on WallRio! Download WallRio app now: $appLink',
       ),
     );
   }
@@ -645,10 +643,10 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                     ),
                   ),
                 ),
-                // Desktop Badge top left
+                // Desktop Badge top right
                 Positioned(
                   top: 6,
-                  left: 6,
+                  right: 6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -678,7 +676,7 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                     ),
                   ),
                 ),
-                // Premium Badge top right
+                // Premium Badge top left
                 VerifyIconWidget(visibility: !wall.isPremium),
                 // Wallpaper Title & Resolution Tag bottom left
                 Positioned(
@@ -759,73 +757,53 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
       ),
       child: Row(
         children: [
-          // Download (Primary Action)
+          // Download (Single Primary Action)
           Expanded(
-            flex: 3,
-            child: ElevatedButton.icon(
-              onPressed: () => _showPlusDialog(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: bgDarkAccentColor,
-                foregroundColor: Colors.white,
-                elevation: 3,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _showPlusDialog(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: bgDarkAccentColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.download_rounded, size: 20),
-              label: const Text(
-                "DOWNLOAD",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  letterSpacing: 0.6,
+                icon: const Icon(Icons.download_rounded, size: 22),
+                label: const Text(
+                  "DOWNLOAD WALLPAPER",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          // Apply / Set Wallpaper Action
-          Expanded(
-            flex: 2,
-            child: OutlinedButton.icon(
-              onPressed: () => _showPlusDialog(context, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: isDarkMode ? Colors.white : Colors.black,
-                side: BorderSide(
-                  color: (isDarkMode ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.25),
-                  width: 1.2,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              icon: const Icon(Icons.wallpaper_rounded, size: 18),
-              label: const Text(
-                "APPLY",
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12.5,
-                  letterSpacing: 0.4,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           // Share Action Button
-          IconButton(
-            onPressed: _shareWallpaper,
-            style: IconButton.styleFrom(
-              backgroundColor: (isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.08),
-              padding: const EdgeInsets.all(12),
-            ),
-            icon: Icon(
-              Icons.share_rounded,
-              color: isDarkMode ? Colors.white : Colors.black,
-              size: 20,
+          SizedBox(
+            height: 52,
+            width: 52,
+            child: IconButton(
+              onPressed: _shareWallpaper,
+              style: IconButton.styleFrom(
+                backgroundColor: (isDarkMode ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              icon: Icon(
+                Icons.share_rounded,
+                color: isDarkMode ? Colors.white : Colors.black,
+                size: 20,
+              ),
             ),
           ),
         ],

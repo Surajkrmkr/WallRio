@@ -35,7 +35,7 @@ class _LivePageState extends State<LivePage> {
             const SliverAppBarWidget(
               showLogo: false,
               showSearchBtn: true,
-              text: 'Trending Live',
+              text: 'Dynamic',
               secondaryText: '',
               showBackBtn: true,
               userProfileIconRight: false,
