@@ -57,22 +57,33 @@ class MainActivity : FlutterActivity() {
 
     private fun setAppIcon(iconKey: String) {
         val pm = packageManager
+        val mainComponent = ComponentName(this, "com.shadowteam.wallrio.MainActivity")
         val targetAlias = "com.shadowteam.wallrio.$iconKey"
+        val isDefault = iconKey == "icon_default" || iconKey == "default"
+
+        val mainState = if (isDefault) {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        } else {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+
+        if (pm.getComponentEnabledSetting(mainComponent) != mainState) {
+            pm.setComponentEnabledSetting(
+                mainComponent,
+                mainState,
+                PackageManager.DONT_KILL_APP
+            )
+        }
 
         for (alias in iconAliases) {
-            val component = ComponentName(this, alias)
-            var newState = if (alias == targetAlias) {
+            val newState = if (!isDefault && alias == targetAlias) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
 
+            val component = ComponentName(this, alias)
             val currentState = pm.getComponentEnabledSetting(component)
-            
-            // The default icon is enabled by default in the manifest.
-            if (alias == "com.shadowteam.wallrio.icon_default" && alias == targetAlias && currentState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
-                newState = PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-            }
 
             if (currentState != newState) {
                 pm.setComponentEnabledSetting(

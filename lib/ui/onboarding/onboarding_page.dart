@@ -69,16 +69,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _goToNextPage() async {
+    if (!mounted) return;
     final provider = Provider.of<OnboardingProvider>(context, listen: false);
-    final nextStep = (_pageController.page ?? 0).round() + 1;
+    final currentPage = _pageController.hasClients ? (_pageController.page ?? 0).round() : 0;
+    final nextStep = currentPage + 1;
     await provider.saveStep(nextStep);
+    if (!mounted) return;
 
     if (nextStep == 3 && UserProfile.plusMember) {
-      if (mounted) _completeOnboarding();
+      _completeOnboarding();
       return;
     }
 
-    if (mounted) {
+    if (_pageController.hasClients) {
       _pageController.animateToPage(
         nextStep.clamp(0, 3),
         duration: const Duration(milliseconds: 500),
@@ -88,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _completeOnboarding() async {
-    if (_completing) return;
+    if (_completing || !mounted) return;
     _completing = true;
     FirebaseAnalytics.instance.logTutorialComplete();
     final currentUser = FirebaseAuth.instance.currentUser;

@@ -203,7 +203,7 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
                                   ? null
                                   : () async {
                                       final ok = await authProvider.signIn();
-                                      if (ok) widget.onSignedIn();
+                                      if (ok && mounted) widget.onSignedIn();
                                     },
                               icon: Image.asset("assets/google_logo.png", height: 26),
                               tooltip: "Sign In with Google",
@@ -215,7 +215,7 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
                                     ? null
                                     : () async {
                                         final ok = await authProvider.signInWithApple();
-                                        if (ok) widget.onSignedIn();
+                                        if (ok && mounted) widget.onSignedIn();
                                       },
                                 icon: const Icon(Icons.apple, color: Colors.black, size: 30),
                                 tooltip: "Sign In with Apple",

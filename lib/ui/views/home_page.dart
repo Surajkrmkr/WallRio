@@ -35,7 +35,8 @@ class _HomePageState extends State<HomePage> {
     _isPrefetched = true;
 
     final wallRio = Provider.of<WallRio>(context, listen: false);
-    final liveProvider = Provider.of<LiveWallpaperProvider>(context, listen: false);
+    final liveProvider =
+        Provider.of<LiveWallpaperProvider>(context, listen: false);
 
     // 1. Prefetch next 10 wallpaper thumbnails
     final staticWalls = wallRio.originalWallList.take(10);
@@ -54,7 +55,9 @@ class _HomePageState extends State<HomePage> {
     }
     if (liveWalls.isNotEmpty) {
       final firstLive = liveWalls.first;
-      final videoUrl = firstLive.previewVideo.isNotEmpty ? firstLive.previewVideo : firstLive.videoUrl;
+      final videoUrl = firstLive.previewVideo.isNotEmpty
+          ? firstLive.previewVideo
+          : firstLive.videoUrl;
       if (videoUrl.isNotEmpty) {
         LivePreviewManager.instance.getController(videoUrl);
       }
@@ -82,14 +85,13 @@ class _HomePageState extends State<HomePage> {
                 SliverToBoxAdapter(child: _buildFilterRow()),
                 if (_filterIndex == 0) ...[
                   SliverToBoxAdapter(child: _buildTrendingLiveSection(context)),
-                  SliverToBoxAdapter(child: _buildDesktopWallpapersSection(context)),
+                  SliverToBoxAdapter(
+                      child: _buildDesktopWallpapersSection(context)),
                   const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 18),
-                      child: AdsWidget(clearNavBar: false, bottomPadding: 0),
-                    ),
+                    child: AdsWidget(clearNavBar: false, bottomPadding: 0),
                   ),
-                  SliverToBoxAdapter(child: _buildSectionHeader(context, "Explore Feed")),
+                  SliverToBoxAdapter(
+                      child: _buildSectionHeader(context, "Explore Feed")),
                 ],
                 if (_filterIndex == 3)
                   const LiveWallsGridSliver()
@@ -163,7 +165,7 @@ class _HomePageState extends State<HomePage> {
         final displayList = provider.desktopWallList;
 
         return Padding(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.only(bottom: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -194,7 +196,8 @@ class _HomePageState extends State<HomePage> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => DesktopWallpaperDetailPage(wallModel: wall),
+                          builder: (_) =>
+                              DesktopWallpaperDetailPage(wallModel: wall),
                         ),
                       ),
                       child: Container(
@@ -217,9 +220,10 @@ class _HomePageState extends State<HomePage> {
                               CNImage(imageUrl: wall.thumbnail),
                               Positioned(
                                 top: 8,
-                                left: 8,
+                                right: 8,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.65),
                                     borderRadius: BorderRadius.circular(8),
@@ -227,9 +231,14 @@ class _HomePageState extends State<HomePage> {
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.desktop_windows_rounded, color: Colors.white, size: 12),
+                                      Icon(Icons.desktop_windows_rounded,
+                                          color: Colors.white, size: 12),
                                       SizedBox(width: 4),
-                                      Text('DESKTOP', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                      Text('DESKTOP',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800)),
                                     ],
                                   ),
                                 ),
@@ -250,7 +259,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {VoidCallback? onViewAll}) {
+  Widget _buildSectionHeader(BuildContext context, String title,
+      {VoidCallback? onViewAll}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -276,7 +286,8 @@ class _HomePageState extends State<HomePage> {
             GestureDetector(
               onTap: onViewAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: bgDarkAccentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -369,4 +380,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -568,25 +569,27 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextButton(
-                  onPressed: () => subProvider.restorePurchases(),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    "Restore Purchases",
-                    style: TextStyle(
-                      color: bgDarkAccentColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      decoration: TextDecoration.underline,
-                      decorationColor: bgDarkAccentColor,
+                if (Platform.isIOS) ...[
+                  TextButton(
+                    onPressed: () => subProvider.restorePurchases(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      "Restore Purchases",
+                      style: TextStyle(
+                        color: bgDarkAccentColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        decoration: TextDecoration.underline,
+                        decorationColor: bgDarkAccentColor,
+                      ),
                     ),
                   ),
-                ),
-                Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
+                  Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
+                ],
                 TextButton(
                   onPressed: () => LaunchUrlWidget.launch('https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy'),
                   style: TextButton.styleFrom(

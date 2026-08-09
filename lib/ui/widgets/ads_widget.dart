@@ -205,26 +205,32 @@ class _AdsWidgetState extends State<AdsWidget> {
       ),
     );
 
+    final double topMargin = widget.clearNavBar ? 0 : 8.0;
+    final double bottomMargin = widget.bottomPadding + navBarClearance + (widget.clearNavBar ? 0 : 16.0);
+
     Widget adContainer = Container(
       margin: EdgeInsets.only(
-        bottom: widget.bottomPadding + navBarClearance,
-        top: 0,
+        top: topMargin,
+        bottom: bottomMargin,
         left: 16,
         right: 16,
       ),
-      child: Center(child: adContent),
+      child: Center(
+        heightFactor: 1.0,
+        child: adContent,
+      ),
     );
 
-    if (widget.size == AdSize.banner && !widget.clearNavBar) {
-      adContainer = SafeArea(
-        top: false,
-        child: adContainer,
+    if (widget.clearNavBar) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: SafeArea(
+          top: false,
+          child: adContainer,
+        ),
       );
     }
 
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: adContainer,
-    );
+    return adContainer;
   }
 }

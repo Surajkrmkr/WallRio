@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
@@ -26,7 +27,7 @@ class SettingsPage extends StatelessWidget {
         label: 'Appearance',
         children: [
           _darkModeTile(context),
-          _previewQualityTile(context),
+          // _previewQualityTile(context),
           _tile(context,
               icon: Icons.palette_rounded,
               title: 'Personalization Hub',
@@ -118,12 +119,13 @@ class SettingsPage extends StatelessWidget {
         context,
         label: 'Support & Legal',
         children: [
-          _tile(context,
-              icon: Icons.restore_rounded,
-              title: 'Restore Purchases',
-              subtitle: 'Restore previous in-app purchases',
-              onTap: () => Provider.of<SubscriptionProvider>(context, listen: false)
-                  .restorePurchases()),
+          if (Platform.isIOS)
+            _tile(context,
+                icon: Icons.restore_rounded,
+                title: 'Restore Purchases',
+                subtitle: 'Restore previous in-app purchases',
+                onTap: () => Provider.of<SubscriptionProvider>(context, listen: false)
+                    .restorePurchases()),
           _tile(context,
               icon: Icons.help_outline_rounded,
               title: 'Support',
@@ -138,35 +140,36 @@ class SettingsPage extends StatelessWidget {
                   'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy')),
         ],
       ),
-      _sectionCard(
-        context,
-        label: 'Debug Tools (Temporary)',
-        children: [
-          _tile(context,
-              icon: Icons.bug_report_rounded,
-              title: 'Clear Purchase Prefs',
-              subtitle: 'Reset local purchase & collection state in SharedPreferences',
-              onTap: () async {
-                final subProvider =
-                    Provider.of<SubscriptionProvider>(context, listen: false);
-                final progProvider =
-                    Provider.of<ProgressionProvider>(context, listen: false);
-                await subProvider.clearPurchaseSharedPreferences();
-                await progProvider.clearUnlockedCollections();
-                ToastWidget.showToast('Debug: Cleared purchase & collection SharedPreferences');
-              }),
-          _tile(context,
-              icon: Icons.restart_alt_rounded,
-              title: 'Clear Onboarding Prefs',
-              subtitle: 'Reset onboarding completion state in SharedPreferences',
-              onTap: () async {
-                final onboardingProvider =
-                    Provider.of<OnboardingProvider>(context, listen: false);
-                await onboardingProvider.clearOnboardingState();
-                ToastWidget.showToast('Debug: Cleared onboarding SharedPreferences');
-              }),
-        ],
-      ),
+      if (kDebugMode)
+        _sectionCard(
+          context,
+          label: 'Debug Tools (Temporary)',
+          children: [
+            _tile(context,
+                icon: Icons.bug_report_rounded,
+                title: 'Clear Purchase Prefs',
+                subtitle: 'Reset local purchase & collection state in SharedPreferences',
+                onTap: () async {
+                  final subProvider =
+                      Provider.of<SubscriptionProvider>(context, listen: false);
+                  final progProvider =
+                      Provider.of<ProgressionProvider>(context, listen: false);
+                  await subProvider.clearPurchaseSharedPreferences();
+                  await progProvider.clearUnlockedCollections();
+                  ToastWidget.showToast('Debug: Cleared purchase & collection SharedPreferences');
+                }),
+            _tile(context,
+                icon: Icons.restart_alt_rounded,
+                title: 'Clear Onboarding Prefs',
+                subtitle: 'Reset onboarding completion state in SharedPreferences',
+                onTap: () async {
+                  final onboardingProvider =
+                      Provider.of<OnboardingProvider>(context, listen: false);
+                  await onboardingProvider.clearOnboardingState();
+                  ToastWidget.showToast('Debug: Cleared onboarding SharedPreferences');
+                }),
+          ],
+        ),
       _appInfoSection(context),
     ];
 
@@ -458,6 +461,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   Widget _previewQualityTile(BuildContext context) {
     final mode = LivePreviewManager.instance.qualityMode;
     final modeLabel = mode == 'high'

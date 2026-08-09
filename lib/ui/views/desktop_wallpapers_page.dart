@@ -321,10 +321,10 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
                   ),
                 ),
               ),
-              // Small "Desktop" badge top-left
+              // Small "Desktop" badge top-right
               Positioned(
                 top: 8,
-                left: 8,
+                right: 8,
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
