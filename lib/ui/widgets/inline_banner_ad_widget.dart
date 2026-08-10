@@ -104,7 +104,10 @@ class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
           child: SizedBox(
             width: adWidth,
             height: adHeight,
-            child: AdWidget(ad: _bannerAd!),
+            child: AdWidget(
+              key: ValueKey(_bannerAd.hashCode),
+              ad: _bannerAd!,
+            ),
           ),
         ),
       ),

@@ -110,8 +110,10 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
               width: 300,
               height: 250,
               child: _nativeAd != null
-                  ? AdWidget(ad: _nativeAd!)
-                  : AdWidget(ad: _bannerAd!),
+                  ? AdWidget(
+                      key: ValueKey(_nativeAd.hashCode), ad: _nativeAd!)
+                  : AdWidget(
+                      key: ValueKey(_bannerAd.hashCode), ad: _bannerAd!),
             ),
           ),
         ),

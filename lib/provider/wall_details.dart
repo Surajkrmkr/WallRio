@@ -40,32 +40,56 @@ class WallDetails extends ChangeNotifier {
 
   void getColorPalette(String url) async {
     setIsColorPaletteLoading = true;
-    await Future.delayed(const Duration(seconds: 2));
-    PaletteGenerator? paletteGenerator =
-        await PaletteGenerator.fromImageProvider(
-      CachedNetworkImageProvider(url),
-      maximumColorCount: 10,
-    );
-    setColorSwatches = paletteGenerator.colors.toList();
-    setIsColorPaletteLoading = false;
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      PaletteGenerator? paletteGenerator =
+          await PaletteGenerator.fromImageProvider(
+        CachedNetworkImageProvider(url),
+        maximumColorCount: 10,
+      );
+      setColorSwatches = paletteGenerator.colors.toList();
+    } catch (error) {
+      logger.w('Failed to get color palette for $url: $error');
+      setColorSwatches = [];
+    } finally {
+      setIsColorPaletteLoading = false;
+    }
   }
 
   void getWallDetails(String url) async {
     setIsImageDetailsLoading = true;
     setImgSize = "0 MB";
     setImageResolution(0, 0);
-    await getImgDetails(url);
-    setIsImageDetailsLoading = false;
+    try {
+      await getImgDetails(url);
+    } catch (error, stackTrace) {
+      logger.e('Failed to get wall details for $url: $error',
+          error: error, stackTrace: stackTrace);
+    } finally {
+      setIsImageDetailsLoading = false;
+    }
   }
 
-  Future getImgDetails(String url) async {
-    final cache = DefaultCacheManager();
-    final file = await cache.getSingleFile(url);
-    final fileBytes = file.readAsBytesSync();
-    setImgSize = formatBytes(fileBytes.lengthInBytes);
+  Future<void> getImgDetails(String url) async {
+    try {
+      final cache = DefaultCacheManager();
+      final file = await cache.getSingleFile(url);
+      final fileBytes = await file.readAsBytes();
+      if (fileBytes.isEmpty) return;
 
-    var decodedImage = await decodeImageFromList(fileBytes);
-    setImageResolution(decodedImage.height, decodedImage.width);
+      setImgSize = formatBytes(fileBytes.lengthInBytes);
+
+      try {
+        var decodedImage = await decodeImageFromList(fileBytes);
+        setImageResolution(decodedImage.height, decodedImage.width);
+      } catch (decodeError) {
+        logger.w('Could not decode image resolution for $url: $decodeError');
+        setImageResolution(0, 0);
+      }
+    } catch (error, stackTrace) {
+      logger.e('Error fetching img details for $url: $error',
+          error: error, stackTrace: stackTrace);
+    }
   }
 
   static String formatBytes(int bytes) {

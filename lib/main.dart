@@ -103,9 +103,52 @@ Future<void> initializationHandler() async {
   ]);
 
   if (kReleaseMode) {
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      final exceptionStr = details.exception.toString();
+      final stackStr = details.stack?.toString() ?? '';
+
+      final isTransientOrPlatformViewError = details.silent ||
+          exceptionStr.contains('ClientException') ||
+          exceptionStr.contains('Connection closed') ||
+          exceptionStr.contains('SocketException') ||
+          exceptionStr.contains('HttpException') ||
+          exceptionStr.contains('Network is unreachable') ||
+          exceptionStr.contains('Connection refused') ||
+          stackStr.contains('getTransformTo') ||
+          stackStr.contains('_PlatformViewPlaceholderBox') ||
+          (exceptionStr.contains('Null check operator used on a null value') &&
+              (stackStr.contains('localToGlobal') ||
+                  stackStr.contains('platform_view.dart')));
+
+      if (isTransientOrPlatformViewError) {
+        FirebaseCrashlytics.instance.recordFlutterError(details);
+      } else {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      }
+    };
+
     PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      final errorStr = error.toString();
+      final stackStr = stack.toString();
+
+      final isTransientOrPlatformViewError =
+          errorStr.contains('ClientException') ||
+          errorStr.contains('Connection closed') ||
+          errorStr.contains('SocketException') ||
+          errorStr.contains('HttpException') ||
+          errorStr.contains('Network is unreachable') ||
+          errorStr.contains('Connection refused') ||
+          stackStr.contains('getTransformTo') ||
+          stackStr.contains('_PlatformViewPlaceholderBox') ||
+          (errorStr.contains('Null check operator used on a null value') &&
+              (stackStr.contains('localToGlobal') ||
+                  stackStr.contains('platform_view.dart')));
+
+      if (isTransientOrPlatformViewError) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+      } else {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      }
       return true;
     };
   }

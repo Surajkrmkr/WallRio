@@ -27,7 +27,7 @@ class _SplashPageState extends State<SplashPage> {
     firebaseAuth.authStateChanges().listen((event) {
       if (mounted && event != null) {
         Provider.of<SubscriptionProvider>(context, listen: false)
-            .checkPastPurchases(email: event.email!);
+            .checkPastPurchases(email: event.email);
         Provider.of<ProgressionProvider>(context, listen: false)
             .fetchProgression();
         Provider.of<PersonalizationProvider>(context, listen: false)

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -42,7 +43,12 @@ class _HomePageState extends State<HomePage> {
     final staticWalls = wallRio.originalWallList.take(10);
     for (final wall in staticWalls) {
       if (wall.thumbnail.isNotEmpty) {
-        precacheImage(CachedNetworkImageProvider(wall.thumbnail), context);
+        precacheImage(
+          CachedNetworkImageProvider(wall.thumbnail),
+          context,
+          onError: (e, s) =>
+              logger.w('Error precaching static thumbnail ${wall.thumbnail}: $e'),
+        );
       }
     }
 
@@ -50,7 +56,12 @@ class _HomePageState extends State<HomePage> {
     final liveWalls = liveProvider.wallList.take(2);
     for (final live in liveWalls) {
       if (live.thumbnail.isNotEmpty) {
-        precacheImage(CachedNetworkImageProvider(live.thumbnail), context);
+        precacheImage(
+          CachedNetworkImageProvider(live.thumbnail),
+          context,
+          onError: (e, s) =>
+              logger.w('Error precaching live thumbnail ${live.thumbnail}: $e'),
+        );
       }
     }
     if (liveWalls.isNotEmpty) {

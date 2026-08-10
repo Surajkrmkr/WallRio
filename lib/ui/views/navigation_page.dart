@@ -52,7 +52,7 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     TrackingService.requestIfNeeded();
     Future.delayed(Duration.zero, () {
-      _checkUserIsDisable(_timer);
+      _checkUserIsDisable();
       if (!mounted) return;
       final wallRio = Provider.of<WallRio>(context, listen: false);
       if (wallRio.originalWallList.isEmpty) {
@@ -180,13 +180,22 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
     super.dispose();
   }
 
-  void _checkUserIsDisable(Timer timer) {
+  Future<void> _checkUserIsDisable([Timer? timer]) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     try {
-      user.reload();
-    } catch (error) {
-      logger.e(error);
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-disabled' || e.code == 'user-not-found') {
+        logger.w('User account disabled or deleted: ${e.code}');
+        await FirebaseAuth.instance.signOut();
+      } else if (e.code == 'network-request-failed') {
+        logger.w('Network request failed while reloading user: ${e.message}');
+      } else {
+        logger.w('FirebaseAuthException reloading user: ${e.code} - ${e.message}');
+      }
+    } catch (error, stackTrace) {
+      logger.e('Error reloading user: $error', error: error, stackTrace: stackTrace);
     }
   }
 

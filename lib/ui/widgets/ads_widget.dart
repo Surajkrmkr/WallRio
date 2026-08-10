@@ -200,7 +200,10 @@ class _AdsWidgetState extends State<AdsWidget> {
         child: SizedBox(
           width: adWidth,
           height: adHeight,
-          child: AdWidget(ad: bannerAd!),
+          child: AdWidget(
+            key: ValueKey(bannerAd.hashCode),
+            ad: bannerAd!,
+          ),
         ),
       ),
     );
