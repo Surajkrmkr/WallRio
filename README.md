@@ -1,4 +1,4 @@
-# wallrio
+# Wallrio
 
 A new Flutter project.
 
