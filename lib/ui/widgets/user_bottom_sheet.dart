@@ -130,20 +130,117 @@ class UserBottomSheet extends StatelessWidget {
         },
       );
     }
-    return PrimaryBtnWidget(
-        btnText: 'LOG OUT',
-        onTap: () async {
-          final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-          
-          subProvider.clearData();
-          await authProvider.signOut();
-          
-          if (context.mounted) {
-            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginPage()),
-              (route) => false,
-            );
-          }
-        });
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PrimaryBtnWidget(
+          btnText: 'LOG OUT',
+          onTap: () async {
+            final subProvider =
+                Provider.of<SubscriptionProvider>(context, listen: false);
+            final favProvider =
+                Provider.of<FavouriteProvider>(context, listen: false);
+
+            subProvider.clearData();
+            favProvider.clearData();
+            await authProvider.signOut();
+
+            if (context.mounted) {
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
+            }
+          },
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => _confirmAccountDeletion(context, authProvider),
+          child: const Text(
+            'DELETE ACCOUNT',
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmAccountDeletion(BuildContext context, AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            SizedBox(width: 10),
+            Text('Delete Account?'),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to permanently delete your account?\n\n'
+          'This action CANNOT be undone. All your saved favourites, profile customizations, and account data will be permanently erased.',
+          style: TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close confirmation dialog
+
+              BuildContext? loadingContext;
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (lCtx) {
+                  loadingContext = lCtx;
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.redAccent),
+                  );
+                },
+              );
+
+              final subProvider =
+                  Provider.of<SubscriptionProvider>(context, listen: false);
+              final favProvider =
+                  Provider.of<FavouriteProvider>(context, listen: false);
+              subProvider.clearData();
+              favProvider.clearData();
+
+              final success = await authProvider.deleteAccount();
+
+              if (loadingContext != null && loadingContext!.mounted) {
+                Navigator.pop(loadingContext!);
+              }
+
+              if (success && context.mounted) {
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

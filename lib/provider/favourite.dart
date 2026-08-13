@@ -33,6 +33,11 @@ class FavouriteProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearData() {
+    wallList.clear();
+    notifyListeners();
+  }
+
   void addToFav(BuildContext context, {required Walls wall}) async {
     final bool isAdded = await saveToFirebase(wall: wall);
     if (isAdded) {

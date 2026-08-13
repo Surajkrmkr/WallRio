@@ -215,7 +215,10 @@ class SettingsPage extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!authProvider.isLoggedIn) _guestSignInBanner(context),
+            if (!authProvider.isLoggedIn)
+              _guestSignInBanner(context)
+            else
+              _userAccountSection(context, authProvider),
             _plusBanner(context),
           ],
         );
@@ -262,6 +265,172 @@ class SettingsPage extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
       ],
+    );
+  }
+
+  // ─── Signed In User Account Section ────────────────────────────
+
+  Widget _userAccountSection(BuildContext context, AuthProvider authProvider) {
+    return _sectionCard(
+      context,
+      label: 'Account',
+      children: [
+        ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          leading: PremiumAvatar(
+            imageUrl: authProvider.photoUrl,
+            radius: 20,
+          ),
+          title: Text(
+            authProvider.displayName,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          subtitle: Text(
+            authProvider.email.isNotEmpty ? authProvider.email : 'Signed In User',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ),
+        ListTile(
+          onTap: () async {
+            final subProvider =
+                Provider.of<SubscriptionProvider>(context, listen: false);
+            final favProvider =
+                Provider.of<FavouriteProvider>(context, listen: false);
+            subProvider.clearData();
+            favProvider.clearData();
+            await authProvider.signOut();
+            if (context.mounted) {
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
+            }
+          },
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: _tileIcon(Icons.logout_rounded),
+          title: Text('Log Out',
+              style: Theme.of(context).textTheme.titleMedium),
+          subtitle: Text('Sign out of your account',
+              style: Theme.of(context).textTheme.labelSmall),
+          trailing: Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 13,
+            color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        ),
+        ListTile(
+          onTap: () => _confirmAccountDeletion(context, authProvider),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.delete_forever_rounded,
+                color: Colors.redAccent, size: 20),
+          ),
+          title: const Text(
+            'Delete Account',
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(
+            'Permanently delete account & saved data',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.redAccent.withValues(alpha: 0.7),
+                ),
+          ),
+          trailing: Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 13,
+            color: Colors.redAccent.withValues(alpha: 0.5),
+          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        ),
+      ],
+    );
+  }
+
+  void _confirmAccountDeletion(BuildContext context, AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            SizedBox(width: 10),
+            Text('Delete Account?'),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to permanently delete your account?\n\n'
+          'This action CANNOT be undone. All your saved favourites, profile customizations, and account data will be permanently erased.',
+          style: TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close confirmation dialog
+
+              BuildContext? loadingContext;
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (lCtx) {
+                  loadingContext = lCtx;
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.redAccent),
+                  );
+                },
+              );
+
+              final subProvider =
+                  Provider.of<SubscriptionProvider>(context, listen: false);
+              final favProvider =
+                  Provider.of<FavouriteProvider>(context, listen: false);
+              subProvider.clearData();
+              favProvider.clearData();
+
+              final success = await authProvider.deleteAccount();
+
+              if (loadingContext != null && loadingContext!.mounted) {
+                Navigator.pop(loadingContext!);
+              }
+
+              if (success && context.mounted) {
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

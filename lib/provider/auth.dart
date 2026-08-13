@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -129,4 +130,72 @@ class AuthProvider with ChangeNotifier {
       setIsLoading = false;
     }
   }
+
+  Future<bool> deleteAccount() async {
+    setIsLoading = true;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userEmail = user.email ?? UserProfile.email;
+
+        // 1. Delete user data from Cloud Firestore
+        if (userEmail.isNotEmpty) {
+          try {
+            final favDocRef = FirebaseFirestore.instance
+                .collection('favourite')
+                .doc(userEmail);
+            final favItems = await favDocRef.collection('favouriteItems').get();
+            for (final doc in favItems.docs) {
+              await doc.reference.delete();
+            }
+            await favDocRef.delete();
+          } catch (e) {
+            logger.e('Error cleaning up Firestore data during account deletion: $e');
+          }
+
+          // Delete user personalization local preferences
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('local_personalization_$userEmail');
+          } catch (e) {
+            logger.e('Error clearing local personalization prefs: $e');
+          }
+        }
+
+        // 2. Disconnect Google Sign-in session if applicable
+        try {
+          await googleSignIn.disconnect();
+        } catch (e) {
+          // May throw if not signed in with Google, can be safely ignored
+        }
+
+        // 3. Delete user account from Firebase Auth
+        await user.delete();
+
+        // 4. Reset in-memory state
+        _user = null;
+        UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
+
+        await FirebaseAnalytics.instance.logEvent(name: 'user_account_deleted');
+        ToastWidget.showToast("Account deleted successfully");
+        return true;
+      }
+      return false;
+    } on FirebaseAuthException catch (e) {
+      logger.e('FirebaseAuthException during deleteAccount: ${e.code} - ${e.message}');
+      if (e.code == 'requires-recent-login') {
+        ToastWidget.showToast('For security, please log out and sign back in to confirm account deletion.');
+      } else {
+        ToastWidget.showToast(e.message ?? 'Failed to delete account.');
+      }
+      return false;
+    } catch (error) {
+      logger.e('Error deleting account: $error');
+      ToastWidget.showToast('Failed to delete account. Please try again.');
+      return false;
+    } finally {
+      setIsLoading = false;
+    }
+  }
 }
+
