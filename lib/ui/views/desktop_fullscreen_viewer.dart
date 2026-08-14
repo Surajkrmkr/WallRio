@@ -52,7 +52,9 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
       final x = -position.dx * 1.5;
       final y = -position.dy * 1.5;
       final zoomedMatrix = Matrix4.identity()
+        // ignore: deprecated_member_use
         ..translate(x, y)
+        // ignore: deprecated_member_use
         ..scale(2.5);
 
       _animation = Matrix4Tween(
@@ -85,90 +87,126 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Interactive Pan & Zoom Image
-          GestureDetector(
-            onDoubleTapDown: _handleDoubleTapDown,
-            onDoubleTap: _handleDoubleTap,
-            child: Center(
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Interactive Pan & Zoom Image
+            GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onDoubleTapDown: _handleDoubleTapDown,
+              onDoubleTap: _handleDoubleTap,
               child: InteractiveViewer(
                 transformationController: _transformationController,
-                clipBehavior: Clip.none,
                 minScale: 1.0,
                 maxScale: 4.0,
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: CachedNetworkImage(
-                    imageUrl: widget.wallModel.thumbnail,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white.withValues(alpha: 0.6),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.wallModel.thumbnail,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
                       ),
-                    ),
-                    errorWidget: (context, url, error) => const Icon(
-                      Icons.broken_image_rounded,
-                      color: Colors.white54,
-                      size: 48,
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.broken_image_rounded,
+                        color: Colors.white54,
+                        size: 48,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Top Header Overlay
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 0.8,
-                    ),
-                  ),
+            // Top Header Overlay with guaranteed high-priority 48x48 close button
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                top: true,
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.desktop_windows_rounded,
-                          color: Colors.white, size: 14),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.wallModel.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                      // Dedicated Close Button with guaranteed touch priority
+                      Material(
+                        color: Colors.transparent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.35),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.desktop_windows_rounded,
+                                color: Colors.white, size: 14),
+                            const SizedBox(width: 6),
+                            Text(
+                              widget.wallModel.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
 
           // Bottom Action Bar Overlay
           Positioned(
@@ -220,6 +258,7 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

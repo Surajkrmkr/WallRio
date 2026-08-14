@@ -73,7 +73,7 @@ class UserBottomSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                              "WallRio ${provider.subscriptionDaysLeft.isNotEmpty ? "Plus" : ""} Member",
+                              "WallRio ${provider.subscriptionDaysLeft.isNotEmpty ? "PRO" : ""} Member",
                               style: Theme.of(context).textTheme.titleSmall)
                         ],
                       );

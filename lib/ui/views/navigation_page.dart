@@ -254,10 +254,16 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
               ],
             ),
           ),
-          bottomNavigationBar: RepaintBoundary(
-            child: Platform.isIOS
-                ? _buildCupertinoTabBar(provider, isDarkMode)
-                : _buildCustomTabBar(provider, isDarkMode),
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildStickyBanner(provider),
+              RepaintBoundary(
+                child: Platform.isIOS
+                    ? _buildCupertinoTabBar(provider, isDarkMode)
+                    : _buildCustomTabBar(provider, isDarkMode),
+              ),
+            ],
           ),
           // The shuffle FAB sets the home-screen wallpaper directly via
           // WallpaperManagerPlus, which has no iOS equivalent (no API sets a
@@ -265,9 +271,7 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
           floatingActionButton: Platform.isAndroid
               ? Padding(
                   padding: EdgeInsets.only(
-                    bottom: UserProfile.plusMember
-                        ? 0.0
-                        : (_showPromoBanner ? 140.0 : 70.0),
+                    bottom: _showPromoBanner ? 70.0 : 16.0,
                   ),
                   child: RepaintBoundary(
                     child: ClipRRect(
@@ -332,6 +336,24 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
         ),
       );
     });
+  }
+
+  Widget _buildStickyBanner(Navigation provider) {
+    if (UserProfile.plusMember) return const SizedBox.shrink();
+
+    // Do NOT show on Collections / Purchase flow tab (index 2)
+    if (provider.index == 2) return const SizedBox.shrink();
+
+    String screenName = 'HomePage';
+    if (provider.index == 1) screenName = 'LivePage';
+    if (provider.index == 3) screenName = 'CategoryPage';
+    if (provider.index == 4) screenName = 'FavouritePage';
+
+    return StickyBottomBannerWidget(
+      key: ValueKey('sticky_bottom_banner_${provider.index}'),
+      screenName: screenName,
+      placementName: 'StickyBottomBanner',
+    );
   }
 
   Widget _buildCupertinoTabBar(Navigation provider, bool isDarkMode) {

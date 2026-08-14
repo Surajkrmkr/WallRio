@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/widgets/shimmer_widget.dart';
 
 class SponsoredAdCard extends StatefulWidget {
-  const SponsoredAdCard({super.key});
+  final double borderRadius;
+  const SponsoredAdCard({super.key, this.borderRadius = 18.0});
 
   @override
   State<SponsoredAdCard> createState() => _SponsoredAdCardState();
@@ -44,7 +46,7 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
       nativeTemplateStyle: NativeTemplateStyle(
         templateType: TemplateType.medium,
         mainBackgroundColor: Colors.transparent,
-        cornerRadius: 18.0,
+        cornerRadius: widget.borderRadius,
       ),
     )..load();
   }
@@ -76,19 +78,27 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isAdLoaded || UserProfile.plusMember || (_nativeAd == null && _bannerAd == null)) {
-      return const SizedBox.shrink();
+    if (UserProfile.plusMember) {
+      return const IgnorePointer(child: SizedBox.shrink());
+    }
+
+    if (!_isAdLoaded || (_nativeAd == null && _bannerAd == null)) {
+      return ShimmerWidget(
+        height: double.infinity,
+        width: double.infinity,
+        radius: widget.borderRadius,
+      );
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final cardBgColor = isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(widget.borderRadius),
       child: Container(
         decoration: BoxDecoration(
           color: cardBgColor,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(widget.borderRadius),
           border: Border.all(
             color: isDarkMode
                 ? Colors.white.withValues(alpha: 0.08)

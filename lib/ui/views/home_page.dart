@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cupertino_native_better/cupertino_native_better.dart';
@@ -20,6 +21,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _filterIndex = 0;
   bool _isPrefetched = false;
+  Timer? _popupTimer;
+  static bool _hasScheduledPopupThisSession = false;
 
   static const _filters = ['All', 'Free', 'Pro', 'Live'];
 
@@ -27,8 +30,32 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _prefetchMedia();
+      if (mounted) {
+        _prefetchMedia();
+        _schedulePromotionalPopup();
+      }
     });
+  }
+
+  void _schedulePromotionalPopup() {
+    if (_hasScheduledPopupThisSession) return;
+    _popupTimer?.cancel();
+    _popupTimer = Timer(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      final wallRio = Provider.of<WallRio>(context, listen: false);
+      final config = wallRio.popupConfig;
+      if (config != null && config.status) {
+        _hasScheduledPopupThisSession = true;
+        await RemotePopupService.checkAndShowPopup(context, config);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _popupTimer?.cancel();
+    _popupTimer = null;
+    super.dispose();
   }
 
   void _prefetchMedia() {
@@ -99,7 +126,12 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(
                       child: _buildDesktopWallpapersSection(context)),
                   const SliverToBoxAdapter(
-                    child: AdsWidget(clearNavBar: false, bottomPadding: 0),
+                    child: AdsWidget(
+                      clearNavBar: false,
+                      bottomPadding: 0,
+                      screenName: 'HomePage',
+                      placementName: 'DesktopSectionBanner',
+                    ),
                   ),
                   SliverToBoxAdapter(
                       child: _buildSectionHeader(context, "Explore Feed")),
@@ -174,6 +206,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context, provider, _) {
         if (provider.desktopWallList.isEmpty) return const SizedBox.shrink();
         final displayList = provider.desktopWallList;
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
@@ -212,49 +245,33 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       child: Container(
-                        width: 220,
+                        width: 224,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.06),
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
+                              color: Colors.black.withValues(alpha: isDarkMode ? 0.28 : 0.08),
+                              blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(21),
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
                               CNImage(imageUrl: wall.thumbnail),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.65),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.desktop_windows_rounded,
-                                          color: Colors.white, size: 12),
-                                      SizedBox(width: 4),
-                                      Text('DESKTOP',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800)),
-                                    ],
-                                  ),
-                                ),
+                              VerifyIconWidget(
+                                visibility: !wall.isPremium,
+                                padding: 10,
                               ),
-                              VerifyIconWidget(visibility: !wall.isPremium),
                             ],
                           ),
                         ),

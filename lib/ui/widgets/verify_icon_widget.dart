@@ -14,18 +14,18 @@ class VerifyIconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Offstage(
-      offstage: visibility,
-      child: IgnorePointer(
-        child: Align(
-          alignment: alignment,
-          child: Padding(
-            padding: EdgeInsets.all(padding),
-            child: SvgPicture.asset(
-              "assets/icons/Prowalls.svg",
-              semanticsLabel: 'Pro',
-              height: 12,
-            ),
+    if (visibility) {
+      return const SizedBox.shrink();
+    }
+    return IgnorePointer(
+      child: Align(
+        alignment: alignment,
+        child: Padding(
+          padding: EdgeInsets.all(padding),
+          child: SvgPicture.asset(
+            "assets/icons/Prowalls.svg",
+            semanticsLabel: 'Pro',
+            height: 12,
           ),
         ),
       ),

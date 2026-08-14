@@ -10,3 +10,5 @@ export 'premium/premium_service.dart';
 export 'theme_data.dart';
 export 'tracking_service.dart';
 export 'responsive.dart';
+export 'banner_ad_manager.dart';
+export 'remote_popup_service.dart';

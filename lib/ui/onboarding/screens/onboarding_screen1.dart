@@ -262,8 +262,12 @@ class _PhoneFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isTablet = ResponsiveHelper.isTablet(context);
-    final String frameAsset = isTablet ? "assets/frame_ipad.png" : "assets/frame.png";
-    final double targetAspectRatio = isTablet ? (735 / 1024) : (217 / 450);
+    final String frameAsset = isTablet
+        ? "assets/frame_ipad.png"
+        : (Platform.isAndroid ? "assets/frame_android.png" : "assets/frame.png");
+    final double targetAspectRatio = isTablet
+        ? (735 / 1024)
+        : (Platform.isAndroid ? (473 / 988) : (217 / 450));
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -273,7 +277,7 @@ class _PhoneFrame extends StatelessWidget {
           aspectRatio: targetAspectRatio,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(isTablet ? 20 : 36),
+              borderRadius: BorderRadius.circular(isTablet ? 20 : 34),
               boxShadow: isCenter
                   ? [
                       BoxShadow(
@@ -287,10 +291,30 @@ class _PhoneFrame extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // Precise padding to ensure wallpaper stays strictly inside inner transparent screen bounds of frame asset
-                final double padLeft = isTablet ? constraints.maxWidth * 0.049 : constraints.maxWidth * 0.04;
-                final double padTop = isTablet ? constraints.maxHeight * 0.039 : constraints.maxHeight * 0.02;
-                final double padRight = isTablet ? constraints.maxWidth * 0.053 : constraints.maxWidth * 0.04;
-                final double padBottom = isTablet ? constraints.maxHeight * 0.038 : constraints.maxHeight * 0.02;
+                final double padLeft = isTablet
+                    ? constraints.maxWidth * 0.049
+                    : (Platform.isAndroid
+                        ? constraints.maxWidth * 0.030
+                        : constraints.maxWidth * 0.04);
+                final double padTop = isTablet
+                    ? constraints.maxHeight * 0.039
+                    : (Platform.isAndroid
+                        ? constraints.maxHeight * 0.015
+                        : constraints.maxHeight * 0.02);
+                final double padRight = isTablet
+                    ? constraints.maxWidth * 0.053
+                    : (Platform.isAndroid
+                        ? constraints.maxWidth * 0.040
+                        : constraints.maxWidth * 0.04);
+                final double padBottom = isTablet
+                    ? constraints.maxHeight * 0.038
+                    : (Platform.isAndroid
+                        ? constraints.maxHeight * 0.015
+                        : constraints.maxHeight * 0.02);
+
+                final double innerRadius = isTablet
+                    ? 16
+                    : (Platform.isAndroid ? 28 : 30);
 
                 return Stack(
                   fit: StackFit.expand,
@@ -302,7 +326,7 @@ class _PhoneFrame extends StatelessWidget {
                       right: padRight,
                       bottom: padBottom,
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(isTablet ? 16 : 30),
+                        borderRadius: BorderRadius.circular(innerRadius),
                         child: child,
                       ),
                     ),

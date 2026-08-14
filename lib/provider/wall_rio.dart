@@ -16,6 +16,7 @@ class WallRio extends ChangeNotifier {
   List<Banners> bannerList = [];
   List<Collections> collections = [];
   List<SubscriptionPlan> subscriptionPlans = [];
+  PopupConfig? popupConfig;
   Search search = const Search();
   List<Color> colors = [];
 
@@ -81,6 +82,11 @@ class WallRio extends ChangeNotifier {
 
   set setSubscriptionPlans(List<SubscriptionPlan> plans) {
     subscriptionPlans = plans;
+    notifyListeners();
+  }
+
+  set setPopupConfig(PopupConfig? config) {
+    popupConfig = config;
     notifyListeners();
   }
 
@@ -167,6 +173,7 @@ class WallRio extends ChangeNotifier {
       
       setSearchData = model.search;
       setSubscriptionPlans = model.subscriptionPlans;
+      setPopupConfig = model.popupConfig;
       setActionWallList =
           getFilteredWallList(model.walls, search.tags, search.categories);
       resetPagination();

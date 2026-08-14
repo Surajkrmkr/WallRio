@@ -1023,7 +1023,7 @@ class _SubscriptionTopAnimatedBannerState
                       const Icon(Icons.star_rounded, color: Color(0xFFFFB300), size: 14),
                       const SizedBox(width: 5),
                       Text(
-                        "4.8  •  400+ ratings  •  100k+ downloads",
+                        "4.8  •  1500+ ratings  •  100k+ downloads",
                         style: TextStyle(
                           color: _subColor,
                           fontSize: 11,

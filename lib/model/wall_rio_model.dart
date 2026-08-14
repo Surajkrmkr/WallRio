@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/collection_model.dart';
+import 'package:wallrio/model/popup_config.dart';
 import 'package:wallrio/services/export.dart';
 
 class SubscriptionPlan {
@@ -22,37 +23,45 @@ class WallRioModel {
   final Search search;
   final List<Walls> walls;
   final List<SubscriptionPlan> subscriptionPlans;
+  final PopupConfig? popupConfig;
   WallRioCollection collection;
   String error = "";
 
-  WallRioModel(
-      {this.banners = const [],
-      this.walls = const [],
-      this.collection = const WallRioCollection(),
-      this.search = const Search(),
-      this.subscriptionPlans = const []});
+  WallRioModel({
+    this.banners = const [],
+    this.walls = const [],
+    this.collection = const WallRioCollection(),
+    this.search = const Search(),
+    this.subscriptionPlans = const [],
+    this.popupConfig,
+  });
 
   set setCollection(WallRioCollection value) => collection = value;
 
   factory WallRioModel.fromJson(Map<String, dynamic> json) => WallRioModel(
       search: json['search'] == null
           ? const Search()
-          : Search.fromJson(json["search"]),
+          : Search.fromJson(Map<String, dynamic>.from(json["search"] as Map)),
       banners: json['banners'] == null
           ? []
           : (json['banners'] as List<dynamic>)
-              .map((v) => Banners.fromJson(v))
+              .map((v) => Banners.fromJson(Map<String, dynamic>.from(v as Map)))
               .toList(),
       walls: json['walls'] == null
           ? []
           : (json['walls'] as List<dynamic>)
-              .map((v) => Walls.fromJson(v))
+              .map((v) => Walls.fromJson(Map<String, dynamic>.from(v as Map)))
               .toList(),
       subscriptionPlans: json['subscription'] == null
           ? []
           : (json['subscription'] as List<dynamic>)
-              .map((v) => SubscriptionPlan.fromJson(v))
-              .toList());
+              .map((v) => SubscriptionPlan.fromJson(Map<String, dynamic>.from(v as Map)))
+              .toList(),
+      popupConfig: json['pop-up'] != null
+          ? PopupConfig.fromJson(json['pop-up'] as Map)
+          : (json['popup'] != null
+              ? PopupConfig.fromJson(json['popup'] as Map)
+              : null));
 }
 
 class Banners {

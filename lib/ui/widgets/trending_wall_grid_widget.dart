@@ -136,7 +136,10 @@ class TrendingWallGridWidget extends StatelessWidget {
             (context, index) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
-                return const InlineBannerAdWidget();
+                return const InlineBannerAdWidget(
+                  screenName: 'ExploreFeed',
+                  placementName: 'GridChunkBanner',
+                );
               }
               final row = item as List<dynamic>;
 

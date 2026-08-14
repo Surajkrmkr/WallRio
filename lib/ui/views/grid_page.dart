@@ -180,7 +180,10 @@ class _GridPageState extends State<GridPage> {
             (context, index) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
-                return const InlineBannerAdWidget();
+                return const InlineBannerAdWidget(
+                  screenName: 'GridPage',
+                  placementName: 'GridChunkBanner',
+                );
               }
               return _buildWallRow(item as List<dynamic>, columnsCount, context);
             },

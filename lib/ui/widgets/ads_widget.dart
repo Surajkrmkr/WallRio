@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -12,159 +13,256 @@ class AdsWidget extends StatefulWidget {
   final double bottomPadding;
   final AdSize size;
   final bool clearNavBar;
-  const AdsWidget(
-      {super.key,
-      this.bottomPadding = 10,
-      this.size = AdSize.banner,
-      this.clearNavBar = true});
+  final String screenName;
+  final String placementName;
+
+  const AdsWidget({
+    super.key,
+    this.bottomPadding = 10,
+    this.size = AdSize.banner,
+    this.clearNavBar = true,
+    this.screenName = 'General',
+    this.placementName = 'AdsWidget',
+  });
 
   @override
   State<AdsWidget> createState() => _AdsWidgetState();
 
-  static Widget getPlusDialog(BuildContext context,
-      {void Function()? onWatchAdClick,
-      bool isExplorePlus = false,
-      bool showAdButton = true}) {
-    final title = isExplorePlus ? "Explore Plus" : "Unlock Wallpaper";
+  static Widget getPlusDialog(
+    BuildContext context, {
+    void Function()? onWatchAdClick,
+    bool isExplorePlus = false,
+    bool showAdButton = true,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final title = isExplorePlus ? "Explore PRO" : "Unlock Wallpaper";
     final message = isExplorePlus
-        ? "Upgrade to Plus to unlock exclusive features and take your experience to the next level!"
-        : "Get access to the wallpapers by either watching an ad or purchasing the Plus Subscription.";
+        ? "Upgrade to PRO to unlock premium wallpapers, live wallpapers, collections, auto wallpaper change, and an ad-free experience."
+        : "Get access to premium wallpapers by watching an ad or upgrading to PRO for an ad-free experience.";
     final showWatchAd = !isExplorePlus && showAdButton;
 
-    if (Platform.isIOS) {
-      return CupertinoAlertDialog(
-        title: Text(title),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(message),
-        ),
-        actions: [
-          if (showWatchAd)
-            Consumer<AdsProvider>(builder: (context, provider, _) {
-              return CupertinoDialogAction(
-                onPressed:
-                    provider.isRewardedAdLoading ? null : (onWatchAdClick ?? () {}),
-                child: provider.isRewardedAdLoading
-                    ? const CupertinoActivityIndicator()
-                    : const Text("Watch AD"),
-              );
-            }),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => _onPlusClick(context),
-            child: const Text("Go Pro"),
-          ),
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Not Now"),
-          ),
-        ],
-      );
-    }
+    final dialogBg = isDarkMode ? const Color(0xFF161822) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final subtextColor = isDarkMode ? Colors.white70 : Colors.black54;
 
-    return AlertDialog(
-      title: Row(
-        children: [
-          Expanded(child: Text(title)),
-          const CloseButton()
-        ],
-      ),
-      content: Text(
-        message,
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-      actions: [
-        Offstage(
-          offstage: !showWatchAd,
-          child: Consumer<AdsProvider>(builder: (context, provider, _) {
-            return provider.isRewardedAdLoading
-                ? ShimmerWidget.withWidget(
-                    _getWatchAdBtnUI(onWatchAdClick ?? () {}), context)
-                : _getWatchAdBtnUI(onWatchAdClick ?? () {});
-          }),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          decoration: BoxDecoration(
+            color: dialogBg,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.08),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.5 : 0.18),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row with Icon, Title, and Close Button
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.diamond_rounded,
+                      color: Color(0xFFFFD700),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: (isDarkMode ? Colors.white : Colors.black)
+                            .withValues(alpha: 0.06),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: subtextColor,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Description
+              Text(
+                message,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                  color: subtextColor,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Action Buttons
+              if (showWatchAd) ...[
+                Consumer<AdsProvider>(builder: (context, provider, _) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: textColor,
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : Colors.black.withValues(alpha: 0.15),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: provider.isRewardedAdLoading
+                          ? null
+                          : (onWatchAdClick ?? () {}),
+                      icon: provider.isRewardedAdLoading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.play_circle_outline_rounded, size: 20),
+                      label: Text(
+                        provider.isRewardedAdLoading
+                            ? "Loading Ad..."
+                            : "Watch Ad to Unlock",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 10),
+              ],
+
+              // Primary "Go PRO" Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: bgDarkAccentColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 2,
+                  ),
+                  onPressed: () => _onPlusClick(context),
+                  icon: const Icon(Icons.workspace_premium_rounded, size: 20),
+                  label: const Text(
+                    "Go PRO",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        Visibility(
-          visible: !showWatchAd,
-          replacement: OutlinedButton.icon(
-              icon: const Icon(Icons.verified),
-              onPressed: () => _onPlusClick(context),
-              label: const Text("Go Pro")),
-          child: FilledButton.icon(
-              onPressed: () => _onPlusClick(context),
-              icon: const Icon(Icons.verified),
-              label: const Text("Go Pro")),
-        )
-      ],
+      ),
     );
-  }
-
-  static Widget _getWatchAdBtnUI(void Function() onWatchAdClick) {
-    return FilledButton(
-        onPressed: onWatchAdClick, child: const Text("Watch AD"));
   }
 
   static void _onPlusClick(BuildContext context) {
     Navigator.pop(context);
     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              OnboardingScreen4(onComplete: () => Navigator.pop(context)),
-        ));
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            OnboardingScreen4(onComplete: () => Navigator.pop(context)),
+      ),
+    );
   }
 }
 
 class _AdsWidgetState extends State<AdsWidget> {
-  // AdMob ad units are registered per-platform, so Android and iOS use
-  // separate ad unit IDs even though they share the same publisher account.
-  final String _bannerId = Platform.isIOS
-      ? "ca-app-pub-4861691653340010/2292486372"
-      : "ca-app-pub-4861691653340010/8536832813";
-  bool _isBannerLoading = false;
   bool _isBannerFailed = false;
   BannerAd? bannerAd;
 
   @override
   void initState() {
-    if (!UserProfile.plusMember) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) loadBannerAd();
-      });
-    }
     super.initState();
+    if (!UserProfile.plusMember) {
+      _acquireBannerAd();
+    }
   }
 
   @override
   void dispose() {
-    if (!UserProfile.plusMember && bannerAd != null) bannerAd!.dispose();
+    if (bannerAd != null) {
+      BannerAdManager.instance.releaseBanner(
+        bannerAd,
+        screen: widget.screenName,
+        placement: widget.placementName,
+      );
+      bannerAd = null;
+    }
     super.dispose();
   }
 
-  set setBannerLoading(bool val) => setState(() => _isBannerLoading = val);
+  void _acquireBannerAd() {
+    if (bannerAd != null) return;
 
-  void loadBannerAd() {
-    setBannerLoading = true;
-    bannerAd = BannerAd(
-      adUnitId: _bannerId,
-      request: const AdRequest(),
-      size: widget.size,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          setBannerLoading = false;
-        },
-        onAdFailedToLoad: (ad, err) {
-          logger.i('BannerAd failed to load (usually no fill): $err');
-          _isBannerFailed = true;
-          setBannerLoading = false;
-          ad.dispose();
-        },
-      ),
-    )..load();
+    final ad = BannerAdManager.instance.acquireBanner(
+      screen: widget.screenName,
+      placement: widget.placementName,
+    );
+
+    setState(() {
+      bannerAd = ad;
+      _isBannerFailed = (ad == null);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isBannerLoading || UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
+    if (UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
       return const SizedBox.shrink();
     }
 

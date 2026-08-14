@@ -1,15 +1,18 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
-
+import 'package:wallrio/services/export.dart';
 
 class InlineBannerAdWidget extends StatefulWidget {
   final double verticalPadding;
+  final String screenName;
+  final String placementName;
+
   const InlineBannerAdWidget({
     super.key,
     this.verticalPadding = 18.0,
+    this.screenName = 'Feed',
+    this.placementName = 'InlineBanner',
   });
 
   @override
@@ -17,60 +20,48 @@ class InlineBannerAdWidget extends StatefulWidget {
 }
 
 class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
-  final String _adUnitId = Platform.isIOS
-      ? 'ca-app-pub-4861691653340010/2292486372'
-      : 'ca-app-pub-4861691653340010/8536832813';
-
   BannerAd? _bannerAd;
-  bool _isAdLoaded = false;
   bool _isAdFailed = false;
 
   @override
   void initState() {
     super.initState();
     if (!UserProfile.plusMember) {
-      _loadBannerAd();
+      _acquireBannerAd();
     }
   }
 
-  void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      size: AdSize.banner,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          if (mounted) {
-            setState(() {
-              _isAdLoaded = true;
-            });
-          }
-        },
-        onAdFailedToLoad: (ad, err) {
-          debugPrint('InlineBannerAdWidget failed to load ($err)');
-          ad.dispose();
-          _bannerAd = null;
-          if (mounted) {
-            setState(() {
-              _isAdFailed = true;
-              _isAdLoaded = false;
-            });
-          }
-        },
-      ),
-    )..load();
+  void _acquireBannerAd() {
+    if (_bannerAd != null) return;
+
+    final ad = BannerAdManager.instance.acquireBanner(
+      screen: widget.screenName,
+      placement: widget.placementName,
+    );
+
+    setState(() {
+      _bannerAd = ad;
+      _isAdFailed = (ad == null);
+    });
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
+    if (_bannerAd != null) {
+      BannerAdManager.instance.releaseBanner(
+        _bannerAd,
+        screen: widget.screenName,
+        placement: widget.placementName,
+      );
+      _bannerAd = null;
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (UserProfile.plusMember || _isAdFailed || !_isAdLoaded || _bannerAd == null) {
-      return const SizedBox.shrink();
+    if (UserProfile.plusMember || _isAdFailed || _bannerAd == null) {
+      return const IgnorePointer(child: SizedBox.shrink());
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -89,8 +80,8 @@ class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.08),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.08),
               width: 1,
             ),
             boxShadow: [

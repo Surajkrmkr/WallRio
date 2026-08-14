@@ -69,7 +69,10 @@ class LiveWallsGridSliver extends StatelessWidget {
               (context, index) {
                 final item = feedItems[index];
                 if (item == 'INLINE_BANNER_AD') {
-                  return const InlineBannerAdWidget();
+                  return const InlineBannerAdWidget(
+                    screenName: 'LiveWallpapersGrid',
+                    placementName: 'GridChunkBanner',
+                  );
                 }
                 return _buildWallRow(item as List<dynamic>, columnsCount, context);
               },

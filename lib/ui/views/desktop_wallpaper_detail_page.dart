@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
@@ -73,6 +74,14 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     }
   }
 
+  void _showExploreProDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AdsWidget.getPlusDialog(context, isExplorePlus: true),
+    );
+  }
+
   void _showPlusDialog(BuildContext context) {
     if (UserProfile.plusMember ||
         !widget.wallModel.isPremium ||
@@ -116,12 +125,31 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
   String _getQualityBadge(Walls wall) {
     final lowerTags = wall.tags.map((t) => t.toLowerCase()).toList();
     final lowerName = wall.name.toLowerCase();
-    if (lowerTags.any((t) => t.contains('8k')) || lowerName.contains('8k')) {
+
+    // 8K Detection (7680x4320 or 8K)
+    if (lowerTags.any((t) => t.contains('8k') || t.contains('7680')) ||
+        lowerName.contains('8k') ||
+        lowerName.contains('7680')) {
       return '8K';
     }
-    if (lowerTags.any((t) => t.contains('5k')) || lowerName.contains('5k')) {
+    // 5K Detection (5120x2880 or 5K)
+    if (lowerTags.any((t) => t.contains('5k') || t.contains('5120')) ||
+        lowerName.contains('5k') ||
+        lowerName.contains('5120')) {
       return '5K';
     }
+    // 2K Detection (2560x1440, 1440p, QHD, 2K)
+    if (lowerTags.any((t) =>
+            t.contains('2k') ||
+            t.contains('2560') ||
+            t.contains('1440') ||
+            t.contains('qhd')) ||
+        lowerName.contains('2k') ||
+        lowerName.contains('2560') ||
+        lowerName.contains('1440')) {
+      return '2K';
+    }
+    // 4K Standard Desktop Definition (3840x2160 or 4K)
     return '4K';
   }
 
@@ -129,6 +157,7 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     final quality = _getQualityBadge(wall);
     if (quality == '8K') return '7680 × 4320';
     if (quality == '5K') return '5120 × 2880';
+    if (quality == '2K') return '2560 × 1440';
     return '3840 × 2160';
   }
 
@@ -178,7 +207,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                         const SizedBox(height: 20),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: InlineBannerAdWidget(verticalPadding: 0),
+                          child: InlineBannerAdWidget(
+                            verticalPadding: 0,
+                            screenName: 'DesktopDetailPage',
+                            placementName: 'SectionDividerBanner',
+                          ),
                         ),
                         const SizedBox(height: 24),
                         _buildMoreLikeThisSection(context, isDarkMode),
@@ -234,20 +267,23 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                 ),
                 const SizedBox(width: 8),
                 Consumer<FavouriteProvider>(
-                  builder: (context, favProvider, _) {
-                    final isFav =
-                        favProvider.wallList.any((w) => w.id == widget.wallModel.id);
+                  builder: (context, provider, _) {
+                    final bool isFav = provider.isSelectedAsFav(widget.wallModel.url, id: widget.wallModel.id);
+                    if (provider.isLoading) {
+                      return IconButton(
+                        onPressed: () {},
+                        icon: Icon(Icons.favorite_border_rounded, color: isDarkMode ? Colors.white : Colors.black87),
+                      );
+                    }
                     return IconButton(
-                      onPressed: () {
-                        if (isFav) {
-                          favProvider.removeFromFav(id: widget.wallModel.id);
-                        } else {
-                          favProvider.addToFav(context, wall: widget.wallModel);
-                        }
-                      },
+                      onPressed: () => UserProfile.plusMember
+                          ? isFav
+                              ? provider.removeFromFav(id: widget.wallModel.id)
+                              : provider.addToFav(context, wall: widget.wallModel)
+                          : _showExploreProDialog(context),
                       icon: Icon(
-                        isFav ? Icons.favorite : Icons.favorite_border_rounded,
-                        color: isFav ? Colors.redAccent : (isDarkMode ? Colors.white : Colors.black),
+                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: isFav ? Colors.redAccent : (isDarkMode ? Colors.white : Colors.black87),
                       ),
                     );
                   },
@@ -275,19 +311,17 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
             ),
           );
         },
-        child: Hero(
-          tag: 'desktop_hero_${widget.wallModel.url}',
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.12),
-                  blurRadius: 15,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.12),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: AspectRatio(
@@ -314,8 +348,7 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildInformationPanel(BuildContext context, bool isDarkMode) {
@@ -427,6 +460,26 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     );
   }
 
+  void _copyColor(Color color) async {
+    final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    await Clipboard.setData(ClipboardData(text: hex));
+    ToastWidget.showToast("Color copied");
+  }
+
+  List<dynamic> _buildFeedItems(List<Walls> walls) {
+    final items = <dynamic>[];
+    int count = 0;
+    for (int i = 0; i < walls.length; i++) {
+      items.add(walls[i]);
+      count++;
+      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
+        items.add('AD_TILE');
+        count = 0;
+      }
+    }
+    return items;
+  }
+
   Widget _buildColorPaletteSection(BuildContext context, bool isDarkMode) {
     return Consumer<WallDetails>(
       builder: (context, detailsProvider, _) {
@@ -456,23 +509,21 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                 spacing: 12,
                 runSpacing: 10,
                 children: colorsToDisplay.map((color) {
-                  return Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                  return GestureDetector(
+                    onTap: () => _copyColor(color),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : Colors.black.withValues(alpha: 0.15),
+                          width: 2,
                         ),
-                      ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -484,9 +535,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     );
   }
 
-  // 1. Related Desktop Wallpapers (Horizontal 16:9 Row, 10-12 items)
+  // 1. Related Desktop Wallpapers (Horizontal 16:10 Row with Native Grid Ad after 8 items)
   Widget _buildRelatedWallpapersSection(BuildContext context, bool isDarkMode) {
     if (_relatedWalls.isEmpty) return const SizedBox.shrink();
+
+    final items = _buildFeedItems(_relatedWalls);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,13 +560,15 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
-            itemCount: _relatedWalls.length,
+            itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final wall = _relatedWalls[index];
+              final item = items[index];
               return SizedBox(
                 width: 190,
-                child: _buildDesktopCardTile(wall, context, isDarkMode),
+                child: item is Walls
+                    ? _buildDesktopCardTile(item, context, isDarkMode)
+                    : const SponsoredAdCard(borderRadius: 22.0),
               );
             },
           ),
@@ -522,9 +577,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     );
   }
 
-  // 2. More Like This (Horizontal 16:9 Row, 10-12 items)
+  // 2. More Like This (Horizontal 16:10 Row with Native Grid Ad after 8 items)
   Widget _buildMoreLikeThisSection(BuildContext context, bool isDarkMode) {
     if (_moreLikeThisWalls.isEmpty) return const SizedBox.shrink();
+
+    final items = _buildFeedItems(_moreLikeThisWalls);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,13 +602,15 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
-            itemCount: _moreLikeThisWalls.length,
+            itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final wall = _moreLikeThisWalls[index];
+              final item = items[index];
               return SizedBox(
                 width: 190,
-                child: _buildDesktopCardTile(wall, context, isDarkMode),
+                child: item is Walls
+                    ? _buildDesktopCardTile(item, context, isDarkMode)
+                    : const SponsoredAdCard(borderRadius: 22.0),
               );
             },
           ),
@@ -560,9 +619,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     );
   }
 
-  // 3. Explore Similar Wallpapers (2-Column Landscape Grid)
+  // 3. Explore Similar Wallpapers (2-Column Landscape Grid with Native Grid Ad after 8 items)
   Widget _buildExploreSimilarSection(BuildContext context, bool isDarkMode) {
     if (_exploreSimilarWalls.isEmpty) return const SizedBox.shrink();
+
+    final items = _buildFeedItems(_exploreSimilarWalls);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -580,16 +641,18 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _exploreSimilarWalls.length,
+            itemCount: items.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 16 / 9,
+              childAspectRatio: 16 / 10,
             ),
             itemBuilder: (context, index) {
-              final wall = _exploreSimilarWalls[index];
-              return _buildDesktopCardTile(wall, context, isDarkMode);
+              final item = items[index];
+              return item is Walls
+                  ? _buildDesktopCardTile(item, context, isDarkMode)
+                  : const SponsoredAdCard(borderRadius: 22.0);
             },
           ),
         ],
@@ -597,12 +660,10 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     );
   }
 
-  // Reusable 16:9 Landscape Desktop Card Tile (Desktop Badge, Title, Resolution Tag, Premium Badge)
+  // Reusable 16:10 Landscape Desktop Card Tile with top-left Pro diamond icon only
   Widget _buildDesktopCardTile(Walls wall, BuildContext context, bool isDarkMode) {
-    final resolution = _getQualityBadge(wall);
-
     return AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: 16 / 10,
       child: GestureDetector(
         onTap: () {
           Navigator.pushReplacement(
@@ -614,115 +675,30 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
         },
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.28 : 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(21),
             child: Stack(
               fit: StackFit.expand,
               children: [
                 CNImage(imageUrl: wall.thumbnail),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.15),
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.70),
-                      ],
-                      stops: const [0.0, 0.4, 1.0],
-                    ),
-                  ),
-                ),
-                // Desktop Badge top right
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        width: 0.6,
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.desktop_windows_rounded,
-                            color: Colors.white, size: 9),
-                        SizedBox(width: 3),
-                        Text(
-                          'DESKTOP',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Premium Badge top left
-                VerifyIconWidget(visibility: !wall.isPremium),
-                // Wallpaper Title & Resolution Tag bottom left
-                Positioned(
-                  bottom: 6,
-                  left: 8,
-                  right: 8,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          wall.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black54,
-                                blurRadius: 4,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          resolution,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                VerifyIconWidget(
+                  visibility: !wall.isPremium,
+                  padding: 10,
                 ),
               ],
             ),

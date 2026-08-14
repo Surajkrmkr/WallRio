@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 import 'package:wallrio/ui/views/rewards_hub_page.dart';
 import 'package:wallrio/ui/views/full_image.dart';
@@ -376,23 +378,83 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
           ),
         ),
         const SizedBox(width: 8),
-        // Play/Pause Video Toggle Utility
-        IconButton(
-          onPressed: () {
-            final ctrl = _videoController;
-            if (ctrl == null) return;
-            ctrl.value.isPlaying ? ctrl.pause() : ctrl.play();
-          },
-          icon: Icon(
-            _videoController?.value.isPlaying == true
-                ? Icons.pause_circle_outline_rounded
-                : Icons.play_circle_outline_rounded,
-            color: isDarkMode ? Colors.white : Colors.black87,
-            size: 28,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Share App Button beside Play/Pause
+            IconButton(
+              onPressed: _shareApp,
+              icon: Icon(
+                Icons.share_outlined,
+                color: isDarkMode ? Colors.white : Colors.black87,
+                size: 23,
+              ),
+            ),
+            // Play/Pause Video Toggle Utility
+            IconButton(
+              onPressed: () {
+                final ctrl = _videoController;
+                if (ctrl == null) return;
+                ctrl.value.isPlaying ? ctrl.pause() : ctrl.play();
+              },
+              icon: Icon(
+                _videoController?.value.isPlaying == true
+                    ? Icons.pause_circle_outline_rounded
+                    : Icons.play_circle_outline_rounded,
+                color: isDarkMode ? Colors.white : Colors.black87,
+                size: 28,
+              ),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  void _shareApp() {
+    final appLink = Platform.isIOS
+        ? 'https://apps.apple.com/app/id6474136287'
+        : 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
+    final platformName = Platform.isIOS ? 'iOS' : 'Android';
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Check out WallRio – Premium wallpapers for $platformName: $appLink',
+      ),
+    );
+  }
+
+  void _copyColor(Color color) async {
+    final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    await Clipboard.setData(ClipboardData(text: hex));
+    ToastWidget.showToast("Color copied");
+  }
+
+  List<dynamic> _buildLiveFeedItems(List<LiveWallpaper> walls) {
+    final items = <dynamic>[];
+    int count = 0;
+    for (int i = 0; i < walls.length; i++) {
+      items.add(walls[i]);
+      count++;
+      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
+        items.add('AD_TILE');
+        count = 0;
+      }
+    }
+    return items;
+  }
+
+  List<dynamic> _buildStaticFeedItems(List<Walls> walls) {
+    final items = <dynamic>[];
+    int count = 0;
+    for (int i = 0; i < walls.length; i++) {
+      items.add(walls[i]);
+      count++;
+      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
+        items.add('AD_TILE');
+        count = 0;
+      }
+    }
+    return items;
   }
 
   Widget _buildMetadataChipsUI() {
@@ -475,25 +537,21 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
               children: colors.take(8).map((color) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDarkMode
-                            ? Colors.white.withValues(alpha: 0.25)
-                            : Colors.black.withValues(alpha: 0.15),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                  child: GestureDetector(
+                    onTap: () => _copyColor(color),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : Colors.black.withValues(alpha: 0.15),
+                          width: 2,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -532,14 +590,23 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   Widget _buildLiveRecRow(List<LiveWallpaper> walls) {
+    final items = _buildLiveFeedItems(walls);
+
     return SizedBox(
       height: 145,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: walls.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
-          final wall = walls[i];
+          final item = items[i];
+          if (item is! LiveWallpaper) {
+            return const SizedBox(
+              width: 100,
+              child: SponsoredAdCard(borderRadius: 18.0),
+            );
+          }
+          final wall = item;
           return GestureDetector(
             onTap: () => Navigator.pushReplacement(
               context,
@@ -576,18 +643,32 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
 
   Widget _buildSponsoredBannerSection() {
     if (UserProfile.plusMember) return const SizedBox.shrink();
-    return const AdsWidget(clearNavBar: false, bottomPadding: 0);
+    return const AdsWidget(
+      clearNavBar: false,
+      bottomPadding: 0,
+      screenName: 'LiveDetailPage',
+      placementName: 'BottomSponsoredBanner',
+    );
   }
 
   Widget _buildStaticRecRow(List<Walls> walls) {
+    final items = _buildStaticFeedItems(walls);
+
     return SizedBox(
       height: 145,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: walls.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
-          final wall = walls[i];
+          final item = items[i];
+          if (item is! Walls) {
+            return const SizedBox(
+              width: 100,
+              child: SponsoredAdCard(borderRadius: 18.0),
+            );
+          }
+          final wall = item;
           return GestureDetector(
             onTap: () => Navigator.push(
               context,

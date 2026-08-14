@@ -68,7 +68,7 @@ class _FullImageState extends State<FullImage> {
         .setWall(widget.wallModel.url, context);
   }
 
-  void _showExplorePlusDialog(BuildContext context) {
+  void _showExploreProDialog(BuildContext context) {
     showDialog(
         context: context,
         builder: (context) =>
@@ -341,7 +341,7 @@ class _FullImageState extends State<FullImage> {
             ? isFav
                 ? provider.removeFromFav(id: widget.wallModel.id)
                 : provider.addToFav(context, wall: widget.wallModel)
-            : _showExplorePlusDialog(context),
+            : _showExploreProDialog(context),
         icon: Icon(
           isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
           color: isFav ? Colors.redAccent : defaultColor,
@@ -455,13 +455,6 @@ class _FullImageState extends State<FullImage> {
                               : Colors.black.withValues(alpha: 0.15),
                           width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
                       ),
                     ),
                   ),
@@ -595,7 +588,12 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildSponsoredBannerSection() {
     if (UserProfile.plusMember) return const SizedBox.shrink();
-    return const AdsWidget(clearNavBar: false, bottomPadding: 0);
+    return const AdsWidget(
+      clearNavBar: false,
+      bottomPadding: 0,
+      screenName: 'FullImage',
+      placementName: 'BottomSponsoredBanner',
+    );
   }
 
   Widget _buildFixedActionBtnBar() {

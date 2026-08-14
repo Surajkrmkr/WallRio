@@ -204,7 +204,10 @@ class FavouritePage extends StatelessWidget {
             (context, index) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
-                return const InlineBannerAdWidget();
+                return const InlineBannerAdWidget(
+                  screenName: 'FavouritePage',
+                  placementName: 'GridChunkBanner',
+                );
               }
               final rowItems = item as List<dynamic>;
               return Padding(

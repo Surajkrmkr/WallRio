@@ -85,7 +85,7 @@ class PlusSubscription extends StatelessWidget {
         children: [
           _buildPlusFeature(context: context, feature: "Ad-free experience."),
           _buildPlusFeature(
-              context: context, feature: "Unlock Plus collections (Yearly & Lifetime plans only)."),
+              context: context, feature: "Unlock PRO collections (Yearly & Lifetime plans only)."),
           _buildPlusFeature(
               context: context, feature: "Maximum Quality Upto 8k.")
         ],
@@ -116,7 +116,7 @@ class PlusSubscription extends StatelessWidget {
                     );
                   }),
                   Text(
-                    "Plus",
+                    "PRO",
                     style: Theme.of(context)
                         .textTheme
                         .displayLarge!
