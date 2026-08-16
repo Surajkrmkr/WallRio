@@ -237,6 +237,7 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
                     ElevatedButton.icon(
                       onPressed: () => _downloadHandler(context),
                       style: ElevatedButton.styleFrom(
+                        minimumSize: Size.zero,
                         backgroundColor: bgDarkAccentColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
