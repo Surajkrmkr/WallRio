@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
@@ -21,6 +22,9 @@ class StickyBottomBannerWidget extends StatefulWidget {
 class _StickyBottomBannerWidgetState extends State<StickyBottomBannerWidget> {
   BannerAd? _bannerAd;
   bool _isBannerFailed = false;
+  Timer? _retryTimer;
+  int _retryAttempts = 0;
+  static const int _maxRetries = 2;
 
   @override
   void initState() {
@@ -38,32 +42,28 @@ class _StickyBottomBannerWidgetState extends State<StickyBottomBannerWidget> {
       placement: widget.placementName,
     );
 
-    setState(() {
-      _bannerAd = ad;
-      _isBannerFailed = (ad == null);
-    });
-  }
+    if (mounted) {
+      setState(() {
+        _bannerAd = ad;
+        _isBannerFailed = (ad == null);
+      });
+    }
 
-  @override
-  void didUpdateWidget(covariant StickyBottomBannerWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.screenName != widget.screenName) {
-      if (_bannerAd != null) {
-        BannerAdManager.instance.releaseBanner(
-          _bannerAd,
-          screen: oldWidget.screenName,
-          placement: oldWidget.placementName,
-        );
-        _bannerAd = null;
-      }
-      if (!UserProfile.plusMember) {
-        _acquireBanner();
-      }
+    if (ad == null && mounted && _retryAttempts < _maxRetries) {
+      _retryAttempts++;
+      _retryTimer?.cancel();
+      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted && _bannerAd == null && !UserProfile.plusMember) {
+          _acquireBanner();
+        }
+      });
     }
   }
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     if (_bannerAd != null) {
       BannerAdManager.instance.releaseBanner(
         _bannerAd,

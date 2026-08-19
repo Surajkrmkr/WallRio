@@ -1,13 +1,10 @@
-import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
-import 'package:wallrio/ui/widgets/export.dart';
 
 class AdsWidget extends StatefulWidget {
   final double bottomPadding;
@@ -221,9 +218,16 @@ class AdsWidget extends StatefulWidget {
   }
 }
 
-class _AdsWidgetState extends State<AdsWidget> {
+class _AdsWidgetState extends State<AdsWidget>
+    with AutomaticKeepAliveClientMixin {
   bool _isBannerFailed = false;
   BannerAd? bannerAd;
+  Timer? _retryTimer;
+  int _retryAttempts = 0;
+  static const int _maxRetries = 2;
+
+  @override
+  bool get wantKeepAlive => bannerAd != null;
 
   @override
   void initState() {
@@ -235,6 +239,8 @@ class _AdsWidgetState extends State<AdsWidget> {
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     if (bannerAd != null) {
       BannerAdManager.instance.releaseBanner(
         bannerAd,
@@ -254,14 +260,27 @@ class _AdsWidgetState extends State<AdsWidget> {
       placement: widget.placementName,
     );
 
-    setState(() {
-      bannerAd = ad;
-      _isBannerFailed = (ad == null);
-    });
+    if (mounted) {
+      setState(() {
+        bannerAd = ad;
+        _isBannerFailed = (ad == null);
+      });
+    }
+
+    if (ad == null && mounted && _retryAttempts < _maxRetries) {
+      _retryAttempts++;
+      _retryTimer?.cancel();
+      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted && bannerAd == null && !UserProfile.plusMember) {
+          _acquireBannerAd();
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
       return const SizedBox.shrink();
     }

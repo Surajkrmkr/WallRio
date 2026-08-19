@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
@@ -19,9 +20,16 @@ class InlineBannerAdWidget extends StatefulWidget {
   State<InlineBannerAdWidget> createState() => _InlineBannerAdWidgetState();
 }
 
-class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
+class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget>
+    with AutomaticKeepAliveClientMixin {
   BannerAd? _bannerAd;
   bool _isAdFailed = false;
+  Timer? _retryTimer;
+  int _retryAttempts = 0;
+  static const int _maxRetries = 2;
+
+  @override
+  bool get wantKeepAlive => _bannerAd != null;
 
   @override
   void initState() {
@@ -39,14 +47,28 @@ class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
       placement: widget.placementName,
     );
 
-    setState(() {
-      _bannerAd = ad;
-      _isAdFailed = (ad == null);
-    });
+    if (mounted) {
+      setState(() {
+        _bannerAd = ad;
+        _isAdFailed = (ad == null);
+      });
+    }
+
+    if (ad == null && mounted && _retryAttempts < _maxRetries) {
+      _retryAttempts++;
+      _retryTimer?.cancel();
+      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted && _bannerAd == null && !UserProfile.plusMember) {
+          _acquireBannerAd();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     if (_bannerAd != null) {
       BannerAdManager.instance.releaseBanner(
         _bannerAd,
@@ -60,6 +82,7 @@ class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (UserProfile.plusMember || _isAdFailed || _bannerAd == null) {
       return const IgnorePointer(child: SizedBox.shrink());
     }

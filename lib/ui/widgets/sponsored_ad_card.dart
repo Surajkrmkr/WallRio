@@ -12,13 +12,18 @@ class SponsoredAdCard extends StatefulWidget {
   State<SponsoredAdCard> createState() => _SponsoredAdCardState();
 }
 
-class _SponsoredAdCardState extends State<SponsoredAdCard> {
+class _SponsoredAdCardState extends State<SponsoredAdCard>
+    with AutomaticKeepAliveClientMixin {
   NativeAd? _nativeAd;
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
+  bool _isLoading = false;
 
   // Native advanced ad unit specified for grid tiles
   static const String _adUnitId = 'ca-app-pub-4861691653340010/6870759126';
+
+  @override
+  bool get wantKeepAlive => _isAdLoaded || _nativeAd != null || _bannerAd != null;
 
   @override
   void initState() {
@@ -29,17 +34,28 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
   }
 
   void _loadAd() {
-    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
+    if (UserProfile.plusMember ||
+        !ConsentManager.instance.canRequestAds ||
+        _isLoading ||
+        _isAdLoaded ||
+        _nativeAd != null ||
+        _bannerAd != null) {
       return;
     }
+    _isLoading = true;
     _nativeAd = NativeAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (ad) {
+          _isLoading = false;
           if (mounted) setState(() => _isAdLoaded = true);
         },
+        onAdImpression: (ad) {
+          debugPrint('[NativeTelemetry] NativeAd Impression recorded');
+        },
         onAdFailedToLoad: (ad, err) {
+          _isLoading = false;
           debugPrint('NativeAd failed to load ($err), trying fallback...');
           ad.dispose();
           _nativeAd = null;
@@ -55,18 +71,28 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
   }
 
   void _loadBannerFallback() {
-    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
+    if (UserProfile.plusMember ||
+        !ConsentManager.instance.canRequestAds ||
+        _isLoading ||
+        _isAdLoaded ||
+        _bannerAd != null) {
       return;
     }
+    _isLoading = true;
     _bannerAd = BannerAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),
       size: AdSize.mediumRectangle,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          _isLoading = false;
           if (mounted) setState(() => _isAdLoaded = true);
         },
+        onAdImpression: (ad) {
+          debugPrint('[NativeTelemetry] BannerFallback Impression recorded');
+        },
         onAdFailedToLoad: (ad, err) {
+          _isLoading = false;
           ad.dispose();
           _bannerAd = null;
           if (mounted) setState(() => _isAdLoaded = false);
@@ -84,6 +110,7 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (UserProfile.plusMember) {
       return const IgnorePointer(child: SizedBox.shrink());
     }

@@ -35,7 +35,11 @@ class BannerAdManager {
   int _emptyQueueEventsCount = 0;
   int _requestedCount = 0;
   int _displayedCount = 0;
+  int _impressionCount = 0;
   int _disposedCount = 0;
+  int _disposedBeforeImpressionCount = 0;
+
+  final Set<BannerAd> _impressedAds = <BannerAd>{};
 
   /// Current number of ready preloaded banners in the queue.
   int get readyCount => _readyQueue.length;
@@ -49,7 +53,9 @@ class BannerAdManager {
   int get emptyQueueEventsCount => _emptyQueueEventsCount;
   int get requestedCount => _requestedCount;
   int get displayedCount => _displayedCount;
+  int get impressionCount => _impressionCount;
   int get disposedCount => _disposedCount;
+  int get disposedBeforeImpressionCount => _disposedBeforeImpressionCount;
 
   /// Preload banners in the background upon app launch or initialization.
   void warmUp() {
@@ -115,11 +121,17 @@ class BannerAdManager {
     String placement = 'Banner',
   }) {
     if (ad == null) return;
+    final bool hadImpression = _impressedAds.remove(ad);
+    if (!hadImpression) {
+      _disposedBeforeImpressionCount++;
+    }
     _activeInUse.remove(ad);
     _readyQueue.remove(ad);
     _disposedCount++;
     _logTelemetry(
-      'Banner Disposed',
+      hadImpression
+          ? 'Banner Disposed (Impression recorded)'
+          : 'Banner Disposed BEFORE Impression',
       screen: screen,
       placement: placement,
     );
@@ -133,18 +145,25 @@ class BannerAdManager {
   }
 
   /// Automatically fills the preload queue up to [_targetQueueSize].
+  /// Throttles concurrent in-flight loads to max 2 to prevent server-side request starvation.
   void _replenishQueue() {
     if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
       clear();
       return;
     }
 
-    final int needed = _targetQueueSize - (_readyQueue.length + _inFlightCount);
-    if (needed <= 0 || (_readyQueue.length + _inFlightCount) >= _maxQueueSize) {
+    final int remainingCapacity = _targetQueueSize - (_readyQueue.length + _inFlightCount);
+    if (remainingCapacity <= 0 || (_readyQueue.length + _inFlightCount) >= _maxQueueSize) {
       return;
     }
 
-    for (int i = 0; i < needed; i++) {
+    // Strict throttle: maximum 2 concurrent in-flight requests to prevent server starvation
+    final int toLoad = min(remainingCapacity, max(0, 2 - _inFlightCount));
+    if (toLoad <= 0) {
+      return;
+    }
+
+    for (int i = 0; i < toLoad; i++) {
       _loadPreloadBanner();
     }
   }
@@ -175,6 +194,14 @@ class BannerAdManager {
           _logTelemetry(
             'Banner Loaded in ${stopwatch.elapsedMilliseconds}ms (Avg: ${averageLoadTimeMs}ms)',
           );
+
+          // If more banners needed, continue filling the queue
+          _replenishQueue();
+        },
+        onAdImpression: (ad) {
+          _impressionCount++;
+          _impressedAds.add(ad as BannerAd);
+          _logTelemetry('Banner Impression Registered (Total Impressions: $_impressionCount)');
         },
         onAdFailedToLoad: (ad, err) {
           stopwatch.stop();
@@ -221,6 +248,7 @@ class BannerAdManager {
       } catch (_) {}
     }
     _activeInUse.clear();
+    _impressedAds.clear();
     _inFlightCount = 0;
     _isWarmedUp = false;
   }
@@ -229,8 +257,10 @@ class BannerAdManager {
     if (!kDebugMode) return;
     final screenTag = screen != null ? ' [Screen: $screen]' : '';
     final placeTag = placement != null ? ' [Placement: $placement]' : '';
+    final double matchRate = _requestedCount > 0 ? (_successfulLoadsCount / _requestedCount) * 100 : 0;
+    final double impressionRate = _displayedCount > 0 ? (_impressionCount / _displayedCount) * 100 : 0;
     debugPrint(
-      '[BannerTelemetry]$screenTag$placeTag $event | QueueDepth: ${_readyQueue.length}/$_targetQueueSize | InFlight: $_inFlightCount | EmptyEvents: $_emptyQueueEventsCount | AvgLoadTime: ${averageLoadTimeMs}ms',
+      '[BannerTelemetry]$screenTag$placeTag $event | Queue: ${_readyQueue.length}/$_targetQueueSize | InFlight: $_inFlightCount | Displayed: $_displayedCount | Impressions: $_impressionCount (${impressionRate.toStringAsFixed(1)}%) | MatchRate: ${matchRate.toStringAsFixed(1)}%',
     );
   }
 }

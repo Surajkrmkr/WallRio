@@ -50,6 +50,12 @@ class AdsProvider extends ChangeNotifier {
           _isInterstitialLoading = false;
           logger.i("InterstitialAd loaded successfully.");
           ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdImpression: (ad) {
+              logger.i("[InterstitialTelemetry] InterstitialAd impression registered.");
+            },
+            onAdClicked: (ad) {
+              logger.i("[InterstitialTelemetry] InterstitialAd clicked.");
+            },
             onAdDismissedFullScreenContent: (ad) {
               ad.dispose();
               _interstitialAd = null;
@@ -84,6 +90,12 @@ class AdsProvider extends ChangeNotifier {
           onAdLoaded: (ad) {
             rewardedAd = ad;
             ad.fullScreenContentCallback = FullScreenContentCallback(
+              onAdImpression: (ad) {
+                logger.i("[RewardedTelemetry] RewardedAd impression registered.");
+              },
+              onAdClicked: (ad) {
+                logger.i("[RewardedTelemetry] RewardedAd clicked.");
+              },
               onAdDismissedFullScreenContent: (ad) {
                 Navigator.pop(context);
                 onRewarded();
