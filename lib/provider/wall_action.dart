@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
@@ -207,8 +206,8 @@ class WallActionProvider extends ChangeNotifier {
     Navigator.pop(context);
     ToastWidget.showToast("Applying wallpaper");
 
-    var file = await DefaultCacheManager().getSingleFile(url);
     try {
+      final file = await DefaultCacheManager().getSingleFile(url);
       await WallpaperManagerPlus().setWallpaper(file, wallLocation);
       ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {

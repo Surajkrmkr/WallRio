@@ -53,7 +53,9 @@ class MyApp extends StatelessWidget {
               // resolve Overlay.of() for CNToast.
               builder: (context, child) => Overlay(
                     initialEntries: [
-                      OverlayEntry(builder: (context) => child!),
+                      OverlayEntry(
+                          builder: (context) =>
+                              child ?? const SizedBox.shrink()),
                     ],
                   ),
               home: const SplashPage());

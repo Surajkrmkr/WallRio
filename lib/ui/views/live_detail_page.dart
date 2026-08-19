@@ -114,6 +114,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     if (balance >= cost) {
       final success =
           await progression.deductDiamonds(cost, "Unlocked Video Wallpaper");
+      if (!mounted) return;
       if (success) {
         ToastWidget.showToast("Video Wallpaper Unlocked! 💎");
         setState(() => _isSessionUnlocked = true);
@@ -121,6 +122,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         ToastWidget.showToast("Redemption failed.");
       }
     } else {
+      if (!mounted) return;
       CNBottomSheet.show(
         context: context,
         backgroundColor: Colors.transparent,

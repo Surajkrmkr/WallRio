@@ -3,7 +3,6 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/ui/widgets/scrollable_wallpaper_stack.dart';
 import 'package:wallrio/services/export.dart';
-import 'package:wallrio/ui/widgets/toast_widget.dart';
 
 /// Premium showcase card for a single collection: a horizontally scrollable
 /// wallpaper stack up front, with the collection's name/designer/wallpaper

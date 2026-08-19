@@ -23,7 +23,6 @@ class FullImage extends StatefulWidget {
 
 class _FullImageState extends State<FullImage> {
   Map<dynamic, dynamic> _secureScreen() => {};
-  bool _showPalette = false;
   bool _isSessionUnlocked = false;
   List<Walls> _recommendedWalls = [];
   List<Walls> _sameCategoryWalls = [];
@@ -49,7 +48,7 @@ class _FullImageState extends State<FullImage> {
   }
 
   @override
-  void dispose() async {
+  void dispose() {
     super.dispose();
   }
 

@@ -24,7 +24,15 @@ class ApiServices {
       final response = await client.get(url);
 
       if (response.statusCode == 200) {
-        return WallRioModel.fromJson(json.decode(response.data));
+        final dynamic decoded = response.data is String
+            ? json.decode(response.data as String)
+            : response.data;
+        if (decoded is Map<String, dynamic>) {
+          return WallRioModel.fromJson(decoded);
+        } else if (decoded is Map) {
+          return WallRioModel.fromJson(Map<String, dynamic>.from(decoded));
+        }
+        return WallRioModel(walls: [])..error = "Invalid format";
       } else {
         return WallRioModel(walls: [])..error = "Something went wrong";
       }
@@ -43,13 +51,21 @@ class ApiServices {
       final response = await client.get(url);
 
       if (response.statusCode == 200) {
-        return WallRioCollection.fromJson(json.decode(response.data));
+        final dynamic decoded = response.data is String
+            ? json.decode(response.data as String)
+            : response.data;
+        if (decoded is Map<String, dynamic>) {
+          return WallRioCollection.fromJson(decoded);
+        } else if (decoded is Map) {
+          return WallRioCollection.fromJson(Map<String, dynamic>.from(decoded));
+        }
+        return const WallRioCollection(collections: []);
       } else {
-        return WallRioCollection(collections: []);
+        return const WallRioCollection(collections: []);
       }
     } catch (error) {
       debugPrint(error.toString());
-      return WallRioCollection(collections: []);
+      return const WallRioCollection(collections: []);
     }
   }
 

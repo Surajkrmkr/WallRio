@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wallrio/services/packages/export.dart';
 

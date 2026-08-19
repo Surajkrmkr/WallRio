@@ -41,8 +41,10 @@ class FavouriteProvider extends ChangeNotifier {
   String _getUserDocId() {
     if (UserProfile.email.isNotEmpty) return UserProfile.email;
     final user = FirebaseAuth.instance.currentUser;
-    if (user?.email != null && user!.email!.isNotEmpty) return user.email!;
-    if (user?.uid != null && user!.uid.isNotEmpty) return user.uid;
+    final email = user?.email;
+    if (email != null && email.isNotEmpty) return email;
+    final uid = user?.uid;
+    if (uid != null && uid.isNotEmpty) return uid;
     return '';
   }
 

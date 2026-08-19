@@ -11,9 +11,9 @@ class SubscriptionPlan {
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) =>
       SubscriptionPlan(
-        id: json['id'] ?? '',
+        id: json['id']?.toString() ?? '',
         actualPrice: json['actual price'] != null
-            ? int.parse(json['actual price'].toString())
+            ? int.tryParse(json['actual price'].toString()) ?? 0
             : 0,
       );
 }
@@ -39,27 +39,30 @@ class WallRioModel {
   set setCollection(WallRioCollection value) => collection = value;
 
   factory WallRioModel.fromJson(Map<String, dynamic> json) => WallRioModel(
-      search: json['search'] == null
+      search: json['search'] == null || json['search'] is! Map
           ? const Search()
           : Search.fromJson(Map<String, dynamic>.from(json["search"] as Map)),
-      banners: json['banners'] == null
+      banners: json['banners'] == null || json['banners'] is! List
           ? []
           : (json['banners'] as List<dynamic>)
-              .map((v) => Banners.fromJson(Map<String, dynamic>.from(v as Map)))
+              .whereType<Map>()
+              .map((v) => Banners.fromJson(Map<String, dynamic>.from(v)))
               .toList(),
-      walls: json['walls'] == null
+      walls: json['walls'] == null || json['walls'] is! List
           ? []
           : (json['walls'] as List<dynamic>)
-              .map((v) => Walls.fromJson(Map<String, dynamic>.from(v as Map)))
+              .whereType<Map>()
+              .map((v) => Walls.fromJson(Map<String, dynamic>.from(v)))
               .toList(),
-      subscriptionPlans: json['subscription'] == null
+      subscriptionPlans: json['subscription'] == null || json['subscription'] is! List
           ? []
           : (json['subscription'] as List<dynamic>)
-              .map((v) => SubscriptionPlan.fromJson(Map<String, dynamic>.from(v as Map)))
+              .whereType<Map>()
+              .map((v) => SubscriptionPlan.fromJson(Map<String, dynamic>.from(v)))
               .toList(),
-      popupConfig: json['pop-up'] != null
+      popupConfig: json['pop-up'] != null && json['pop-up'] is Map
           ? PopupConfig.fromJson(json['pop-up'] as Map)
-          : (json['popup'] != null
+          : (json['popup'] != null && json['popup'] is Map
               ? PopupConfig.fromJson(json['popup'] as Map)
               : null));
 }
@@ -82,10 +85,10 @@ class Banners {
   });
 
   factory Banners.fromJson(Map<String, dynamic> json) => Banners(
-        id: json['id'] ?? 0,
-        url: json['url'] ?? "",
-        category: json['category'] ?? "",
-        link: json['link'] ?? "",
+        id: json['id'] != null ? int.tryParse(json['id'].toString()) ?? 0 : 0,
+        url: json['url']?.toString() ?? "",
+        category: json['category']?.toString() ?? "",
+        link: json['link']?.toString() ?? "",
         title: (json['title'] ??
                 json['text'] ??
                 json['banner_title'] ??
@@ -94,7 +97,7 @@ class Banners {
                 "")
             .toString(),
         wallId: json['wall_id'] is int
-            ? json['wall_id']
+            ? json['wall_id'] as int
             : int.tryParse(json['wall_id']?.toString() ?? ''),
       );
 }
@@ -112,13 +115,21 @@ class Search {
       this.hotTags = const []});
 
   factory Search.fromJson(Map<String, dynamic> json) => Search(
-        banner: json['banner'] != null
-            ? Banners.fromJson(json["banner"])
+        banner: json['banner'] != null && json['banner'] is Map
+            ? Banners.fromJson(Map<String, dynamic>.from(json["banner"] as Map))
             : const Banners(),
-        categories:
-            json['categories'] != null ? json['categories'].cast<String>() : [],
-        tags: json['tags'] != null ? json['tags'].cast<String>() : [],
-        hotTags: json['hotTags'] != null ? json['hotTags'].cast<String>() : [],
+        categories: (json['categories'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        tags: (json['tags'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        hotTags: (json['hotTags'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
       );
 }
 
@@ -149,17 +160,24 @@ class Walls {
       required this.colorList});
 
   factory Walls.fromJson(Map<String, dynamic> json) => Walls(
-        id: json['id'] != null ? int.parse(json['id'].toString()) : 0,
-        name: json['name'] ?? "",
-        subjectId: json['subjectId'] ?? "",
-        author: json['author'] ?? "",
-        url: json['url'] ?? "",
-        thumbnail: json['thumbnail'] ?? "",
-        isPremium: json['isPremium'] ?? false,
-        tags: json['tags'] != null ? json['tags'].cast<String>() : [],
-        category: json['category'] ?? "",
-        colorsString: json['color'] != null ? json['color'].cast<String>() : [],
-        colorList: json['color'] != null
+        id: json['id'] != null ? int.tryParse(json['id'].toString()) ?? 0 : 0,
+        name: json['name']?.toString() ?? "",
+        subjectId: json['subjectId']?.toString() ?? "",
+        author: json['author']?.toString() ?? "",
+        url: json['url']?.toString() ?? "",
+        thumbnail: json['thumbnail']?.toString() ?? "",
+        isPremium: json['isPremium'] == true ||
+            json['isPremium']?.toString().toLowerCase() == 'true',
+        tags: (json['tags'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        category: json['category']?.toString() ?? "",
+        colorsString: (json['color'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        colorList: json['color'] != null && json['color'] is List
             ? (json['color'] as List<dynamic>)
                 .map((color) => color.toString().toLowerCase().toColor())
                 .toList()
