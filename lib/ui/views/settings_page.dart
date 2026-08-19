@@ -195,6 +195,7 @@ class SettingsPage extends StatelessWidget {
                 }),
           ],
         ),
+      _bottomAccountActions(context),
       _appInfoSection(context),
     ];
 
@@ -316,72 +317,88 @@ class SettingsPage extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ),
-        ListTile(
-          onTap: () async {
-            final subProvider =
-                Provider.of<SubscriptionProvider>(context, listen: false);
-            final favProvider =
-                Provider.of<FavouriteProvider>(context, listen: false);
-            subProvider.clearData();
-            favProvider.clearData();
-            await authProvider.signOut();
-            if (context.mounted) {
-              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-                (route) => false,
-              );
-            }
-          },
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          leading: _tileIcon(Icons.logout_rounded),
-          title: Text('Log Out',
-              style: Theme.of(context).textTheme.titleMedium),
-          subtitle: Text('Sign out of your account',
-              style: Theme.of(context).textTheme.labelSmall),
-          trailing: Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 13,
-            color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
-          ),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        ),
-        ListTile(
-          onTap: () => _confirmAccountDeletion(context, authProvider),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.delete_forever_rounded,
-                color: Colors.redAccent, size: 20),
-          ),
-          title: const Text(
-            'Delete Account',
-            style: TextStyle(
-              color: Colors.redAccent,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            'Permanently delete account & saved data',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Colors.redAccent.withValues(alpha: 0.7),
-                ),
-          ),
-          trailing: Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 13,
-            color: Colors.redAccent.withValues(alpha: 0.5),
-          ),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        ),
       ],
+    );
+  }
+
+  // ─── Bottom Account Actions (Log Out & Delete Account) ────────
+
+  Widget _bottomAccountActions(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        if (!authProvider.isLoggedIn) return const SizedBox.shrink();
+        return _sectionCard(
+          context,
+          label: 'Account',
+          children: [
+            ListTile(
+              onTap: () async {
+                final subProvider =
+                    Provider.of<SubscriptionProvider>(context, listen: false);
+                final favProvider =
+                    Provider.of<FavouriteProvider>(context, listen: false);
+                subProvider.clearData();
+                favProvider.clearData();
+                await authProvider.signOut();
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                    (route) => false,
+                  );
+                }
+              },
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: _tileIcon(Icons.logout_rounded),
+              title: Text('Log Out',
+                  style: Theme.of(context).textTheme.titleMedium),
+              subtitle: Text('Sign out of your account',
+                  style: Theme.of(context).textTheme.labelSmall),
+              trailing: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+              ),
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            ListTile(
+              onTap: () => _confirmAccountDeletion(context, authProvider),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.delete_forever_rounded,
+                    color: Colors.redAccent, size: 20),
+              ),
+              title: const Text(
+                'Delete Account',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
+                'Permanently delete account & saved data',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.redAccent.withValues(alpha: 0.7),
+                    ),
+              ),
+              trailing: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: Colors.redAccent.withValues(alpha: 0.5),
+              ),
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+          ],
+        );
+      },
     );
   }
 
