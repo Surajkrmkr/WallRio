@@ -29,6 +29,9 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
   }
 
   void _loadAd() {
+    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
+      return;
+    }
     _nativeAd = NativeAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),
@@ -52,6 +55,9 @@ class _SponsoredAdCardState extends State<SponsoredAdCard> {
   }
 
   void _loadBannerFallback() {
+    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
+      return;
+    }
     _bannerAd = BannerAd(
       adUnitId: _adUnitId,
       request: const AdRequest(),

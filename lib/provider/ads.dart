@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
+import 'package:wallrio/services/consent_manager.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/model/export.dart';
 
@@ -24,8 +25,10 @@ class AdsProvider extends ChangeNotifier {
   bool _isInterstitialLoading = false;
 
   AdsProvider() {
-    // Preload interstitial on startup for Free users
-    loadInterstitialAd();
+    // Preload interstitial on startup for Free users if consent is ready
+    if (ConsentManager.instance.canRequestAds) {
+      loadInterstitialAd();
+    }
   }
 
   set setIsRewardedAdLoading(bool val) {
@@ -34,7 +37,7 @@ class AdsProvider extends ChangeNotifier {
   }
 
   void loadInterstitialAd() {
-    if (UserProfile.plusMember) return;
+    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) return;
     if (_interstitialAd != null || _isInterstitialLoading) return;
 
     _isInterstitialLoading = true;
@@ -70,6 +73,9 @@ class AdsProvider extends ChangeNotifier {
   }
 
   void loadRewardedAd(BuildContext context, {required Function() onRewarded}) {
+    if (!ConsentManager.instance.canRequestAds) {
+      return;
+    }
     setIsRewardedAdLoading = true;
     RewardedAd.load(
         adUnitId: rewardedId,

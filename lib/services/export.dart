@@ -12,3 +12,4 @@ export 'tracking_service.dart';
 export 'responsive.dart';
 export 'banner_ad_manager.dart';
 export 'remote_popup_service.dart';
+export 'consent_manager.dart';

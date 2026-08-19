@@ -138,6 +138,22 @@ class SettingsPage extends StatelessWidget {
               subtitle: 'Read our privacy policy',
               onTap: () => launch(
                   'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy')),
+          AnimatedBuilder(
+            animation: ConsentManager.instance,
+            builder: (context, _) {
+              if (!ConsentManager.instance.isPrivacyOptionsRequired) {
+                return const SizedBox.shrink();
+              }
+              return _tile(
+                context,
+                icon: Icons.security_rounded,
+                title: 'Privacy & Ad Consent',
+                subtitle: 'Manage your advertising consent choices',
+                onTap: () =>
+                    ConsentManager.instance.showPrivacyOptionsForm(context),
+              );
+            },
+          ),
         ],
       ),
       if (kDebugMode)
@@ -167,6 +183,15 @@ class SettingsPage extends StatelessWidget {
                       Provider.of<OnboardingProvider>(context, listen: false);
                   await onboardingProvider.clearOnboardingState();
                   ToastWidget.showToast('Debug: Cleared onboarding SharedPreferences');
+                }),
+            _tile(context,
+                icon: Icons.refresh_rounded,
+                title: 'Reset UMP Consent (EEA Test)',
+                subtitle: 'Reset UMP consent status and re-gather with EEA geography',
+                onTap: () async {
+                  await ConsentInformation.instance.reset();
+                  await ConsentManager.instance.gatherConsent(debugEea: true);
+                  ToastWidget.showToast('Debug: Reset UMP consent & requested with EEA geography');
                 }),
           ],
         ),

@@ -83,20 +83,8 @@ Future<void> initializationHandler() async {
   }
   await FirebaseAppCheck.instance.activate();
   await NotificationService().init();
-  // Next-Gen Google Mobile Ads initialization & background queue warm-up
-  MobileAds.instance.initialize().then((status) {
-    if (kDebugMode) {
-      MobileAds.instance.updateRequestConfiguration(
-        RequestConfiguration(
-          testDeviceIds: const [],
-        ),
-      );
-    }
-    // Warm up banner preload queue in background for non-Plus users
-    BannerAdManager.instance.warmUp();
-  }).catchError((err) {
-    debugPrint('[GMA] Next-Gen SDK initialization failed: $err');
-  });
+  // Google UMP (User Messaging Platform) CMP consent information update & Mobile Ads gating
+  ConsentManager.instance.gatherConsent();
   await Workmanager().initialize(
     callbackDispatcher,
   );

@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/services/consent_manager.dart';
 import 'package:wallrio/services/packages/export.dart';
 
 /// Centralized Banner Ad Manager maintaining a 4-item preloaded queue
@@ -52,7 +53,7 @@ class BannerAdManager {
 
   /// Preload banners in the background upon app launch or initialization.
   void warmUp() {
-    if (_isWarmedUp || UserProfile.plusMember) return;
+    if (_isWarmedUp || UserProfile.plusMember || !ConsentManager.instance.canRequestAds) return;
     _isWarmedUp = true;
     _logTelemetry('Queue Warm-up started (Target queue depth: $_targetQueueSize)');
     _replenishQueue();
@@ -73,7 +74,7 @@ class BannerAdManager {
       placement: placement,
     );
 
-    if (UserProfile.plusMember) {
+    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
       return null;
     }
 
@@ -133,7 +134,7 @@ class BannerAdManager {
 
   /// Automatically fills the preload queue up to [_targetQueueSize].
   void _replenishQueue() {
-    if (UserProfile.plusMember) {
+    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
       clear();
       return;
     }
@@ -149,7 +150,10 @@ class BannerAdManager {
   }
 
   void _loadPreloadBanner() {
-    if ((_readyQueue.length + _inFlightCount) >= _maxQueueSize) return;
+    if ((_readyQueue.length + _inFlightCount) >= _maxQueueSize ||
+        !ConsentManager.instance.canRequestAds) {
+      return;
+    }
 
     _inFlightCount++;
     final stopwatch = Stopwatch()..start();
