@@ -129,7 +129,6 @@ class _HomePageState extends State<HomePage> {
                       bottomPadding: 0,
                       screenName: 'HomePage',
                       placementName: 'DesktopSectionBanner',
-                      adUnitId: BannerAdUnits.homepageGridBanner,
                     ),
                   ),
                   SliverToBoxAdapter(

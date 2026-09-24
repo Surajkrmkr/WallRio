@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:wallrio/model/export.dart';
+import 'package:wallrio/services/banner_ad_manager.dart';
 
 /// Centralized Google User Messaging Platform (UMP) Consent Manager.
 ///
@@ -31,7 +33,8 @@ class ConsentManager extends ChangeNotifier {
   Future<void> gatherConsent({bool debugEea = false}) async {
     if (_isConsentUpdating) {
       if (kDebugMode) {
-        debugPrint('[UMP] Consent update already in progress, skipping duplicate call.');
+        debugPrint(
+            '[UMP] Consent update already in progress, skipping duplicate call.');
       }
       return;
     }
@@ -117,8 +120,8 @@ class ConsentManager extends ChangeNotifier {
   Future<void> _updateConsentState() async {
     try {
       _canRequestAds = await ConsentInformation.instance.canRequestAds();
-      final privacyStatus =
-          await ConsentInformation.instance.getPrivacyOptionsRequirementStatus();
+      final privacyStatus = await ConsentInformation.instance
+          .getPrivacyOptionsRequirementStatus();
       _isPrivacyOptionsRequired =
           privacyStatus == PrivacyOptionsRequirementStatus.required;
 
@@ -161,7 +164,10 @@ class ConsentManager extends ChangeNotifier {
         );
       }
 
-      // MobileAds initialized successfully
+      // Warm up banner preload queue for non-Plus users
+      if (!UserProfile.plusMember) {
+        BannerAdManager.instance.warmUp();
+      }
     } catch (err) {
       debugPrint('[GMA] Next-Gen SDK initialization failed: $err');
     }
@@ -202,8 +208,8 @@ class ConsentManager extends ChangeNotifier {
   /// Refreshes the privacy options status (e.g. when entering Settings).
   Future<void> checkPrivacyOptionsRequirement() async {
     try {
-      final privacyStatus =
-          await ConsentInformation.instance.getPrivacyOptionsRequirementStatus();
+      final privacyStatus = await ConsentInformation.instance
+          .getPrivacyOptionsRequirementStatus();
       final required =
           privacyStatus == PrivacyOptionsRequirementStatus.required;
       if (_isPrivacyOptionsRequired != required) {

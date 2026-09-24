@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
-import 'package:wallrio/ui/widgets/simple_banner_ad_widget.dart';
 
 class AdsWidget extends StatefulWidget {
   final double bottomPadding;
@@ -12,7 +12,6 @@ class AdsWidget extends StatefulWidget {
   final bool clearNavBar;
   final String screenName;
   final String placementName;
-  final String adUnitId;
 
   const AdsWidget({
     super.key,
@@ -21,7 +20,6 @@ class AdsWidget extends StatefulWidget {
     this.clearNavBar = true,
     this.screenName = 'General',
     this.placementName = 'AdsWidget',
-    this.adUnitId = BannerAdUnits.homepageGridBanner,
   });
 
   @override
@@ -160,7 +158,8 @@ class AdsWidget extends StatefulWidget {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.play_circle_outline_rounded, size: 20),
+                          : const Icon(Icons.play_circle_outline_rounded,
+                              size: 20),
                       label: Text(
                         provider.isRewardedAdLoading
                             ? "Loading Ad..."
@@ -222,68 +221,86 @@ class AdsWidget extends StatefulWidget {
 
 class _AdsWidgetState extends State<AdsWidget>
     with AutomaticKeepAliveClientMixin {
+  bool _isBannerFailed = false;
   BannerAd? bannerAd;
-  bool _isAdLoaded = false;
+  Timer? _retryTimer;
+  int _retryAttempts = 0;
+  static const int _maxRetries = 2;
 
   @override
-  bool get wantKeepAlive => _isAdLoaded;
+  bool get wantKeepAlive => bannerAd != null;
 
   @override
   void initState() {
     super.initState();
-    _loadBannerAd();
+    ConsentManager.instance.addListener(_onConsentChanged);
+    if (!UserProfile.plusMember) {
+      _acquireBannerAd();
+    }
   }
 
   @override
   void dispose() {
-    bannerAd?.dispose();
-    bannerAd = null;
+    ConsentManager.instance.removeListener(_onConsentChanged);
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    if (bannerAd != null) {
+      BannerAdManager.instance.releaseBanner(
+        bannerAd,
+        screen: widget.screenName,
+        placement: widget.placementName,
+      );
+      bannerAd = null;
+    }
     super.dispose();
   }
 
-  void _loadBannerAd() {
-    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
-      return;
+  void _onConsentChanged() {
+    if (mounted && bannerAd == null && ConsentManager.instance.canRequestAds) {
+      _retryAttempts = 0;
+      _acquireBannerAd();
     }
+  }
 
-    final unitId = BannerAdUnits.resolveAdUnitId(widget.adUnitId);
+  void _acquireBannerAd() {
+    if (bannerAd != null) return;
 
-    bannerAd = BannerAd(
-      adUnitId: unitId,
-      size: widget.size,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          if (mounted) {
-            setState(() {
-              _isAdLoaded = true;
-            });
-          }
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          bannerAd = null;
-          if (mounted) {
-            setState(() {
-              _isAdLoaded = false;
-            });
-          }
-        },
-      ),
+    final ad = BannerAdManager.instance.acquireBanner(
+      screen: widget.screenName,
+      placement: widget.placementName,
+      // DIAGNOSTIC ONLY: tags whether this call is the initial acquire or a
+      // widget-level retry, and which retry attempt number.
+      source: _retryAttempts == 0 ? 'initState' : 'widgetRetry#$_retryAttempts',
     );
 
-    bannerAd!.load();
+    if (mounted) {
+      setState(() {
+        bannerAd = ad;
+        _isBannerFailed = (ad == null);
+      });
+    }
+
+    if (ad == null && mounted && _retryAttempts < _maxRetries) {
+      _retryAttempts++;
+      _retryTimer?.cancel();
+      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted && bannerAd == null && !UserProfile.plusMember) {
+          _acquireBannerAd();
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (UserProfile.plusMember || !_isAdLoaded || bannerAd == null) {
+    if (UserProfile.plusMember || _isBannerFailed || bannerAd == null) {
       return const SizedBox.shrink();
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final double navBarClearance = (widget.size == AdSize.banner && widget.clearNavBar) ? 80.0 : 0.0;
+    final double navBarClearance =
+        (widget.size == AdSize.banner && widget.clearNavBar) ? 80.0 : 0.0;
 
     final double adWidth = bannerAd!.size.width.toDouble();
     final double adHeight = bannerAd!.size.height.toDouble().clamp(48.0, 60.0);
@@ -323,7 +340,9 @@ class _AdsWidgetState extends State<AdsWidget>
     );
 
     final double topMargin = widget.clearNavBar ? 0 : 8.0;
-    final double bottomMargin = widget.bottomPadding + navBarClearance + (widget.clearNavBar ? 0 : 16.0);
+    final double bottomMargin = widget.bottomPadding +
+        navBarClearance +
+        (widget.clearNavBar ? 0 : 16.0);
 
     Widget adContainer = Container(
       margin: EdgeInsets.only(

@@ -210,22 +210,11 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                           child: InlineBannerAdWidget(
                             verticalPadding: 0,
                             screenName: 'DesktopDetailPage',
-                            placementName: 'SectionDividerBanner1',
-                            adUnitId: BannerAdUnits.desktopWallpaperBanner,
+                            placementName: 'SectionDividerBanner',
                           ),
                         ),
                         const SizedBox(height: 24),
                         _buildMoreLikeThisSection(context, isDarkMode),
-                        const SizedBox(height: 20),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: InlineBannerAdWidget(
-                            verticalPadding: 0,
-                            screenName: 'DesktopDetailPage',
-                            placementName: 'SectionDividerBanner2',
-                            adUnitId: BannerAdUnits.desktopWallpaperBanner,
-                          ),
-                        ),
                         const SizedBox(height: 24),
                         _buildExploreSimilarSection(context, isDarkMode),
                         const SizedBox(height: 40),

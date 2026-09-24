@@ -97,7 +97,7 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
       // Insert 1 banner ad after every 3 completed rows
-      if (!UserProfile.plusMember && (i + 1) % 3 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
@@ -179,7 +179,6 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
                           verticalPadding: 12.0,
                           screenName: 'DesktopWallpapersPage',
                           placementName: 'GridChunkBanner',
-                          adUnitId: BannerAdUnits.desktopWallpaperBanner,
                         );
                       }
                       return _buildDesktopRow(

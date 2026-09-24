@@ -15,3 +15,4 @@ export 'responsive.dart';
 export 'remote_popup_service.dart';
 export 'consent_manager.dart';
 export 'home_widget_launch_service.dart';
+export 'banner_ad_manager.dart';

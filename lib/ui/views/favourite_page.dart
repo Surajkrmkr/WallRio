@@ -158,7 +158,7 @@ class FavouritePage extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 3 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
@@ -207,7 +207,6 @@ class FavouritePage extends StatelessWidget {
                 return const InlineBannerAdWidget(
                   screenName: 'FavouritePage',
                   placementName: 'GridChunkBanner',
-                  adUnitId: BannerAdUnits.homepageGridBanner,
                 );
               }
               final rowItems = item as List<dynamic>;

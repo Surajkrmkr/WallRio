@@ -348,10 +348,14 @@ class _NavigationPageState extends State<NavigationPage> with WidgetsBindingObse
   Widget _buildStickyBanner(Navigation provider) {
     if (UserProfile.plusMember) return const SizedBox.shrink();
 
-    return const StickyBottomBannerWidget(
-      key: ValueKey('persistent_sticky_bottom_banner'),
-      screenName: 'MainNavigation',
-      placementName: 'StickyBottomBanner',
+    return Visibility(
+      visible: provider.index != 2,
+      maintainState: true,
+      child: const StickyBottomBannerWidget(
+        key: ValueKey('persistent_sticky_bottom_banner'),
+        screenName: 'MainNavigation',
+        placementName: 'StickyBottomBanner',
+      ),
     );
   }
 

@@ -152,7 +152,7 @@ class _GridPageState extends State<GridPage> {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 3 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
@@ -182,7 +182,6 @@ class _GridPageState extends State<GridPage> {
                 return const InlineBannerAdWidget(
                   screenName: 'GridPage',
                   placementName: 'GridChunkBanner',
-                  adUnitId: BannerAdUnits.categoriesViewAllBanner,
                 );
               }
               return _buildWallRow(item as List<dynamic>, columnsCount, context);

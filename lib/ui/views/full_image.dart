@@ -592,7 +592,6 @@ class _FullImageState extends State<FullImage> {
       bottomPadding: 0,
       screenName: 'FullImage',
       placementName: 'BottomSponsoredBanner',
-      adUnitId: BannerAdUnits.staticDetailBanner,
     );
   }
 

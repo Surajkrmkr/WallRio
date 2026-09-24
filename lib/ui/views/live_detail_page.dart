@@ -650,7 +650,6 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
       bottomPadding: 0,
       screenName: 'LiveDetailPage',
       placementName: 'BottomSponsoredBanner',
-      adUnitId: BannerAdUnits.liveWallpaperBanner,
     );
   }
 
