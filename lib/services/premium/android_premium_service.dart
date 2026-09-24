@@ -11,11 +11,13 @@ class AndroidPremiumService implements PremiumService {
   final String subscriptionFirebasePath = "purchases";
   static const String keyPlusMember = 'user_is_plus_member';
   static const String keyExpiryDate = 'user_subscription_expiry';
+  static const String keyEntitlementSource = 'user_entitlement_source';
 
   @override
   bool isLoading = false;
   bool isSupported = false;
   String _subscriptionDaysLeft = "";
+  bool _storeEntitlementSeen = false;
 
   @override
   List<ProductDetails> products = [];
@@ -38,40 +40,45 @@ class AndroidPremiumService implements PremiumService {
     isSupported = await inAppPurchase.isAvailable();
     logger.i('Android IAP available: $isSupported, queried IDs: $productIDs');
     if (isSupported) {
-      await getUserProducts(productIDs);
       _subscription = inAppPurchase.purchaseStream.listen((data) {
         if (data.isEmpty) return;
-        switch (data.first.status) {
-          case PurchaseStatus.canceled:
-            ToastWidget.showToast('Purchase Cancelled');
-            isLoading = false;
-            break;
-          case PurchaseStatus.error:
-            final error = data.first.error;
-            if (error != null && error.message.contains('itemAlreadyOwned')) {
+        for (final purchase in data) {
+          switch (purchase.status) {
+            case PurchaseStatus.canceled:
+              ToastWidget.showToast('Purchase Cancelled');
+              isLoading = false;
+              break;
+            case PurchaseStatus.error:
+              final error = purchase.error;
+              if (error != null && error.message.contains('itemAlreadyOwned')) {
+                ToastWidget.showToast(
+                    'Fixing a stuck purchase, please try again in a moment');
+                _consumeStalePurchases();
+              } else {
+                ToastWidget.showToast('Something went wrong');
+              }
+              isLoading = false;
+              break;
+            case PurchaseStatus.pending:
               ToastWidget.showToast(
-                  'Fixing a stuck purchase, please try again in a moment');
-              _consumeStalePurchases();
-            } else {
-              ToastWidget.showToast('Something went wrong');
-            }
-            isLoading = false;
-            break;
-          case PurchaseStatus.pending:
-            ToastWidget.showToast(
-                'Your purchase is currently pending. Please check back in sometime');
-            break;
-          case PurchaseStatus.purchased:
-            ToastWidget.showToast('Purchased successfully');
-            _verifyPurchase(data.first);
-            break;
-          case PurchaseStatus.restored:
-            _consumeRestoredPurchase(data.first);
-            break;
-          default:
-            break;
+                  'Your purchase is currently pending. Please check back in sometime');
+              break;
+            case PurchaseStatus.purchased:
+              ToastWidget.showToast('Purchased successfully');
+              _verifyPurchase(purchase);
+              break;
+            case PurchaseStatus.restored:
+              if (_isStoreEntitlement(purchase.productID)) {
+                _storeEntitlementSeen = true;
+              }
+              _consumeRestoredPurchase(purchase);
+              break;
+            default:
+              break;
+          }
         }
       });
+      await getUserProducts(productIDs);
     }
   }
 
@@ -99,8 +106,15 @@ class AndroidPremiumService implements PremiumService {
   Future<void> buyProduct(ProductDetails prod) async {
     try {
       final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
-      await inAppPurchase.buyConsumable(
-          purchaseParam: purchaseParam, autoConsume: true);
+      if (_isCollectionProduct(prod.id)) {
+        await inAppPurchase.buyConsumable(
+            purchaseParam: purchaseParam, autoConsume: true);
+      } else {
+        // Play subscriptions and the lifetime product must not be consumed.
+        // Google Play then owns renewal and makes the entitlement available
+        // again through restorePurchases().
+        await inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+      }
     } on Exception catch (e) {
       logger.e(e);
     }
@@ -125,6 +139,13 @@ class AndroidPremiumService implements PremiumService {
 
   Future<void> _consumeRestoredPurchase(PurchaseDetails purchase) async {
     try {
+      if (!_isCollectionProduct(purchase.productID)) {
+        if (purchase.pendingCompletePurchase) {
+          await inAppPurchase.completePurchase(purchase);
+        }
+        await _grantStoreEntitlement(purchase);
+        return;
+      }
       final addition = inAppPurchase
           .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
       await addition.consumePurchase(purchase);
@@ -140,56 +161,14 @@ class AndroidPremiumService implements PremiumService {
     isLoading = true;
     try {
       await inAppPurchase.completePurchase(purchase);
-      final CollectionReference purchases =
-          FirebaseFirestore.instance.collection(subscriptionFirebasePath);
-      final now = DateTime.now();
-
-      final currentUser = FirebaseAuth.instance.currentUser;
-      final userEmail = currentUser?.email ?? "";
-
-      if (purchase.productID.startsWith('com.wallrio.collection.')) {
+      if (_isCollectionProduct(purchase.productID)) {
         final collectionId = purchase.productID.split('.').last;
         purchasedCollections.add(collectionId);
-        await purchases.add({
-          "productID": purchase.productID,
-          "purchaseID": purchase.purchaseID,
-          "pendingCompletePurchase": purchase.pendingCompletePurchase,
-          "transactionDate": purchase.transactionDate,
-          'email': userEmail,
-          'purchaseDate': now.toUtc(),
-          'isCollection': true,
-        });
         _successPurchased.sink.add(true);
         return;
       }
 
-      final int subscriptionDays = purchase.productID.contains('lifetime')
-          ? 36135
-          : int.parse(purchase.productID.split("_").last);
-      final endDate = now.add(Duration(days: subscriptionDays));
-      await purchases.add({
-        "productID": purchase.productID,
-        "purchaseID": purchase.purchaseID,
-        "pendingCompletePurchase": purchase.pendingCompletePurchase,
-        "transactionDate": purchase.transactionDate,
-        'email': userEmail,
-        'purchaseStartDate': now.toUtc(),
-        'purchaseEndDate': endDate.toUtc(),
-      });
-      _subscriptionDaysLeft = endDate.difference(now).inDays.toString();
-      final bool hasCollectionAccess = subscriptionDays >= 360;
-      UserProfile.setPlusMemberInfo(true,
-          hasCollectionAccess: hasCollectionAccess);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(keyPlusMember, true);
-      await prefs.setBool('user_has_collection_access', hasCollectionAccess);
-      await prefs.setString(keyExpiryDate, endDate.toIso8601String());
-      await prefs.setString('user_subscription_start', now.toIso8601String());
-      FirebaseAnalytics.instance
-          .logPurchase(currency: 'USD', value: null, parameters: {
-        'product_id': purchase.productID,
-        'subscription_days': subscriptionDays,
-      });
+      await _grantStoreEntitlement(purchase);
       _successPurchased.sink.add(true);
     } catch (error) {
       logger.e(error);
@@ -200,10 +179,30 @@ class AndroidPremiumService implements PremiumService {
 
   @override
   Future<void> checkPastPurchases({String? email}) async {
-    if (email == null || email.isEmpty) return;
     isLoading = true;
     try {
       final prefs = await SharedPreferences.getInstance();
+      final hasPlayEntitlement =
+          prefs.getString(keyEntitlementSource) == 'play';
+      if (hasPlayEntitlement) {
+        // Clear only entitlements previously established by Play. Legacy
+        // Firebase entitlements are deliberately left untouched.
+        UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
+        await prefs.setBool(keyPlusMember, false);
+        await prefs.setBool('user_has_collection_access', false);
+      }
+      // This is the source of truth for new Android purchases. The purchase
+      // stream will deliver active subscriptions and lifetime purchases.
+      _storeEntitlementSeen = false;
+      await inAppPurchase.restorePurchases();
+      if (_storeEntitlementSeen ||
+          prefs.getString(keyEntitlementSource) == 'play') {
+        return;
+      }
+
+      // Keep the old Firestore read-only migration path for existing users.
+      // No new purchase or expiry data is written to Firebase.
+      if (hasPlayEntitlement || email == null || email.isEmpty) return;
       final CollectionReference purchases =
           FirebaseFirestore.instance.collection(subscriptionFirebasePath);
       final QuerySnapshot<Object?> querySnapshot = await purchases.get();
@@ -266,6 +265,43 @@ class AndroidPremiumService implements PremiumService {
     }
   }
 
+  bool _isCollectionProduct(String productId) =>
+      productId.startsWith('com.wallrio.collection.');
+
+  bool _isSubscriptionProduct(String productId) =>
+      productId == 'com.wallrio.pro.monthly' ||
+      productId == 'com.wallrio.pro.quarterly' ||
+      productId == 'com.wallrio.pro.annual' ||
+      productId.contains('monthly') ||
+      productId.contains('quaterly') ||
+      productId.contains('quarterly') ||
+      productId.contains('yearly') ||
+      productId.contains('annual');
+
+  bool _isStoreEntitlement(String productId) =>
+      productId.contains('lifetime') || _isSubscriptionProduct(productId);
+
+  Future<void> _grantStoreEntitlement(PurchaseDetails purchase) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLifetime = purchase.productID.contains('lifetime');
+    final isSubscription = _isSubscriptionProduct(purchase.productID);
+    if (!isLifetime && !isSubscription) return;
+
+    // Play is authoritative for recurring entitlement state. Do not calculate
+    // an expiry date because Play owns renewal and cancellation state.
+    final hasCollectionAccess = isLifetime ||
+        purchase.productID.contains('yearly') ||
+        purchase.productID.contains('annual');
+    UserProfile.setPlusMemberInfo(true,
+        hasCollectionAccess: hasCollectionAccess);
+    await prefs.setBool(keyPlusMember, true);
+    await prefs.setBool('user_has_collection_access', hasCollectionAccess);
+    await prefs.setString(keyEntitlementSource, 'play');
+    await prefs.remove(keyExpiryDate);
+    await prefs.remove('user_subscription_start');
+    _subscriptionDaysLeft = isLifetime ? 'Lifetime' : 'Active';
+  }
+
   @override
   Future<void> clearPurchaseSharedPreferences() async {
     isLoading = true;
@@ -275,6 +311,7 @@ class AndroidPremiumService implements PremiumService {
       await prefs.remove(keyExpiryDate);
       await prefs.remove('user_subscription_start');
       await prefs.remove('user_has_collection_access');
+      await prefs.remove(keyEntitlementSource);
       await prefs.remove('user_unlocked_collections');
 
       purchasedCollections.clear();

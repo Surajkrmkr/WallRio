@@ -20,12 +20,12 @@ class SubscriptionProvider extends ChangeNotifier {
       ? 'com.wallrio.ios.lifetime_pro'
       : 'com.wallrio.lifetime_pro';
   static final String monthlyProductId =
-      Platform.isIOS ? 'com.wallrio.ios.monthly_28' : 'com.wallrio.monthly_28';
+      Platform.isIOS ? 'com.wallrio.ios.monthly_28' : 'com.wallrio.pro.monthly';
   static final String quaterlyProductId = Platform.isIOS
       ? 'com.wallrio.ios.quaterly_84'
-      : 'com.wallrio.quaterly_84';
+      : 'com.wallrio.pro.quarterly';
   static final String yearlyProductId =
-      Platform.isIOS ? 'com.wallrio.ios.yearly_365' : 'com.wallrio.yearly_365';
+      Platform.isIOS ? 'com.wallrio.ios.yearly_365' : 'com.wallrio.pro.annual';
 
   final Set<String> productIDs = {
     lifetimeProductId,
@@ -46,10 +46,9 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   bool get isLoading => _service.isLoading;
-  bool get isSupported =>
-      _service is AndroidPremiumService
-          ? (_service as AndroidPremiumService).isSupported
-          : (_service as IOSPremiumService).isSupported;
+  bool get isSupported => _service is AndroidPremiumService
+      ? (_service as AndroidPremiumService).isSupported
+      : (_service as IOSPremiumService).isSupported;
 
   List<ProductDetails> get products => _service.products;
   Set<String> get purchasedCollections => _service.purchasedCollections;
@@ -111,15 +110,17 @@ class SubscriptionProvider extends ChangeNotifier {
 
   Future<bool> buyProductById(String rawProductId) async {
     final String shortId = rawProductId.split('.').last;
-    final String fullProductId = rawProductId.startsWith('com.wallrio.collection.')
-        ? rawProductId
-        : 'com.wallrio.collection.$rawProductId';
+    final String fullProductId =
+        rawProductId.startsWith('com.wallrio.collection.')
+            ? rawProductId
+            : 'com.wallrio.collection.$rawProductId';
 
     final idsToTry = {fullProductId, shortId, rawProductId};
     await fetchProducts(idsToTry);
 
     final product = products.cast<ProductDetails?>().firstWhere(
-          (p) => p != null && (idsToTry.contains(p.id) || p.id.endsWith(shortId)),
+          (p) =>
+              p != null && (idsToTry.contains(p.id) || p.id.endsWith(shortId)),
           orElse: () => null,
         );
 
