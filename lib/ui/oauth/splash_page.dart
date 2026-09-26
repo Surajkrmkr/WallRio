@@ -75,12 +75,6 @@ class _SplashPageState extends State<SplashPage> {
     // Also fetch progression data
     Provider.of<ProgressionProvider>(context, listen: false).fetchProgression();
     Provider.of<PersonalizationProvider>(context, listen: false).fetchPersonalization();
-
-    subscriptionProvider.successPurchasedStream.listen((event) {
-      if (mounted && event) {
-        Navigator.pop(context, true);
-      }
-    });
   }
 
   void _checkInAppUpdate() {

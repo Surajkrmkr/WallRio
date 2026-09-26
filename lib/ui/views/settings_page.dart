@@ -543,7 +543,9 @@ class SettingsPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text(
-                  '${provider.subscriptionDaysLeft} days remaining',
+                  provider.subscriptionDaysLeft == 'Lifetime'
+                      ? 'Lifetime access'
+                      : '~${provider.subscriptionDaysLeft} days remaining',
                   style: const TextStyle(
                     color: whiteColor,
                     fontSize: 12,

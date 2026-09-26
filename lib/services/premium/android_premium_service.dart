@@ -17,6 +17,7 @@ class AndroidPremiumService implements PremiumService {
   bool isLoading = false;
   bool isSupported = false;
   String _subscriptionDaysLeft = "";
+  DateTime? _playExpiryEstimate;
   bool _storeEntitlementSeen = false;
 
   @override
@@ -33,7 +34,9 @@ class AndroidPremiumService implements PremiumService {
   Stream<bool> get successPurchasedStream => _successPurchased.stream;
 
   @override
-  String get subscriptionDaysLeft => _subscriptionDaysLeft;
+  String get subscriptionDaysLeft => _playExpiryEstimate == null
+      ? _subscriptionDaysLeft
+      : _remainingDays(_playExpiryEstimate!);
 
   @override
   Future<void> checkSupportForIAP(Set<String> productIDs) async {
@@ -144,6 +147,7 @@ class AndroidPremiumService implements PremiumService {
           await inAppPurchase.completePurchase(purchase);
         }
         await _grantStoreEntitlement(purchase);
+        _successPurchased.sink.add(true);
         return;
       }
       final addition = inAppPurchase
@@ -190,6 +194,8 @@ class AndroidPremiumService implements PremiumService {
         UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
         await prefs.setBool(keyPlusMember, false);
         await prefs.setBool('user_has_collection_access', false);
+        _playExpiryEstimate = null;
+        _subscriptionDaysLeft = '';
       }
       // This is the source of truth for new Android purchases. The purchase
       // stream will deliver active subscriptions and lifetime purchases.
@@ -287,8 +293,9 @@ class AndroidPremiumService implements PremiumService {
     final isSubscription = _isSubscriptionProduct(purchase.productID);
     if (!isLifetime && !isSubscription) return;
 
-    // Play is authoritative for recurring entitlement state. Do not calculate
-    // an expiry date because Play owns renewal and cancellation state.
+    // The purchase date and product period provide a display estimate only.
+    // Play remains authoritative because this client data cannot account for
+    // grace periods, account holds, or every renewal-state change.
     final hasCollectionAccess = isLifetime ||
         purchase.productID.contains('yearly') ||
         purchase.productID.contains('annual');
@@ -297,9 +304,82 @@ class AndroidPremiumService implements PremiumService {
     await prefs.setBool(keyPlusMember, true);
     await prefs.setBool('user_has_collection_access', hasCollectionAccess);
     await prefs.setString(keyEntitlementSource, 'play');
-    await prefs.remove(keyExpiryDate);
     await prefs.remove('user_subscription_start');
-    _subscriptionDaysLeft = isLifetime ? 'Lifetime' : 'Active';
+    await prefs.remove(keyExpiryDate);
+
+    if (isLifetime) {
+      _subscriptionDaysLeft = 'Lifetime';
+      _playExpiryEstimate = null;
+      return;
+    }
+
+    final purchaseDate = _purchaseDate(purchase);
+    final estimatedExpiry = purchaseDate == null
+        ? null
+        : _estimateExpiry(purchaseDate, purchase.productID);
+    if (estimatedExpiry == null) {
+      logger.w('Cannot estimate subscription expiry for ${purchase.productID}: '
+          'purchase date or plan period is unavailable.');
+      _subscriptionDaysLeft = '';
+      _playExpiryEstimate = null;
+      return;
+    }
+
+    _playExpiryEstimate = estimatedExpiry;
+    _subscriptionDaysLeft = _remainingDays(estimatedExpiry);
+  }
+
+  DateTime? _purchaseDate(PurchaseDetails purchase) {
+    final transactionDate = purchase.transactionDate;
+    if (transactionDate == null) return null;
+
+    final timestamp = int.tryParse(transactionDate);
+    if (timestamp != null) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    }
+    return DateTime.tryParse(transactionDate)?.toLocal();
+  }
+
+  DateTime? _estimateExpiry(DateTime start, String productId) {
+    if (productId == 'com.wallrio.pro.monthly') {
+      return _addCalendarMonths(start, 1);
+    }
+    if (productId == 'com.wallrio.pro.quarterly') {
+      return _addCalendarMonths(start, 3);
+    }
+    if (productId == 'com.wallrio.pro.annual') {
+      return _addCalendarMonths(start, 12);
+    }
+
+    final days = int.tryParse(productId.split('_').last);
+    if (days != null && days > 0) return start.add(Duration(days: days));
+
+    if (productId.contains('monthly')) return _addCalendarMonths(start, 1);
+    if (productId.contains('quarterly') || productId.contains('quaterly')) {
+      return _addCalendarMonths(start, 3);
+    }
+    if (productId.contains('annual') || productId.contains('yearly')) {
+      return _addCalendarMonths(start, 12);
+    }
+    return null;
+  }
+
+  DateTime _addCalendarMonths(DateTime start, int months) {
+    final targetMonth = DateTime(start.year, start.month + months, 1);
+    final lastDayOfTargetMonth =
+        DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
+    final targetDay =
+        start.day > lastDayOfTargetMonth ? lastDayOfTargetMonth : start.day;
+    return DateTime(targetMonth.year, targetMonth.month, targetDay, start.hour,
+        start.minute, start.second);
+  }
+
+  String _remainingDays(DateTime expiry) {
+    final remaining = expiry.difference(DateTime.now());
+    if (remaining.isNegative || remaining == Duration.zero) return '0';
+    return ((remaining.inSeconds + Duration.secondsPerDay - 1) ~/
+            Duration.secondsPerDay)
+        .toString();
   }
 
   @override
@@ -316,6 +396,7 @@ class AndroidPremiumService implements PremiumService {
 
       purchasedCollections.clear();
       _subscriptionDaysLeft = "";
+      _playExpiryEstimate = null;
       UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
       ToastWidget.showToast('Debug: Cleared purchase SharedPreferences');
     } catch (e) {
