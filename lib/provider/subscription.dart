@@ -2,6 +2,7 @@ import 'dart:async' show Future, Stream, StreamSubscription;
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
@@ -19,20 +20,28 @@ class SubscriptionProvider extends ChangeNotifier {
   static final String lifetimeProductId = Platform.isIOS
       ? 'com.wallrio.ios.lifetime_pro'
       : 'com.wallrio.lifetime_pro';
-  static final String monthlyProductId =
-      Platform.isIOS ? 'com.wallrio.ios.monthly_28' : 'com.wallrio.pro.monthly';
+  static const String androidSubscriptionProductId = 'wallrio_pro';
+  static final String monthlyProductId = Platform.isIOS
+      ? 'com.wallrio.ios.monthly_28'
+      : androidSubscriptionProductId;
   static final String quaterlyProductId = Platform.isIOS
       ? 'com.wallrio.ios.quaterly_84'
-      : 'com.wallrio.pro.quarterly';
-  static final String yearlyProductId =
-      Platform.isIOS ? 'com.wallrio.ios.yearly_365' : 'com.wallrio.pro.annual';
+      : androidSubscriptionProductId;
+  static final String yearlyProductId = Platform.isIOS
+      ? 'com.wallrio.ios.yearly_365'
+      : androidSubscriptionProductId;
 
-  final Set<String> productIDs = {
-    lifetimeProductId,
-    monthlyProductId,
-    quaterlyProductId,
-    yearlyProductId,
-  };
+  final Set<String> productIDs = Platform.isIOS
+      ? {
+          lifetimeProductId,
+          monthlyProductId,
+          quaterlyProductId,
+          yearlyProductId,
+        }
+      : {
+          lifetimeProductId,
+          androidSubscriptionProductId,
+        };
 
   final PublishSubject<bool> _successPurchased = PublishSubject<bool>();
   Stream<bool> get successPurchasedStream => _successPurchased.stream;
@@ -53,6 +62,56 @@ class SubscriptionProvider extends ChangeNotifier {
   List<ProductDetails> get products => _service.products;
   Set<String> get purchasedCollections => _service.purchasedCollections;
   String get subscriptionDaysLeft => _service.subscriptionDaysLeft;
+
+  static String? androidBasePlanId(ProductDetails product) {
+    if (product is! GooglePlayProductDetails ||
+        product.subscriptionIndex == null) {
+      return null;
+    }
+    final offers = product.productDetails.subscriptionOfferDetails;
+    final index = product.subscriptionIndex!;
+    if (offers == null || index >= offers.length) return null;
+    return offers[index].basePlanId;
+  }
+
+  static String? androidBillingPeriod(ProductDetails product) {
+    if (product is! GooglePlayProductDetails ||
+        product.subscriptionIndex == null) {
+      return null;
+    }
+    final offers = product.productDetails.subscriptionOfferDetails;
+    final index = product.subscriptionIndex!;
+    if (offers == null || index >= offers.length) return null;
+    final phases = offers[index].pricingPhases;
+    return phases.isEmpty ? null : phases.first.billingPeriod;
+  }
+
+  static String selectionId(ProductDetails product) {
+    final basePlanId = androidBasePlanId(product);
+    return basePlanId == null
+        ? product.id
+        : '$androidSubscriptionProductId:$basePlanId';
+  }
+
+  static String billingPeriodDescription(ProductDetails product) {
+    final period = androidBillingPeriod(product);
+    if (period == null) return product.id;
+    final match = RegExp(
+      r'^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?$',
+    ).firstMatch(period);
+    if (match == null) return product.id;
+    final years = int.tryParse(match.group(1) ?? '0') ?? 0;
+    final months = int.tryParse(match.group(2) ?? '0') ?? 0;
+    final weeks = int.tryParse(match.group(3) ?? '0') ?? 0;
+    final days = int.tryParse(match.group(4) ?? '0') ?? 0;
+    final totalMonths = years * 12 + months;
+    if (totalMonths > 0) {
+      return 'every $totalMonths ${totalMonths == 1 ? 'month' : 'months'}';
+    }
+    if (weeks > 0) return 'every $weeks ${weeks == 1 ? 'week' : 'weeks'}';
+    if (days > 0) return 'every $days ${days == 1 ? 'day' : 'days'}';
+    return product.id;
+  }
 
   set setIsSubscriptionIdLoading(bool val) {
     isSubscriptionLoading = val;

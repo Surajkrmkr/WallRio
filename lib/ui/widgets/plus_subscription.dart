@@ -85,7 +85,9 @@ class PlusSubscription extends StatelessWidget {
         children: [
           _buildPlusFeature(context: context, feature: "Ad-free experience."),
           _buildPlusFeature(
-              context: context, feature: "Unlock PRO collections (Yearly & Lifetime plans only)."),
+              context: context,
+              feature:
+                  "Unlock PRO collections (Yearly & Lifetime plans only)."),
           _buildPlusFeature(
               context: context, feature: "Maximum Quality Upto 8k.")
         ],
@@ -142,8 +144,21 @@ class PlusSubscription extends StatelessWidget {
 
   RadioListTile<String> _buildSubscriptonTile(BuildContext context,
       {required ProductDetails product, required String activeSubscription}) {
+    final basePlanId = SubscriptionProvider.androidBasePlanId(product);
+    final periodDescription =
+        SubscriptionProvider.billingPeriodDescription(product);
+    final planTitle = basePlanId == null
+        ? product.title
+        : basePlanId.toLowerCase().contains('year')
+            ? 'Yearly'
+            : basePlanId.toLowerCase().contains('quarter') ||
+                    basePlanId.toLowerCase().contains('qarter')
+                ? 'Quarterly'
+                : basePlanId.toLowerCase().contains('month')
+                    ? 'Monthly'
+                    : product.title;
     return RadioListTile(
-      value: product.id,
+      value: SubscriptionProvider.selectionId(product),
       // ignore: deprecated_member_use
       groupValue: activeSubscription,
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -153,13 +168,13 @@ class PlusSubscription extends StatelessWidget {
               .buyProduct(product),
       title: Row(
         children: [
-          Expanded(child: Text(product.title)),
+          Expanded(child: Text(planTitle)),
           Text(product.price),
         ],
       ),
       isThreeLine: true,
       subtitle: Text(
-        product.description,
+        basePlanId == null ? product.description : periodDescription,
         style:
             Theme.of(context).textTheme.labelSmall!.copyWith(color: blackColor),
       ),

@@ -47,7 +47,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     if (_selectedProductId == null) return;
     ProductDetails? product;
     for (final p in subProvider.products) {
-      if (p.id == _selectedProductId) {
+      if (SubscriptionProvider.selectionId(p) == _selectedProductId) {
         product = p;
         break;
       }
@@ -89,19 +89,28 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   String _billingPeriodText(String id, List<ProductDetails> products) {
     final match = products.cast<dynamic>().firstWhere(
-        (p) => p.id == id,
+        (p) => SubscriptionProvider.selectionId(p) == id,
         orElse: () => null);
+    if (match != null && !Platform.isIOS) {
+      return '${match.price} ${SubscriptionProvider.billingPeriodDescription(match)}';
+    }
     final priceStr = match?.price ?? '';
-    if (id == SubscriptionProvider.yearlyProductId) return '$priceStr every year';
-    if (id == SubscriptionProvider.quaterlyProductId) return '$priceStr every 3 months';
-    if (id == SubscriptionProvider.monthlyProductId) return '$priceStr every month';
+    if (id == SubscriptionProvider.yearlyProductId) {
+      return '$priceStr every year';
+    }
+    if (id == SubscriptionProvider.quaterlyProductId) {
+      return '$priceStr every 3 months';
+    }
+    if (id == SubscriptionProvider.monthlyProductId) {
+      return '$priceStr every month';
+    }
     return '$priceStr per period';
   }
 
   String _ctaLabel(List<ProductDetails> products) {
     if (_selectedProductId == null) return 'Continue';
     final match = products.cast<dynamic>().firstWhere(
-        (p) => p.id == _selectedProductId,
+        (p) => SubscriptionProvider.selectionId(p) == _selectedProductId,
         orElse: () => null);
     if (match == null) return 'Continue';
 
@@ -402,10 +411,27 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
-  int _productOrderIndex(String id) {
-    if (id == SubscriptionProvider.yearlyProductId) return 1;
-    if (id == SubscriptionProvider.quaterlyProductId) return 2;
-    if (id == SubscriptionProvider.monthlyProductId) return 3;
+  String _basePlanId(ProductDetails product) =>
+      SubscriptionProvider.androidBasePlanId(product)?.toLowerCase() ?? '';
+
+  bool _isYearlyPlan(ProductDetails product) =>
+      (Platform.isIOS && product.id == SubscriptionProvider.yearlyProductId) ||
+      _basePlanId(product).contains('year') ||
+      _basePlanId(product).contains('annual');
+
+  bool _isQuarterlyPlan(ProductDetails product) =>
+      (Platform.isIOS && product.id == SubscriptionProvider.quaterlyProductId) ||
+      _basePlanId(product).contains('quarter') ||
+      _basePlanId(product).contains('qarter');
+
+  bool _isMonthlyPlan(ProductDetails product) =>
+      (Platform.isIOS && product.id == SubscriptionProvider.monthlyProductId) ||
+      _basePlanId(product).contains('month');
+
+  int _productOrderIndex(ProductDetails product) {
+    if (_isYearlyPlan(product)) return 1;
+    if (_isQuarterlyPlan(product)) return 2;
+    if (_isMonthlyPlan(product)) return 3;
     return 4;
   }
 
@@ -415,11 +441,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         final others = subProvider.products
             .where((p) => p.id != SubscriptionProvider.lifetimeProductId && !p.id.contains('collection'))
             .toList()
-          ..sort((a, b) => _productOrderIndex(a.id).compareTo(_productOrderIndex(b.id)));
+          ..sort((a, b) =>
+              _productOrderIndex(a).compareTo(_productOrderIndex(b)));
         if (others.isEmpty) return const SizedBox.shrink();
         return Column(
           children: others.map((product) {
-            final isSelected = _selectedProductId == product.id;
+            final selectionId = SubscriptionProvider.selectionId(product);
+            final isSelected = _selectedProductId == selectionId;
             final plan = _planFor(product.id, plans);
             final discount = plan != null
                 ? _discountPercent(product.rawPrice, plan.actualPrice)
@@ -430,7 +458,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             String subtitle;
             Widget? badgeWidget;
 
-            if (product.id == SubscriptionProvider.yearlyProductId) {
+            if (_isYearlyPlan(product)) {
               displayTitle = "Yearly";
               subtitle = "Billed annually. Full access.";
               badgeWidget = Container(
@@ -449,10 +477,11 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   ),
                 ),
               );
-            } else if (product.id == SubscriptionProvider.quaterlyProductId) {
+            } else if (_isQuarterlyPlan(product)) {
               displayTitle = "Quarterly";
-              subtitle = "Billed every 3 months. Flexible.";
-            } else if (product.id == SubscriptionProvider.monthlyProductId) {
+              subtitle =
+                  "Billed ${SubscriptionProvider.billingPeriodDescription(product)}. Flexible.";
+            } else if (_isMonthlyPlan(product)) {
               displayTitle = "Monthly";
               subtitle = "Billed monthly. Cancel anytime.";
             } else {
@@ -461,7 +490,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             }
 
             return GestureDetector(
-              onTap: () => setState(() => _selectedProductId = product.id),
+              onTap: () => setState(() => _selectedProductId = selectionId),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: 6),

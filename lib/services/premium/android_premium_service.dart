@@ -5,6 +5,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
+import 'package:wallrio/services/premium/android_subscription_access.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class AndroidPremiumService implements PremiumService {
@@ -12,12 +13,16 @@ class AndroidPremiumService implements PremiumService {
   static const String keyPlusMember = 'user_is_plus_member';
   static const String keyExpiryDate = 'user_subscription_expiry';
   static const String keyEntitlementSource = 'user_entitlement_source';
+  static const String keyPlayBasePlanId = 'user_play_base_plan_id';
+  static const String keyPlayBillingPeriod = 'user_play_billing_period';
 
   @override
   bool isLoading = false;
   bool isSupported = false;
   String _subscriptionDaysLeft = "";
   DateTime? _playExpiryEstimate;
+  String? _selectedBasePlanId;
+  String? _selectedBillingPeriod;
   bool _storeEntitlementSeen = false;
 
   @override
@@ -108,11 +113,29 @@ class AndroidPremiumService implements PremiumService {
   @override
   Future<void> buyProduct(ProductDetails prod) async {
     try {
-      final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
       if (_isCollectionProduct(prod.id)) {
+        final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
         await inAppPurchase.buyConsumable(
             purchaseParam: purchaseParam, autoConsume: true);
       } else {
+        final PurchaseParam purchaseParam;
+        if (prod is GooglePlayProductDetails &&
+            prod.subscriptionIndex != null) {
+          final offer = prod.productDetails
+              .subscriptionOfferDetails![prod.subscriptionIndex!];
+          _selectedBasePlanId = offer.basePlanId;
+          _selectedBillingPeriod = offer.pricingPhases.first.billingPeriod;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(keyPlayBasePlanId, offer.basePlanId);
+          await prefs.setString(
+              keyPlayBillingPeriod, offer.pricingPhases.first.billingPeriod);
+          purchaseParam = GooglePlayPurchaseParam(
+            productDetails: prod,
+            offerToken: prod.offerToken,
+          );
+        } else {
+          purchaseParam = PurchaseParam(productDetails: prod);
+        }
         // Play subscriptions and the lifetime product must not be consumed.
         // Google Play then owns renewal and makes the entitlement available
         // again through restorePurchases().
@@ -275,6 +298,7 @@ class AndroidPremiumService implements PremiumService {
       productId.startsWith('com.wallrio.collection.');
 
   bool _isSubscriptionProduct(String productId) =>
+      productId == 'wallrio_pro' ||
       productId == 'com.wallrio.pro.monthly' ||
       productId == 'com.wallrio.pro.quarterly' ||
       productId == 'com.wallrio.pro.annual' ||
@@ -296,9 +320,14 @@ class AndroidPremiumService implements PremiumService {
     // The purchase date and product period provide a display estimate only.
     // Play remains authoritative because this client data cannot account for
     // grace periods, account holds, or every renewal-state change.
-    final hasCollectionAccess = isLifetime ||
-        purchase.productID.contains('yearly') ||
-        purchase.productID.contains('annual');
+    if (purchase.productID == 'wallrio_pro') {
+      _selectedBasePlanId ??= prefs.getString(keyPlayBasePlanId);
+      _selectedBillingPeriod ??= prefs.getString(keyPlayBillingPeriod);
+    }
+    final hasCollectionAccess = AndroidSubscriptionAccess.hasCollectionAccess(
+      productId: purchase.productID,
+      basePlanId: _selectedBasePlanId,
+    );
     UserProfile.setPlusMemberInfo(true,
         hasCollectionAccess: hasCollectionAccess);
     await prefs.setBool(keyPlusMember, true);
@@ -313,10 +342,22 @@ class AndroidPremiumService implements PremiumService {
       return;
     }
 
+    if (_selectedBasePlanId != null) {
+      await prefs.setString(keyPlayBasePlanId, _selectedBasePlanId!);
+    }
+    if (_selectedBillingPeriod != null) {
+      await prefs.setString(keyPlayBillingPeriod, _selectedBillingPeriod!);
+    }
+
     final purchaseDate = _purchaseDate(purchase);
     final estimatedExpiry = purchaseDate == null
         ? null
-        : _estimateExpiry(purchaseDate, purchase.productID);
+        : _estimateExpiry(
+            purchaseDate,
+            purchase.productID,
+            _selectedBillingPeriod,
+            _selectedBasePlanId,
+          );
     if (estimatedExpiry == null) {
       logger.w('Cannot estimate subscription expiry for ${purchase.productID}: '
           'purchase date or plan period is unavailable.');
@@ -340,25 +381,57 @@ class AndroidPremiumService implements PremiumService {
     return DateTime.tryParse(transactionDate)?.toLocal();
   }
 
-  DateTime? _estimateExpiry(DateTime start, String productId) {
-    if (productId == 'com.wallrio.pro.monthly') {
-      return _addCalendarMonths(start, 1);
-    }
-    if (productId == 'com.wallrio.pro.quarterly') {
-      return _addCalendarMonths(start, 3);
-    }
-    if (productId == 'com.wallrio.pro.annual') {
-      return _addCalendarMonths(start, 12);
+  DateTime? _estimateExpiry(
+    DateTime start,
+    String productId,
+    String? billingPeriod,
+    String? basePlanId,
+  ) {
+    if (productId != 'wallrio_pro') {
+      if (productId == 'com.wallrio.pro.monthly') {
+        return _addCalendarMonths(start, 1);
+      }
+      if (productId == 'com.wallrio.pro.quarterly') {
+        return _addCalendarMonths(start, 3);
+      }
+      if (productId == 'com.wallrio.pro.annual') {
+        return _addCalendarMonths(start, 12);
+      }
+
+      final days = int.tryParse(productId.split('_').last);
+      if (days != null && days > 0) return start.add(Duration(days: days));
+
+      if (productId.contains('monthly')) return _addCalendarMonths(start, 1);
+      if (productId.contains('quarterly') || productId.contains('quaterly')) {
+        return _addCalendarMonths(start, 3);
+      }
+      if (productId.contains('annual') || productId.contains('yearly')) {
+        return _addCalendarMonths(start, 12);
+      }
+      return null;
     }
 
-    final days = int.tryParse(productId.split('_').last);
-    if (days != null && days > 0) return start.add(Duration(days: days));
+    if (billingPeriod != null) {
+      final match = RegExp(
+        r'^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?$',
+      ).firstMatch(billingPeriod);
+      if (match != null) {
+        final years = int.tryParse(match.group(1) ?? '0') ?? 0;
+        final months = int.tryParse(match.group(2) ?? '0') ?? 0;
+        final weeks = int.tryParse(match.group(3) ?? '0') ?? 0;
+        final days = int.tryParse(match.group(4) ?? '0') ?? 0;
+        final monthExpiry = _addCalendarMonths(start, years * 12 + months);
+        return monthExpiry.add(Duration(days: weeks * 7 + days));
+      }
+    }
 
-    if (productId.contains('monthly')) return _addCalendarMonths(start, 1);
-    if (productId.contains('quarterly') || productId.contains('quaterly')) {
+    final normalizedPlan = basePlanId?.toLowerCase() ?? '';
+    if (normalizedPlan.contains('month')) return _addCalendarMonths(start, 1);
+    if (normalizedPlan.contains('quarter') ||
+        normalizedPlan.contains('qarter')) {
       return _addCalendarMonths(start, 3);
     }
-    if (productId.contains('annual') || productId.contains('yearly')) {
+    if (normalizedPlan.contains('year') || normalizedPlan.contains('annual')) {
       return _addCalendarMonths(start, 12);
     }
     return null;
@@ -392,11 +465,15 @@ class AndroidPremiumService implements PremiumService {
       await prefs.remove('user_subscription_start');
       await prefs.remove('user_has_collection_access');
       await prefs.remove(keyEntitlementSource);
+      await prefs.remove(keyPlayBasePlanId);
+      await prefs.remove(keyPlayBillingPeriod);
       await prefs.remove('user_unlocked_collections');
 
       purchasedCollections.clear();
       _subscriptionDaysLeft = "";
       _playExpiryEstimate = null;
+      _selectedBasePlanId = null;
+      _selectedBillingPeriod = null;
       UserProfile.setPlusMemberInfo(false, hasCollectionAccess: false);
       ToastWidget.showToast('Debug: Cleared purchase SharedPreferences');
     } catch (e) {
