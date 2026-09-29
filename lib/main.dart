@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +111,17 @@ Future<void> initializationHandler() async {
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
+  if (Platform.isIOS) {
+    try {
+      await RevenueCatService.initialize();
+    } catch (error, stackTrace) {
+      logger.e(
+        'Failed to initialize RevenueCat. iOS purchases will be unavailable.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  
   try {
     // ignore: deprecated_member_use
     await FirebaseAppCheck.instance.activate(
@@ -118,7 +129,7 @@ Future<void> initializationHandler() async {
     );
   } catch (e) {
     logger.w('AppCheck activation skipped/failed: $e');
-  }
+  }}
   try {
     await NotificationService().init();
   } catch (e) {

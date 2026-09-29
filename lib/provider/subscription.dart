@@ -56,7 +56,7 @@ class SubscriptionProvider extends ChangeNotifier {
 
   bool get isLoading => _service.isLoading;
   bool get isSupported => _service is AndroidPremiumService
-      ? (_service as AndroidPremiumService).isSupported
+      ? _service.isSupported
       : (_service as IOSPremiumService).isSupported;
 
   List<ProductDetails> get products => _service.products;

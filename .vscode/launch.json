@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "WallRio (iOS - RevenueCat)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=REVENUECAT_IOS_API_KEY=${input:revenueCatIosApiKey}"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "revenueCatIosApiKey",
+      "type": "promptString",
+      "description": "RevenueCat public iOS SDK key (appl_...)",
+      "password": true
+    }
+  ]
+}

@@ -33,6 +33,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 .vscode/
+!.vscode/
+!.vscode/launch.json
 /build/
 
 # Symbolication related
