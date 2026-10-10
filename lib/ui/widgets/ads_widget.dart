@@ -35,8 +35,10 @@ class AdsWidget extends StatefulWidget {
     final title = isExplorePlus ? "Explore PRO" : "Unlock Wallpaper";
     final message = isExplorePlus
         ? "Upgrade to PRO to unlock premium wallpapers, live wallpapers, collections, auto wallpaper change, and an ad-free experience."
-        : "Get access to premium wallpapers by watching an ad or upgrading to PRO for an ad-free experience.";
-    final showWatchAd = !isExplorePlus && showAdButton;
+        : AdsConfig.enabled
+          ? "Get access to premium wallpapers by watching an ad or upgrading to PRO for an ad-free experience."
+          : "Upgrade to PRO to get access to premium wallpapers.";
+      final showWatchAd = AdsConfig.enabled && !isExplorePlus && showAdButton;
 
     final dialogBg = isDarkMode ? const Color(0xFF161822) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black87;

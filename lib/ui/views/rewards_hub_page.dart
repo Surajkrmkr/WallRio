@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
+import 'package:wallrio/services/ads_config.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/services/app_theme_tokens.dart';
 import 'package:wallrio/services/responsive.dart';
@@ -27,8 +28,10 @@ class RewardsHubPage extends StatelessWidget {
             final progression = progressionProvider.progression;
             if (progressionProvider.isLoading || progression == null) {
               return Center(
-                  child: CircularProgressIndicator(
-                      color: context.appColors.accent));
+                child: CircularProgressIndicator(
+                  color: context.appColors.accent,
+                ),
+              );
             }
 
             return CustomScrollView(
@@ -45,16 +48,21 @@ class RewardsHubPage extends StatelessWidget {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                          maxWidth:
-                              ResponsiveHelper.getMaxContentWidth(context)),
+                        maxWidth: ResponsiveHelper.getMaxContentWidth(context),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildDiamondBalanceCard(context,
-                                progression.diamondsBalance, isDarkMode),
+                            _buildDiamondBalanceCard(
+                              context,
+                              progression.diamondsBalance,
+                              isDarkMode,
+                            ),
                             const SizedBox(height: 12),
                             _buildDataWarning(isDarkMode),
                             const SizedBox(height: 24),
@@ -63,22 +71,34 @@ class RewardsHubPage extends StatelessWidget {
                             const SizedBox(height: 32),
                             _sectionTitle(context, 'Earn Diamonds'),
                             _buildQuestsList(
-                                context, progressionProvider, isDarkMode),
+                              context,
+                              progressionProvider,
+                              isDarkMode,
+                            ),
                             if (progression.dailyShares >= 2) ...[
                               const SizedBox(height: 16),
                               _buildShareLimitWarning(context, isDarkMode),
                             ],
                             const SizedBox(height: 32),
                             _buildStreakSection(
-                                context, progressionProvider, isDarkMode),
+                              context,
+                              progressionProvider,
+                              isDarkMode,
+                            ),
                             const SizedBox(height: 32),
                             _sectionTitle(context, 'Your Journey'),
                             _buildMilestoneJourney(
-                                context, progression, isDarkMode),
+                              context,
+                              progression,
+                              isDarkMode,
+                            ),
                             const SizedBox(height: 32),
                             _sectionTitle(context, 'Transaction History'),
                             _buildTransactionHistory(
-                                context, progression, isDarkMode),
+                              context,
+                              progression,
+                              isDarkMode,
+                            ),
                             const SizedBox(height: 32),
                           ],
                         ),
@@ -95,14 +115,17 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildMilestoneJourney(
-      BuildContext context, dynamic progression, bool isDarkMode) {
+    BuildContext context,
+    dynamic progression,
+    bool isDarkMode,
+  ) {
     final List<Map<String, dynamic>> milestones = [
       {
         'key': 'start',
         'label': 'Beginner',
         'desc': 'Started the journey',
         'req': 0,
-        'icon': Icons.rocket_launch_rounded
+        'icon': Icons.rocket_launch_rounded,
       },
       {
         'key': 'streak_7',
@@ -110,7 +133,7 @@ class RewardsHubPage extends StatelessWidget {
         'desc': '7 Day Streak',
         'req': 7,
         'type': 'streak',
-        'icon': Icons.local_fire_department_rounded
+        'icon': Icons.local_fire_department_rounded,
       },
       {
         'key': 'streak_30',
@@ -118,7 +141,7 @@ class RewardsHubPage extends StatelessWidget {
         'desc': '30 Day Streak',
         'req': 30,
         'type': 'streak',
-        'icon': Icons.workspace_premium_rounded
+        'icon': Icons.workspace_premium_rounded,
       },
       {
         'key': 'earner_500',
@@ -126,7 +149,7 @@ class RewardsHubPage extends StatelessWidget {
         'desc': 'Earned 500 💎',
         'req': 500,
         'type': 'earned',
-        'icon': Icons.diamond_rounded
+        'icon': Icons.diamond_rounded,
       },
       {
         'key': 'streak_90',
@@ -134,7 +157,7 @@ class RewardsHubPage extends StatelessWidget {
         'desc': '90 Day Streak',
         'req': 90,
         'type': 'streak',
-        'icon': Icons.stars_rounded
+        'icon': Icons.stars_rounded,
       },
     ];
 
@@ -170,22 +193,26 @@ class RewardsHubPage extends StatelessWidget {
                         color: isCompleted
                             ? context.appColors.accent
                             : (isDarkMode
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.black.withValues(alpha: 0.05)),
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.black.withValues(alpha: 0.05)),
                         shape: BoxShape.circle,
                         boxShadow: isCompleted
                             ? [
                                 BoxShadow(
-                                    color: context.appColors.accent
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    spreadRadius: 1)
+                                  color: context.appColors.accent.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
                               ]
                             : null,
                       ),
-                      child: Icon(m['icon'],
-                          color: isCompleted ? Colors.white : Colors.grey,
-                          size: 20),
+                      child: Icon(
+                        m['icon'],
+                        color: isCompleted ? Colors.white : Colors.grey,
+                        size: 20,
+                      ),
                     ),
                     if (index < milestones.length - 1)
                       Expanded(
@@ -208,36 +235,44 @@ class RewardsHubPage extends StatelessWidget {
                         Text(
                           m['label'],
                           style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: isCompleted
-                                  ? (isDarkMode ? Colors.white : Colors.black)
-                                  : Colors.grey),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: isCompleted
+                                ? (isDarkMode ? Colors.white : Colors.black)
+                                : Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         DiamondText(
                           m['desc'],
                           style: TextStyle(
-                              fontSize: 11,
-                              color: isCompleted
-                                  ? Colors.grey
-                                  : Colors.grey.withValues(alpha: 0.5),
-                              fontWeight: FontWeight.w600),
+                            fontSize: 11,
+                            color: isCompleted
+                                ? Colors.grey
+                                : Colors.grey.withValues(alpha: 0.5),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
                 if (isCompleted)
-                  Icon(Icons.check_circle_rounded,
-                      color: context.appColors.accent, size: 20)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: context.appColors.accent,
+                    size: 20,
+                  )
                 else
-                  Text('LOCKED',
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.grey.withValues(alpha: 0.5),
-                          letterSpacing: 1)),
+                  Text(
+                    'LOCKED',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.grey.withValues(alpha: 0.5),
+                      letterSpacing: 1,
+                    ),
+                  ),
               ],
             ),
           );
@@ -263,9 +298,10 @@ class RewardsHubPage extends StatelessWidget {
             child: Text(
               'Clearing app data or uninstalling will remove your locally saved diamonds.',
               style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.orange,
-                  fontWeight: FontWeight.w600),
+                fontSize: 10,
+                color: Colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -280,8 +316,9 @@ class RewardsHubPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: context.appColors.accent.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: context.appColors.accent.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
@@ -291,10 +328,11 @@ class RewardsHubPage extends StatelessWidget {
             child: Text(
               "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.",
               style: TextStyle(
-                  fontSize: 12,
-                  color: context.appColors.accent,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4),
+                fontSize: 12,
+                color: context.appColors.accent,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -303,7 +341,10 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildDiamondBalanceCard(
-      BuildContext context, int balance, bool isDarkMode) {
+    BuildContext context,
+    int balance,
+    bool isDarkMode,
+  ) {
     final accent = context.appColors.accent;
     return Container(
       width: double.infinity,
@@ -324,7 +365,7 @@ class RewardsHubPage extends StatelessWidget {
             color: accent.withValues(alpha: 0.1),
             blurRadius: 30,
             offset: const Offset(0, 10),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -332,10 +373,11 @@ class RewardsHubPage extends StatelessWidget {
           Text(
             'DIAMOND BALANCE',
             style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                color: accent),
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+              color: accent,
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -347,7 +389,10 @@ class RewardsHubPage extends StatelessWidget {
               Text(
                 balance.toString(),
                 style: const TextStyle(
-                    fontSize: 48, fontWeight: FontWeight.w900, height: 1),
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
               ),
             ],
           ),
@@ -394,7 +439,9 @@ class RewardsHubPage extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 10.5, fontWeight: FontWeight.w700),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
                 textAlign: TextAlign.center,
               ),
               Container(
@@ -430,7 +477,10 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildStreakSection(
-      BuildContext context, ProgressionProvider provider, bool isDarkMode) {
+    BuildContext context,
+    ProgressionProvider provider,
+    bool isDarkMode,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -441,7 +491,10 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildQuestsList(
-      BuildContext context, ProgressionProvider provider, bool isDarkMode) {
+    BuildContext context,
+    ProgressionProvider provider,
+    bool isDarkMode,
+  ) {
     final progression = provider.progression!;
     return GridView.count(
       shrinkWrap: true,
@@ -451,20 +504,23 @@ class RewardsHubPage extends StatelessWidget {
       mainAxisSpacing: 16,
       childAspectRatio: 1,
       children: [
-        _questCard(
-          context: context,
-          icon: Icons.play_circle_fill_rounded,
-          title: 'Watch Ad',
-          subtitle: 'Earn 10 💎',
-          progressText: '${progression.dailyAdViews}/10',
-          isDarkMode: isDarkMode,
-          onTap: () {
-            Provider.of<AdsProvider>(context, listen: false)
-                .loadRewardedAd(context, onRewarded: () {
-              // Global tracking handles this, no action needed here.
-            });
-          },
-        ),
+        if (AdsConfig.enabled)
+          _questCard(
+            context: context,
+            icon: Icons.play_circle_fill_rounded,
+            title: 'Watch Ad',
+            subtitle: 'Earn 10 💎',
+            progressText: '${progression.dailyAdViews}/10',
+            isDarkMode: isDarkMode,
+            onTap: () {
+              Provider.of<AdsProvider>(context, listen: false).loadRewardedAd(
+                context,
+                onRewarded: () {
+                  // Global tracking handles this, no action needed here.
+                },
+              );
+            },
+          ),
         _questCard(
           context: context,
           icon: Icons.alternate_email_rounded,
@@ -478,8 +534,9 @@ class RewardsHubPage extends StatelessWidget {
             _isRating = true;
             try {
               final launched = await launchUrl(
-                  Uri.parse(ProgressionProvider.followXUrl),
-                  mode: LaunchMode.externalApplication);
+                Uri.parse(ProgressionProvider.followXUrl),
+                mode: LaunchMode.externalApplication,
+              );
               if (launched) {
                 provider.trackAction(ActionType.followX);
               } else {
@@ -494,8 +551,9 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.share_rounded,
           title: 'Invite',
-          subtitle:
-              progression.dailyShares >= 2 ? 'Limit Reached' : 'Earn 5 💎',
+          subtitle: progression.dailyShares >= 2
+              ? 'Limit Reached'
+              : 'Earn 5 💎',
           progressText:
               '${progression.dailyShares >= 2 ? 2 : progression.dailyShares}/2',
           isDarkMode: isDarkMode,
@@ -503,12 +561,14 @@ class RewardsHubPage extends StatelessWidget {
           onTap: () {
             if (progression.dailyShares >= 2) {
               ToastWidget.showToast(
-                  "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
+                "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.",
+              );
               return;
             }
             // ignore: deprecated_member_use
             Share.share(
-                'Check out WallRio for amazing AMOLED wallpapers! https://play.google.com/store/apps/details?id=com.shadowteam.wallrio');
+              'Check out WallRio for amazing AMOLED wallpapers! https://play.google.com/store/apps/details?id=com.shadowteam.wallrio',
+            );
             provider.trackAction(ActionType.shareApp);
           },
         ),
@@ -560,29 +620,41 @@ class RewardsHubPage extends StatelessWidget {
                           : Colors.grey.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon,
-                        size: 22,
-                        color: isActionable
-                            ? context.appColors.accent
-                            : Colors.grey),
+                    child: Icon(
+                      icon,
+                      size: 22,
+                      color: isActionable
+                          ? context.appColors.accent
+                          : Colors.grey,
+                    ),
                   ),
                   if (isActionable)
-                    const Icon(Icons.arrow_outward_rounded,
-                        size: 14, color: Colors.grey),
+                    const Icon(
+                      Icons.arrow_outward_rounded,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w900)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  DiamondText(subtitle,
-                      style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w600)),
+                  DiamondText(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
               if (progressText != null && progressText.isNotEmpty)
@@ -596,13 +668,16 @@ class RewardsHubPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                    child: Text(progressText,
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: isActionable
-                                ? (isDarkMode ? Colors.white70 : Colors.black87)
-                                : Colors.grey)),
+                    child: Text(
+                      progressText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isActionable
+                            ? (isDarkMode ? Colors.white70 : Colors.black87)
+                            : Colors.grey,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -613,14 +688,19 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildTransactionHistory(
-      BuildContext context, dynamic progression, bool isDarkMode) {
+    BuildContext context,
+    dynamic progression,
+    bool isDarkMode,
+  ) {
     final history = progression.transactionHistory;
     if (history.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text('No transactions yet',
-              style: Theme.of(context).textTheme.labelSmall),
+          child: Text(
+            'No transactions yet',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
         ),
       );
     }
@@ -659,13 +739,21 @@ class RewardsHubPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tx.reason,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700)),
+                      Text(
+                        tx.reason,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(DateFormat('MMM dd, hh:mm a').format(tx.timestamp),
-                          style: const TextStyle(
-                              fontSize: 10, color: Colors.grey)),
+                      Text(
+                        DateFormat('MMM dd, hh:mm a').format(tx.timestamp),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -704,9 +792,9 @@ class RewardsHubPage extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
           ),
         ],
       ),

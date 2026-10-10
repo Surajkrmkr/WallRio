@@ -207,14 +207,15 @@ class _DesktopWallpaperDetailPageState
                         const SizedBox(height: 24),
                         _buildRelatedWallpapersSection(context, isDarkMode),
                         const SizedBox(height: 20),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: InlineBannerAdWidget(
-                            verticalPadding: 0,
-                            screenName: 'DesktopDetailPage',
-                            placementName: 'SectionDividerBanner',
+                        if (AdsConfig.enabled)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: InlineBannerAdWidget(
+                              verticalPadding: 0,
+                              screenName: 'DesktopDetailPage',
+                              placementName: 'SectionDividerBanner',
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 24),
                         _buildMoreLikeThisSection(context, isDarkMode),
                         const SizedBox(height: 24),
@@ -487,7 +488,10 @@ class _DesktopWallpaperDetailPageState
     for (int i = 0; i < walls.length; i++) {
       items.add(walls[i]);
       count++;
-      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
+        if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
+          count == 6 &&
+          (i + 1) < walls.length) {
         items.add('AD_TILE');
         count = 0;
       }

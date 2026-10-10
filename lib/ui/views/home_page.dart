@@ -124,14 +124,15 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(child: _buildTrendingLiveSection(context)),
                   SliverToBoxAdapter(
                       child: _buildDesktopWallpapersSection(context)),
-                  const SliverToBoxAdapter(
-                    child: AdsWidget(
-                      clearNavBar: false,
-                      bottomPadding: 0,
-                      screenName: 'HomePage',
-                      placementName: 'DesktopSectionBanner',
+                  if (AdsConfig.enabled)
+                    const SliverToBoxAdapter(
+                      child: AdsWidget(
+                        clearNavBar: false,
+                        bottomPadding: 0,
+                        screenName: 'HomePage',
+                        placementName: 'DesktopSectionBanner',
+                      ),
                     ),
-                  ),
                   SliverToBoxAdapter(
                       child: _buildSectionHeader(context, "Explore Feed",
                           subtitle: "Handpicked walls, live picks mixed in")),

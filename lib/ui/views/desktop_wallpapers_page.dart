@@ -12,8 +12,11 @@ import 'package:wallrio/ui/widgets/export.dart';
 class DesktopWallpapersPage extends StatefulWidget {
   final List<Walls>? initialWalls;
   final bool isTab;
-  const DesktopWallpapersPage(
-      {super.key, this.initialWalls, this.isTab = false});
+  const DesktopWallpapersPage({
+    super.key,
+    this.initialWalls,
+    this.isTab = false,
+  });
 
   @override
   State<DesktopWallpapersPage> createState() => _DesktopWallpapersPageState();
@@ -95,7 +98,8 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
       wallCounter++;
 
       // Insert 1 native ad tile after every 8 desktop wallpapers
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           wallCounter == 8 &&
           (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
@@ -113,7 +117,8 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
       // Insert 1 banner ad after every 3 completed rows
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           (i + 1) % 4 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
@@ -132,8 +137,10 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicatorWidget(
-        onRefresh: () => Provider.of<WallRio>(context, listen: false)
-            .fetchDesktopWallpapers(),
+        onRefresh: () => Provider.of<WallRio>(
+          context,
+          listen: false,
+        ).fetchDesktopWallpapers(),
         child: SafeArea(
           top: false,
           bottom: !widget.isTab,
@@ -150,76 +157,86 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
                 showBackBtn: !widget.isTab,
                 showUserProfileIcon: widget.isTab,
               ),
-              Consumer<WallRio>(builder: (context, provider, _) {
-                if (provider.isLoading) {
-                  return SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    sliver: SliverGrid.count(
-                      crossAxisCount: columnsCount,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 16 / 10,
-                      children: List.generate(
-                        columnsCount * 3,
-                        (_) => const ShimmerWidget(
-                          height: 110,
-                          width: double.infinity,
-                          radius: 22,
+              Consumer<WallRio>(
+                builder: (context, provider, _) {
+                  if (provider.isLoading) {
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      sliver: SliverGrid.count(
+                        crossAxisCount: columnsCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 16 / 10,
+                        children: List.generate(
+                          columnsCount * 3,
+                          (_) => const ShimmerWidget(
+                            height: 110,
+                            width: double.infinity,
+                            radius: 22,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                final walls = _getDesktopWalls(provider);
-                final pagedWalls = walls.length > provider.visibleCount
-                    ? walls.sublist(0, provider.visibleCount)
-                    : walls;
+                  final walls = _getDesktopWalls(provider);
+                  final pagedWalls = walls.length > provider.visibleCount
+                      ? walls.sublist(0, provider.visibleCount)
+                      : walls;
 
-                if (walls.isEmpty) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: Lottie.asset(
-                        'assets/lottie/empty.json',
-                        width: MediaQuery.of(context).size.width * 0.7,
+                  if (walls.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Lottie.asset(
+                          'assets/lottie/empty.json',
+                          width: MediaQuery.of(context).size.width * 0.7,
+                        ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                final feedItems = _buildFeedItems(pagedWalls, columnsCount);
+                  final feedItems = _buildFeedItems(pagedWalls, columnsCount);
 
-                return SliverMainAxisGroup(slivers: [
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                        16, 8, 16, MediaQuery.paddingOf(context).bottom + 24),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: feedItems.length,
-                        (context, index) {
-                          final item = feedItems[index];
-                          if (item == 'INLINE_BANNER_AD') {
-                            return const InlineBannerAdWidget(
-                              verticalPadding: 12.0,
-                              screenName: 'DesktopWallpapersPage',
-                              placementName: 'GridChunkBanner',
-                            );
-                          }
-                          return AppearAnimation(
-                            child: _buildDesktopRow(
-                              item as List<dynamic>,
-                              columnsCount,
-                              context,
-                              isDarkMode,
-                            ),
-                          );
-                        },
+                  return SliverMainAxisGroup(
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          8,
+                          16,
+                          MediaQuery.paddingOf(context).bottom + 24,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: feedItems.length,
+                            (context, index) {
+                              final item = feedItems[index];
+                              if (item == 'INLINE_BANNER_AD') {
+                                return const InlineBannerAdWidget(
+                                  verticalPadding: 12.0,
+                                  screenName: 'DesktopWallpapersPage',
+                                  placementName: 'GridChunkBanner',
+                                );
+                              }
+                              return AppearAnimation(
+                                child: _buildDesktopRow(
+                                  item as List<dynamic>,
+                                  columnsCount,
+                                  context,
+                                  isDarkMode,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ]);
-              }),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -246,7 +263,10 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
                       aspectRatio: 16 / 10,
                       child: rowItems[i] is Walls
                           ? _buildDesktopCard(
-                              rowItems[i] as Walls, context, isDarkMode)
+                              rowItems[i] as Walls,
+                              context,
+                              isDarkMode,
+                            )
                           : const SponsoredAdCard(borderRadius: 22.0),
                     )
                   : const IgnorePointer(
@@ -317,10 +337,7 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
                   ),
                 ),
               ),
-              VerifyIconWidget(
-                visibility: !wall.isPremium,
-                padding: 10,
-              ),
+              VerifyIconWidget(visibility: !wall.isPremium, padding: 10),
               Material(
                 color: Colors.transparent,
                 child: InkWell(

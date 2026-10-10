@@ -14,22 +14,24 @@ class FavouritePage extends StatelessWidget {
 
   void _onLongPressHandler(BuildContext context, dynamic model) {
     CNBottomSheet.show(
-        context: context,
-        enableDrag: true,
-        isScrollControlled: true,
-        isDismissible: true,
-        showDragHandle: Platform.isIOS,
-        backgroundColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-        builder: (context) => ImageBottomSheet(wallModel: model));
+      context: context,
+      enableDrag: true,
+      isScrollControlled: true,
+      isDismissible: true,
+      showDragHandle: Platform.isIOS,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) => ImageBottomSheet(wallModel: model),
+    );
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
-    final walls = Provider.of<FavouriteProvider>(context, listen: false)
-        .wallList
-        .reversed
-        .toList();
+    final walls = Provider.of<FavouriteProvider>(
+      context,
+      listen: false,
+    ).wallList.reversed.toList();
     Navigator.push(context, WallpaperRoute.pager(items: walls, initial: model));
   }
 
@@ -41,8 +43,10 @@ class FavouritePage extends StatelessWidget {
       body: RefreshIndicatorWidget(
         onRefresh: () async {
           if (authProvider.isLoggedIn) {
-            Provider.of<FavouriteProvider>(context, listen: false)
-                .getFavouritesFromFirebase();
+            Provider.of<FavouriteProvider>(
+              context,
+              listen: false,
+            ).getFavouritesFromFirebase();
           }
           await Future.delayed(const Duration(milliseconds: 800));
         },
@@ -50,18 +54,19 @@ class FavouritePage extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             const SliverAppBarWidget(
-                showSaleChip: true,
-                showLogo: false,
-                showSearchBtn: true,
-                text: "Favourites",
-                secondaryText: "",
-                showBackBtn: true,
-                showFavouriteBtn: false,
-                showUserProfileIcon: true),
+              showSaleChip: true,
+              showLogo: false,
+              showSearchBtn: true,
+              text: "Favourites",
+              secondaryText: "",
+              showBackBtn: true,
+              showFavouriteBtn: false,
+              showUserProfileIcon: true,
+            ),
             if (!authProvider.isLoggedIn)
               _buildGuestUI(context)
             else
-              _buildListUI(context)
+              _buildListUI(context),
           ],
         ),
       ),
@@ -107,8 +112,9 @@ class FavouritePage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  color: (isDarkMode ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.6),
+                  color: (isDarkMode ? Colors.white : Colors.black).withValues(
+                    alpha: 0.6,
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
@@ -124,8 +130,9 @@ class FavouritePage extends StatelessWidget {
                     backgroundColor: context.appColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 4,
-                    shadowColor:
-                        context.appColors.accent.withValues(alpha: 0.4),
+                    shadowColor: context.appColors.accent.withValues(
+                      alpha: 0.4,
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -156,7 +163,8 @@ class FavouritePage extends StatelessWidget {
       allGridItems.add(walls[i]);
       wallCounter++;
 
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           wallCounter == 6 &&
           (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
@@ -177,7 +185,8 @@ class FavouritePage extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           (i + 1) % 4 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
@@ -187,42 +196,51 @@ class FavouritePage extends StatelessWidget {
   }
 
   Widget _buildListUI(BuildContext context) {
-    return Consumer<FavouriteProvider>(builder: (context, provider, _) {
-      final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
-      if (provider.isLoading) {
-        return SliverPadding(
+    return Consumer<FavouriteProvider>(
+      builder: (context, provider, _) {
+        final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(
+          context,
+        );
+        if (provider.isLoading) {
+          return SliverPadding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 15),
             sliver: SliverGrid.count(
-                crossAxisCount: columnsCount,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 0.55,
-                children: List.generate(
-                    columnsCount * 3,
-                    (index) => const ShimmerWidget(
-                          height: 100,
-                          width: double.infinity,
-                          radius: 25,
-                        ))));
-      }
-      List<Walls> walls = provider.wallList;
-      if (walls.isEmpty) {
-        return SliverFillRemaining(
-          child: Center(
-            child: Lottie.asset('assets/lottie/empty.json',
-                width: MediaQuery.of(context).size.width * 0.7),
-          ),
-        );
-      }
-      walls = walls.reversed.toList();
-      final feedItems = _buildFeedItems(walls, columnsCount);
+              crossAxisCount: columnsCount,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.55,
+              children: List.generate(
+                columnsCount * 3,
+                (index) => const ShimmerWidget(
+                  height: 100,
+                  width: double.infinity,
+                  radius: 25,
+                ),
+              ),
+            ),
+          );
+        }
+        List<Walls> walls = provider.wallList;
+        if (walls.isEmpty) {
+          return SliverFillRemaining(
+            child: Center(
+              child: Lottie.asset(
+                'assets/lottie/empty.json',
+                width: MediaQuery.of(context).size.width * 0.7,
+              ),
+            ),
+          );
+        }
+        walls = walls.reversed.toList();
+        final feedItems = _buildFeedItems(walls, columnsCount);
 
-      return SliverPadding(
-        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            childCount: feedItems.length,
-            (context, index) {
+        return SliverPadding(
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(childCount: feedItems.length, (
+              context,
+              index,
+            ) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
                 return const InlineBannerAdWidget(
@@ -246,35 +264,41 @@ class FavouritePage extends StatelessWidget {
                                     ? Hero(
                                         tag: (rowItems[i] as Walls).url,
                                         child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                           child: Stack(
                                             fit: StackFit.expand,
                                             children: [
                                               CNImage(
-                                                  imageUrl:
-                                                      (rowItems[i] as Walls)
-                                                          .thumbnail),
+                                                imageUrl: (rowItems[i] as Walls)
+                                                    .thumbnail,
+                                              ),
                                               Material(
                                                 color: Colors.transparent,
                                                 child: InkWell(
                                                   onTap: () => _onTapHandler(
-                                                      context,
-                                                      rowItems[i] as Walls),
+                                                    context,
+                                                    rowItems[i] as Walls,
+                                                  ),
                                                   onLongPress: () =>
                                                       _onLongPressHandler(
-                                                          context,
-                                                          rowItems[i] as Walls),
+                                                        context,
+                                                        rowItems[i] as Walls,
+                                                      ),
                                                   splashColor: blackColor
                                                       .withValues(alpha: 0.3),
                                                 ),
                                               ),
-                                              _buildImgDetailsUI(context,
-                                                  rowItems[i] as Walls),
+                                              _buildImgDetailsUI(
+                                                context,
+                                                rowItems[i] as Walls,
+                                              ),
                                               VerifyIconWidget(
-                                                  visibility:
-                                                      !(rowItems[i] as Walls)
-                                                          .isPremium),
+                                                visibility:
+                                                    !(rowItems[i] as Walls)
+                                                        .isPremium,
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -287,58 +311,61 @@ class FavouritePage extends StatelessWidget {
                   ],
                 ),
               );
-            },
+            }),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Align _buildImgDetailsUI(BuildContext context, Walls wall) {
     return Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Colors.transparent, Colors.black54],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter)),
-          padding: const EdgeInsets.only(left: 15, right: 5),
-          height: 65,
-          alignment: Alignment.bottomCenter,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      wall.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.fade,
-                      softWrap: false,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium!
-                          .copyWith(color: whiteColor, fontSize: 12),
-                    ),
-                    Text(
-                      "Designed by ${wall.author}",
-                      maxLines: 1,
-                      overflow: TextOverflow.clip,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium!
-                          .copyWith(color: whiteColor, fontSize: 10),
-                    ),
-                  ],
-                ),
-              )
-            ],
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.transparent, Colors.black54],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-        ));
+        ),
+        padding: const EdgeInsets.only(left: 15, right: 5),
+        height: 65,
+        alignment: Alignment.bottomCenter,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    wall.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      color: whiteColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    "Designed by ${wall.author}",
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      color: whiteColor,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/services/ads_config.dart';
 import 'package:wallrio/services/banner_ad_manager.dart';
 
 /// Centralized Google User Messaging Platform (UMP) Consent Manager.
@@ -20,7 +21,7 @@ class ConsentManager extends ChangeNotifier {
   bool _isPrivacyOptionsRequired = false;
 
   /// Whether ads can currently be requested according to Google UMP signals.
-  bool get canRequestAds => _canRequestAds;
+  bool get canRequestAds => AdsConfig.enabled && _canRequestAds;
 
   /// Whether the IAB TCF privacy options entry point is required by regulation.
   bool get isPrivacyOptionsRequired => _isPrivacyOptionsRequired;
@@ -31,6 +32,7 @@ class ConsentManager extends ChangeNotifier {
   /// Requests the latest consent information from Google UMP and displays
   /// the consent form if required by regulation.
   Future<void> gatherConsent({bool debugEea = false}) async {
+    if (!AdsConfig.enabled) return;
     if (_isConsentUpdating) {
       if (kDebugMode) {
         debugPrint(

@@ -409,7 +409,9 @@ class _NavigationPageState extends State<NavigationPage>
   }
 
   Widget _buildStickyBanner(Navigation provider) {
-    if (UserProfile.plusMember) return const SizedBox.shrink();
+    if (!AdsConfig.enabled || UserProfile.plusMember) {
+      return const SizedBox.shrink();
+    }
 
     return Visibility(
       visible: provider.index != 2,

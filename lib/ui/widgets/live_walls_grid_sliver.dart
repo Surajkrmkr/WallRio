@@ -24,7 +24,10 @@ class LiveWallsGridSliver extends StatelessWidget {
               children: List.generate(
                 columnsCount * 3,
                 (_) => const ShimmerWidget(
-                    height: 100, width: double.infinity, radius: 16),
+                  height: 100,
+                  width: double.infinity,
+                  radius: 16,
+                ),
               ),
             ),
           );
@@ -62,25 +65,30 @@ class LiveWallsGridSliver extends StatelessWidget {
         final feedItems = _buildFeedItems(provider.wallList, columnsCount);
         return SliverPadding(
           padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.paddingOf(context).bottom + 24),
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 24,
+          ),
           sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              childCount: feedItems.length,
-              (context, index) {
-                final item = feedItems[index];
-                if (item == 'INLINE_BANNER_AD') {
-                  return const InlineBannerAdWidget(
-                    screenName: 'LiveWallpapersGrid',
-                    placementName: 'GridChunkBanner',
-                  );
-                }
-                return AppearAnimation(
-                    child: _buildWallRow(
-                        item as List<dynamic>, columnsCount, context));
-              },
-            ),
+            delegate: SliverChildBuilderDelegate(childCount: feedItems.length, (
+              context,
+              index,
+            ) {
+              final item = feedItems[index];
+              if (item == 'INLINE_BANNER_AD') {
+                return const InlineBannerAdWidget(
+                  screenName: 'LiveWallpapersGrid',
+                  placementName: 'GridChunkBanner',
+                );
+              }
+              return AppearAnimation(
+                child: _buildWallRow(
+                  item as List<dynamic>,
+                  columnsCount,
+                  context,
+                ),
+              );
+            }),
           ),
         );
       },
@@ -88,7 +96,9 @@ class LiveWallsGridSliver extends StatelessWidget {
   }
 
   List<List<dynamic>> _buildItemList(
-      List<LiveWallpaper> walls, int columnsCount) {
+    List<LiveWallpaper> walls,
+    int columnsCount,
+  ) {
     final allGridItems = <dynamic>[];
     int wallCounter = 0;
 
@@ -96,7 +106,8 @@ class LiveWallsGridSliver extends StatelessWidget {
       allGridItems.add(walls[i]);
       wallCounter++;
 
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           wallCounter == 6 &&
           (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
@@ -117,7 +128,8 @@ class LiveWallsGridSliver extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember &&
+      if (AdsConfig.enabled &&
+          !UserProfile.plusMember &&
           (i + 1) % 4 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
@@ -127,7 +139,10 @@ class LiveWallsGridSliver extends StatelessWidget {
   }
 
   Widget _buildWallRow(
-      List<dynamic> rowItems, int columnsCount, BuildContext context) {
+    List<dynamic> rowItems,
+    int columnsCount,
+    BuildContext context,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -148,9 +163,9 @@ class LiveWallsGridSliver extends StatelessWidget {
                                   context,
                                   WallpaperRoute.pager(
                                     items: Provider.of<LiveWallpaperProvider>(
-                                            context,
-                                            listen: false)
-                                        .wallList,
+                                      context,
+                                      listen: false,
+                                    ).wallList,
                                     initial: rowItems[i] as LiveWallpaper,
                                   ),
                                 ),

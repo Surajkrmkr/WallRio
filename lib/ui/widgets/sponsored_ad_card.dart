@@ -133,7 +133,7 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (UserProfile.plusMember) {
+    if (!AdsConfig.enabled || UserProfile.plusMember) {
       return const IgnorePointer(child: SizedBox.shrink());
     }
 
