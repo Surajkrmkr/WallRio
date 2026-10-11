@@ -1,22 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wallrio/services/ads_config.dart';
 import 'package:wallrio/services/consent_manager.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('ConsentManager Tests', () {
-    test('Disabled ads skip consent and SDK initialization', () async {
-      if (AdsConfig.enabled) return;
-
-      final manager = ConsentManager.instance;
-      await manager.gatherConsent();
-
-      expect(manager.canRequestAds, isFalse);
-      expect(manager.isMobileAdsInitialized, isFalse);
-      expect(manager.isPrivacyOptionsRequired, isFalse);
-    });
-
     test('Singleton instance is consistent', () {
       final instance1 = ConsentManager.instance;
       final instance2 = ConsentManager.instance;

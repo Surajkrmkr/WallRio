@@ -14,36 +14,31 @@ class TrendingWallGridWidget extends StatelessWidget {
   final bool isActionGrid;
   // 0 = All, 1 = Free, 2 = Pro (only used when isActionGrid is false)
   final int filterIndex;
-  const TrendingWallGridWidget({
-    super.key,
-    this.isShuffled = false,
-    this.isActionGrid = false,
-    this.filterIndex = 0,
-  });
+  const TrendingWallGridWidget(
+      {super.key,
+      this.isShuffled = false,
+      this.isActionGrid = false,
+      this.filterIndex = 0});
 
   void _onLongPressHandler(BuildContext context, dynamic model) {
     CNBottomSheet.show(
-      context: context,
-      enableDrag: true,
-      isScrollControlled: true,
-      isDismissible: true,
-      showDragHandle: Platform.isIOS,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) => ImageBottomSheet(wallModel: model),
-    );
+        context: context,
+        enableDrag: true,
+        isScrollControlled: true,
+        isDismissible: true,
+        showDragHandle: Platform.isIOS,
+        backgroundColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+        builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.push(
-      context,
-      WallpaperRoute.pager(
-        items: _resolveWalls(Provider.of<WallRio>(context, listen: false)),
-        initial: model,
-      ),
-    );
+        context,
+        WallpaperRoute.pager(
+            items: _resolveWalls(Provider.of<WallRio>(context, listen: false)),
+            initial: model));
   }
 
   List<Walls> _resolveWalls(WallRio provider) {
@@ -53,14 +48,12 @@ class TrendingWallGridWidget extends StatelessWidget {
     } else {
       switch (filterIndex) {
         case 1:
-          fullList = provider.originalWallList
-              .where((w) => !w.isPremium)
-              .toList();
+          fullList =
+              provider.originalWallList.where((w) => !w.isPremium).toList();
           break;
         case 2:
-          fullList = provider.originalWallList
-              .where((w) => w.isPremium)
-              .toList();
+          fullList =
+              provider.originalWallList.where((w) => w.isPremium).toList();
           break;
         default:
           fullList = provider.originalWallList;
@@ -73,10 +66,7 @@ class TrendingWallGridWidget extends StatelessWidget {
   // Builds grid rows where every element is a Wall, a LiveWallpaper or an
   // 'AD_TILE' marker occupying 1 grid slot. Ad cadence only counts static walls.
   List<List<dynamic>> _buildItemList(
-    List<Walls> walls,
-    int columnsCount,
-    List<LiveWallpaper> lives,
-  ) {
+      List<Walls> walls, int columnsCount, List<LiveWallpaper> lives) {
     final allGridItems = <dynamic>[];
     int wallCounter = 0;
     // Session-stable seed keeps live tiles in place while paging/rebuilding.
@@ -92,8 +82,7 @@ class TrendingWallGridWidget extends StatelessWidget {
 
       // Insert 1 native ad tile after every 6 wallpapers
       bool addedAd = false;
-      if (AdsConfig.enabled &&
-          !UserProfile.plusMember &&
+      if (!UserProfile.plusMember &&
           wallCounter == 6 &&
           (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
@@ -120,16 +109,12 @@ class TrendingWallGridWidget extends StatelessWidget {
   }
 
   List<dynamic> _buildFeedItems(
-    List<Walls> walls,
-    int columnsCount,
-    List<LiveWallpaper> lives,
-  ) {
+      List<Walls> walls, int columnsCount, List<LiveWallpaper> lives) {
     final rows = _buildItemList(walls, columnsCount, lives);
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (AdsConfig.enabled &&
-          !UserProfile.plusMember &&
+      if (!UserProfile.plusMember &&
           (i + 1) % 4 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
@@ -153,58 +138,46 @@ class TrendingWallGridWidget extends StatelessWidget {
     final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
 
     return Consumer2<WallRio, LiveWallpaperProvider>(
-      builder: (context, provider, liveProvider, _) {
-        if (provider.isLoading) {
-          return SliverPadding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 15),
-            sliver: SliverGrid.count(
-              crossAxisCount: columnsCount,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.55,
-              children: List.generate(
-                columnsCount * 3,
-                (_) => const ShimmerWidget(
-                  height: 100,
-                  width: double.infinity,
-                  radius: 16,
-                ),
-              ),
-            ),
-          );
-        }
-        if (provider.error.isNotEmpty) {
-          return SliverFillRemaining(
-            child: Center(child: Text(provider.error)),
-          );
-        }
-        final walls = _resolveWalls(provider);
-        if (walls.isEmpty) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Lottie.asset(
-                'assets/lottie/empty.json',
-                width: MediaQuery.of(context).size.width * 0.7,
-              ),
-            ),
-          );
-        }
-        final feedItems = _buildFeedItems(
-          walls,
-          columnsCount,
-          _resolveLives(liveProvider),
-        );
+        builder: (context, provider, liveProvider, _) {
+      if (provider.isLoading) {
         return SliverPadding(
-          padding: EdgeInsets.only(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 15),
+          sliver: SliverGrid.count(
+            crossAxisCount: columnsCount,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.55,
+            children: List.generate(
+              columnsCount * 3,
+              (_) => const ShimmerWidget(
+                  height: 100, width: double.infinity, radius: 16),
+            ),
+          ),
+        );
+      }
+      if (provider.error.isNotEmpty) {
+        return SliverFillRemaining(child: Center(child: Text(provider.error)));
+      }
+      final walls = _resolveWalls(provider);
+      if (walls.isEmpty) {
+        return SliverFillRemaining(
+          child: Center(
+            child: Lottie.asset('assets/lottie/empty.json',
+                width: MediaQuery.of(context).size.width * 0.7),
+          ),
+        );
+      }
+      final feedItems =
+          _buildFeedItems(walls, columnsCount, _resolveLives(liveProvider));
+      return SliverPadding(
+        padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.paddingOf(context).bottom + 24,
-          ),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(childCount: feedItems.length, (
-              context,
-              index,
-            ) {
+            bottom: MediaQuery.paddingOf(context).bottom + 24),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: feedItems.length,
+            (context, index) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
                 return const InlineBannerAdWidget(
@@ -225,13 +198,12 @@ class TrendingWallGridWidget extends StatelessWidget {
               }
 
               return AppearAnimation(
-                child: _buildWallRow(row, columnsCount, context),
-              );
-            }),
+                  child: _buildWallRow(row, columnsCount, context));
+            },
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   Widget _buildFeaturedRow(List<Walls> rowWalls, BuildContext context) {
@@ -246,12 +218,8 @@ class TrendingWallGridWidget extends StatelessWidget {
               // Left: Large Featured
               Expanded(
                 flex: 2,
-                child: _buildImgUI(
-                  rowWalls[0],
-                  context,
-                  isFeatured: true,
-                  rank: 1,
-                ),
+                child: _buildImgUI(rowWalls[0], context,
+                    isFeatured: true, rank: 1),
               ),
               const SizedBox(width: 10),
               // Right: Two Small Featured
@@ -262,24 +230,16 @@ class TrendingWallGridWidget extends StatelessWidget {
                     Expanded(
                       child: AspectRatio(
                         aspectRatio: 0.55,
-                        child: _buildImgUI(
-                          rowWalls[1],
-                          context,
-                          isSmallFeatured: true,
-                          rank: 2,
-                        ),
+                        child: _buildImgUI(rowWalls[1], context,
+                            isSmallFeatured: true, rank: 2),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Expanded(
                       child: AspectRatio(
                         aspectRatio: 0.55,
-                        child: _buildImgUI(
-                          rowWalls[2],
-                          context,
-                          isSmallFeatured: true,
-                          rank: 3,
-                        ),
+                        child: _buildImgUI(rowWalls[2], context,
+                            isSmallFeatured: true, rank: 3),
                       ),
                     ),
                   ],
@@ -294,10 +254,7 @@ class TrendingWallGridWidget extends StatelessWidget {
   }
 
   Widget _buildWallRow(
-    List<dynamic> rowItems,
-    int columnsCount,
-    BuildContext context,
-  ) {
+      List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -329,11 +286,9 @@ class TrendingWallGridWidget extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             WallpaperRoute.pager(
-              items: _resolveLives(
-                Provider.of<LiveWallpaperProvider>(context, listen: false),
-              ),
-              initial: item,
-            ),
+                items: _resolveLives(
+                    Provider.of<LiveWallpaperProvider>(context, listen: false)),
+                initial: item),
           ),
         ),
       );
@@ -343,13 +298,8 @@ class TrendingWallGridWidget extends StatelessWidget {
     );
   }
 
-  Hero _buildImgUI(
-    Walls wall,
-    BuildContext context, {
-    bool isFeatured = false,
-    bool isSmallFeatured = false,
-    int? rank,
-  }) {
+  Hero _buildImgUI(Walls wall, BuildContext context,
+      {bool isFeatured = false, bool isSmallFeatured = false, int? rank}) {
     return Hero(
       tag: wall.url,
       child: ClipRRect(
@@ -394,10 +344,8 @@ class TrendingWallGridWidget extends StatelessWidget {
                 top: isFeatured ? 16 : 10,
                 left: isFeatured ? 16 : 10,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     gradient: _getRankGradient(rank),
                     borderRadius: BorderRadius.circular(20),
@@ -412,7 +360,11 @@ class TrendingWallGridWidget extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_getRankIcon(rank), color: Colors.white, size: 14),
+                      Icon(
+                        _getRankIcon(rank),
+                        color: Colors.white,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         rank.toString(),

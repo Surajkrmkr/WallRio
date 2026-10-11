@@ -94,12 +94,11 @@ class ImageBottomSheet extends StatelessWidget {
                             ],
                           ))),
                 ),
-                if (AdsConfig.enabled)
-                  const AdsWidget(
-                    bottomPadding: 20,
-                    screenName: 'ImageBottomSheet',
-                    placementName: 'ModalBottomBanner',
-                  ),
+                const AdsWidget(
+                  bottomPadding: 20,
+                  screenName: 'ImageBottomSheet',
+                  placementName: 'ModalBottomBanner',
+                ),
                 PrimaryBtnWidget(
                     btnText: Platform.isAndroid ? "Apply" : "Save Image",
                     onTap: () => UserProfile.plusMember || !wallModel.isPremium

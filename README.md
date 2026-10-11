@@ -2,23 +2,6 @@
 
 A new Flutter project.
 
-## Ads toggle
-
-Ads are disabled by default on Android and iOS. The existing ad implementations
-and placements are retained behind `AdsConfig.enabled` in
-`lib/services/ads_config.dart`. This also skips ad consent and SDK initialization.
-
-To enable ads again, pass `--dart-define=ADS_ENABLED=true` when running or building:
-
-```sh
-flutter run --dart-define=ADS_ENABLED=true
-flutter build appbundle --dart-define=ADS_ENABLED=true
-flutter build ios --dart-define=ADS_ENABLED=true
-```
-
-Omit the flag (or set it to `false`) to keep ads off. Changing this build-time
-toggle requires a full restart or rebuild, not a hot reload.
-
 ## iOS in-app purchases
 
 iOS purchases use RevenueCat. Configure the existing App Store products in

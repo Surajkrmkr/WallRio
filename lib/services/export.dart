@@ -1,4 +1,3 @@
-export 'ads_config.dart';
 export 'api_services.dart';
 export 'dark_mode_services.dart';
 export 'live_wallpaper_service.dart';

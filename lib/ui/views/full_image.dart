@@ -534,9 +534,7 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildRecommendationGridCarousel(List<Walls> walls) {
     final int adFrequency = 6;
-    final bool showAds = AdsConfig.enabled && !UserProfile.plusMember;
-    final int adCount =
-      showAds && walls.isNotEmpty ? walls.length ~/ adFrequency : 0;
+    final int adCount = walls.isNotEmpty ? walls.length ~/ adFrequency : 0;
     final int totalCount = walls.length + adCount;
 
     return SizedBox(
@@ -548,7 +546,7 @@ class _FullImageState extends State<FullImage> {
         itemBuilder: (context, i) {
           // Calculate if this position is a native ad (after every 6 wallpaper cards)
           final bool isAdPosition = (i + 1) % (adFrequency + 1) == 0;
-          if (showAds && isAdPosition) {
+          if (isAdPosition && !UserProfile.plusMember) {
             return const SizedBox(
               width: 100,
               height: 145,
@@ -557,7 +555,7 @@ class _FullImageState extends State<FullImage> {
           }
 
           // Calculate actual wallpaper index
-          final int wallIndex = showAds ? i - (i ~/ (adFrequency + 1)) : i;
+          final int wallIndex = i - (i ~/ (adFrequency + 1));
           if (wallIndex >= walls.length) return const SizedBox.shrink();
 
           final wall = walls[wallIndex];
@@ -597,9 +595,7 @@ class _FullImageState extends State<FullImage> {
   }
 
   Widget _buildSponsoredBannerSection() {
-    if (!AdsConfig.enabled || UserProfile.plusMember) {
-      return const SizedBox.shrink();
-    }
+    if (UserProfile.plusMember) return const SizedBox.shrink();
     return const AdsWidget(
       clearNavBar: false,
       bottomPadding: 0,

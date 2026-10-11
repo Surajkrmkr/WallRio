@@ -459,10 +459,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     for (int i = 0; i < walls.length; i++) {
       items.add(walls[i]);
       count++;
-        if (AdsConfig.enabled &&
-          !UserProfile.plusMember &&
-          count == 6 &&
-          (i + 1) < walls.length) {
+      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
         items.add('AD_TILE');
         count = 0;
       }
@@ -476,10 +473,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     for (int i = 0; i < walls.length; i++) {
       items.add(walls[i]);
       count++;
-        if (AdsConfig.enabled &&
-          !UserProfile.plusMember &&
-          count == 6 &&
-          (i + 1) < walls.length) {
+      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
         items.add('AD_TILE');
         count = 0;
       }
@@ -675,9 +669,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   }
 
   Widget _buildSponsoredBannerSection() {
-    if (!AdsConfig.enabled || UserProfile.plusMember) {
-      return const SizedBox.shrink();
-    }
+    if (UserProfile.plusMember) return const SizedBox.shrink();
     return const AdsWidget(
       clearNavBar: false,
       bottomPadding: 0,

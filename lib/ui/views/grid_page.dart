@@ -12,13 +12,12 @@ class GridPage extends StatefulWidget {
   final List<Walls?> walls;
   final bool isSearchMode;
   final Collections? collection;
-  const GridPage({
-    super.key,
-    required this.categoryName,
-    required this.walls,
-    this.isSearchMode = false,
-    this.collection,
-  });
+  const GridPage(
+      {super.key,
+      required this.categoryName,
+      required this.walls,
+      this.isSearchMode = false,
+      this.collection});
 
   @override
   State<GridPage> createState() => _GridPageState();
@@ -33,10 +32,8 @@ class _GridPageState extends State<GridPage> {
     textEditingController.text = widget.categoryName;
     if (widget.isSearchMode && widget.categoryName.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<WallRio>(
-          context,
-          listen: false,
-        ).onSearchTap(widget.categoryName);
+        Provider.of<WallRio>(context, listen: false)
+            .onSearchTap(widget.categoryName);
       });
     }
     scrollController.addListener(() {
@@ -52,23 +49,16 @@ class _GridPageState extends State<GridPage> {
     if (widget.collection == null) return true;
     if (UserProfile.hasCollectionAccess) return true;
 
-    final progression = Provider.of<ProgressionProvider>(
-      context,
-      listen: false,
-    );
-    final subProvider = Provider.of<SubscriptionProvider>(
-      context,
-      listen: false,
-    );
+    final progression =
+        Provider.of<ProgressionProvider>(context, listen: false);
+    final subProvider =
+        Provider.of<SubscriptionProvider>(context, listen: false);
 
-    final isRedeemed = progression.isCollectionUnlocked(
-      widget.collection!.productId,
-    );
+    final isRedeemed =
+        progression.isCollectionUnlocked(widget.collection!.productId);
     final shortId = widget.collection!.productId.split('.').last;
-    final isPurchased =
-        subProvider.purchasedCollections.contains(
-          widget.collection!.productId,
-        ) ||
+    final isPurchased = subProvider.purchasedCollections
+            .contains(widget.collection!.productId) ||
         subProvider.purchasedCollections.contains(shortId);
 
     return isRedeemed || isPurchased;
@@ -80,8 +70,9 @@ class _GridPageState extends State<GridPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       showDragHandle: Platform.isIOS,
-      builder: (context) =>
-          CollectionUnlockSheet(collection: widget.collection!),
+      builder: (context) => CollectionUnlockSheet(
+        collection: widget.collection!,
+      ),
     );
   }
 
@@ -91,16 +82,14 @@ class _GridPageState extends State<GridPage> {
       return;
     }
     CNBottomSheet.show(
-      context: context,
-      isScrollControlled: true,
-      enableDrag: true,
-      showDragHandle: Platform.isIOS,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) => ImageBottomSheet(wallModel: model),
-    );
+        context: context,
+        isScrollControlled: true,
+        enableDrag: true,
+        showDragHandle: Platform.isIOS,
+        backgroundColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+        builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
@@ -110,12 +99,10 @@ class _GridPageState extends State<GridPage> {
     }
     final provider = Provider.of<WallRio>(context, listen: false);
     Navigator.push(
-      context,
-      WallpaperRoute.pager(
-        items: widget.isSearchMode ? provider.queryWallList : widget.walls,
-        initial: model,
-      ),
-    );
+        context,
+        WallpaperRoute.pager(
+            items: widget.isSearchMode ? provider.queryWallList : widget.walls,
+            initial: model));
   }
 
   void _cancelSearchBar(BuildContext context) {
@@ -136,9 +123,8 @@ class _GridPageState extends State<GridPage> {
                     showLogo: false,
                     showSearchBtn: false,
                     text: widget.categoryName,
-                    showBackBtn: true,
-                  ),
-            _buildListUI(context),
+                    showBackBtn: true),
+            _buildListUI(context)
           ],
         ),
       ),
@@ -154,8 +140,7 @@ class _GridPageState extends State<GridPage> {
         allGridItems.add(walls[i]);
         wallCounter++;
 
-        if (AdsConfig.enabled &&
-            !UserProfile.plusMember &&
+        if (!UserProfile.plusMember &&
             wallCounter == 6 &&
             (i + 1) < walls.length) {
           allGridItems.add('AD_TILE');
@@ -177,8 +162,7 @@ class _GridPageState extends State<GridPage> {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (AdsConfig.enabled &&
-          !UserProfile.plusMember &&
+      if (!UserProfile.plusMember &&
           (i + 1) % 4 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
@@ -191,22 +175,20 @@ class _GridPageState extends State<GridPage> {
     final columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
     return SliverPadding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
-      sliver: Consumer<WallRio>(
-        builder: (context, provider, _) {
-          final walls = widget.isSearchMode
-              ? List<Walls?>.from(provider.queryWallList)
-              : widget.walls;
+      sliver: Consumer<WallRio>(builder: (context, provider, _) {
+        final walls = widget.isSearchMode
+            ? List<Walls?>.from(provider.queryWallList)
+            : widget.walls;
 
-          final pagedWalls = walls.length > provider.visibleCount
-              ? walls.sublist(0, provider.visibleCount)
-              : walls;
+        final pagedWalls = walls.length > provider.visibleCount
+            ? walls.sublist(0, provider.visibleCount)
+            : walls;
 
-          final feedItems = _buildFeedItems(pagedWalls, columnsCount);
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(childCount: feedItems.length, (
-              context,
-              index,
-            ) {
+        final feedItems = _buildFeedItems(pagedWalls, columnsCount);
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: feedItems.length,
+            (context, index) {
               final item = feedItems[index];
               if (item == 'INLINE_BANNER_AD') {
                 return const InlineBannerAdWidget(
@@ -215,22 +197,16 @@ class _GridPageState extends State<GridPage> {
                 );
               }
               return _buildWallRow(
-                item as List<dynamic>,
-                columnsCount,
-                context,
-              );
-            }),
-          );
-        },
-      ),
+                  item as List<dynamic>, columnsCount, context);
+            },
+          ),
+        );
+      }),
     );
   }
 
   Widget _buildWallRow(
-    List<dynamic> rowItems,
-    int columnsCount,
-    BuildContext context,
-  ) {
+      List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -259,21 +235,18 @@ class _GridPageState extends State<GridPage> {
       tag: wall.url,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CNImage(imageUrl: wall.thumbnail),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _onTapHandler(context, wall),
-                onLongPress: () => _onLongPressHandler(context, wall),
-                splashColor: blackColor.withValues(alpha: 0.3),
-              ),
+        child: Stack(fit: StackFit.expand, children: [
+          CNImage(imageUrl: wall.thumbnail),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _onTapHandler(context, wall),
+              onLongPress: () => _onLongPressHandler(context, wall),
+              splashColor: blackColor.withValues(alpha: 0.3),
             ),
-            VerifyIconWidget(visibility: !wall.isPremium),
-          ],
-        ),
+          ),
+          VerifyIconWidget(visibility: !wall.isPremium),
+        ]),
       ),
     );
   }
@@ -282,56 +255,46 @@ class _GridPageState extends State<GridPage> {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20),
-        child: Consumer<WallRio>(
-          builder: (context, provider, _) {
-            return TextFormField(
-              controller: textEditingController,
-              cursorColor: Theme.of(context).primaryColorLight,
-              cursorWidth: 3,
-              cursorRadius: const Radius.circular(10),
-              onTap: () {
-                provider.clearSelectedTags();
-                scrollController.animateTo(
-                  0,
+        child: Consumer<WallRio>(builder: (context, provider, _) {
+          return TextFormField(
+            controller: textEditingController,
+            cursorColor: Theme.of(context).primaryColorLight,
+            cursorWidth: 3,
+            cursorRadius: const Radius.circular(10),
+            onTap: () {
+              provider.clearSelectedTags();
+              scrollController.animateTo(0,
                   duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                );
-              },
-              onChanged: (query) => provider.onSearchTap(query),
-              autofocus: true,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).primaryColorLight.withValues(alpha: 0.05),
-                hintText: 'Search by wall name, tags, etc',
-                hintStyle: const TextStyle(fontSize: 14),
-                suffixIcon: IconButton(
+                  curve: Curves.easeInOut);
+            },
+            onChanged: (query) => provider.onSearchTap(query),
+            autofocus: true,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor:
+                  Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
+              hintText: 'Search by wall name, tags, etc',
+              hintStyle: const TextStyle(fontSize: 14),
+              suffixIcon: IconButton(
                   onPressed: textEditingController.text.isNotEmpty
                       ? () {
                           provider.resetToDefault();
                           _cancelSearchBar(context);
                         }
                       : null,
-                  icon: Icon(
-                    textEditingController.text.isNotEmpty
-                        ? Icons.cancel
-                        : Icons.search_rounded,
-                  ),
-                ),
-                prefixIcon: BackBtnWidget(
-                  color: Theme.of(context).primaryColorLight,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 25),
-                hoverColor: blackColor.withValues(alpha: 0.05),
-                border: const OutlineInputBorder(
+                  icon: Icon(textEditingController.text.isNotEmpty
+                      ? Icons.cancel
+                      : Icons.search_rounded)),
+              prefixIcon:
+                  BackBtnWidget(color: Theme.of(context).primaryColorLight),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+              hoverColor: blackColor.withValues(alpha: 0.05),
+              border: const OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(100)),
-                ),
-              ),
-            );
-          },
-        ),
+                  borderRadius: BorderRadius.all(Radius.circular(100))),
+            ),
+          );
+        }),
       ),
     );
   }
