@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
-import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class TrendingWallGridWidget extends StatelessWidget {
@@ -34,8 +34,11 @@ class TrendingWallGridWidget extends StatelessWidget {
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
+    Navigator.push(
+        context,
+        WallpaperRoute.pager(
+            items: _resolveWalls(Provider.of<WallRio>(context, listen: false)),
+            initial: model));
   }
 
   List<Walls> _resolveWalls(WallRio provider) {
@@ -45,10 +48,12 @@ class TrendingWallGridWidget extends StatelessWidget {
     } else {
       switch (filterIndex) {
         case 1:
-          fullList = provider.originalWallList.where((w) => !w.isPremium).toList();
+          fullList =
+              provider.originalWallList.where((w) => !w.isPremium).toList();
           break;
         case 2:
-          fullList = provider.originalWallList.where((w) => w.isPremium).toList();
+          fullList =
+              provider.originalWallList.where((w) => w.isPremium).toList();
           break;
         default:
           fullList = provider.originalWallList;
@@ -58,19 +63,40 @@ class TrendingWallGridWidget extends StatelessWidget {
     return fullList.sublist(0, provider.visibleCount);
   }
 
-  // Builds grid rows where every element is either a Wall or an 'AD_TILE' marker occupying 1 grid slot
-  List<List<dynamic>> _buildItemList(List<Walls> walls, int columnsCount) {
+  // Builds grid rows where every element is a Wall, a LiveWallpaper or an
+  // 'AD_TILE' marker occupying 1 grid slot. Ad cadence only counts static walls.
+  List<List<dynamic>> _buildItemList(
+      List<Walls> walls, int columnsCount, List<LiveWallpaper> lives) {
     final allGridItems = <dynamic>[];
     int wallCounter = 0;
+    // Session-stable seed keeps live tiles in place while paging/rebuilding.
+    final rng = Random(_liveSeed);
+    int liveIndex = 0;
+    int sinceLive = 0;
+    int nextLiveAt = 5 + rng.nextInt(5);
 
     for (int i = 0; i < walls.length; i++) {
       allGridItems.add(walls[i]);
       wallCounter++;
+      sinceLive++;
 
       // Insert 1 native ad tile after every 6 wallpapers
-      if (!UserProfile.plusMember && wallCounter == 6 && (i + 1) < walls.length) {
+      bool addedAd = false;
+      if (!UserProfile.plusMember &&
+          wallCounter == 6 &&
+          (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
         wallCounter = 0;
+        addedAd = true;
+      }
+
+      if (!addedAd &&
+          liveIndex < lives.length &&
+          sinceLive >= nextLiveAt &&
+          (i + 1) < walls.length) {
+        allGridItems.add(lives[liveIndex++]);
+        sinceLive = 0;
+        nextLiveAt = 6 + rng.nextInt(7);
       }
     }
 
@@ -82,23 +108,37 @@ class TrendingWallGridWidget extends StatelessWidget {
     return rows;
   }
 
-  List<dynamic> _buildFeedItems(List<Walls> walls, int columnsCount) {
-    final rows = _buildItemList(walls, columnsCount);
+  List<dynamic> _buildFeedItems(
+      List<Walls> walls, int columnsCount, List<LiveWallpaper> lives) {
+    final rows = _buildItemList(walls, columnsCount, lives);
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember &&
+          (i + 1) % 4 == 0 &&
+          (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
     return feed;
   }
 
+  static final int _liveSeed = Random().nextInt(1 << 30);
+
+  // Live tiles only blend into the main "All" feed; the first 10 are already
+  // featured in the Trending Live row above it.
+  List<LiveWallpaper> _resolveLives(LiveWallpaperProvider liveProvider) {
+    if (isActionGrid || filterIndex != 0) return const [];
+    final list = liveProvider.wallList;
+    return list.length > 10 ? list.sublist(10) : list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final int columnsCount = ResponsiveHelper.getGridCrossAxisCount(context);
 
-    return Consumer<WallRio>(builder: (context, provider, _) {
+    return Consumer2<WallRio, LiveWallpaperProvider>(
+        builder: (context, provider, liveProvider, _) {
       if (provider.isLoading) {
         return SliverPadding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 15),
@@ -127,9 +167,13 @@ class TrendingWallGridWidget extends StatelessWidget {
           ),
         );
       }
-      final feedItems = _buildFeedItems(walls, columnsCount);
+      final feedItems =
+          _buildFeedItems(walls, columnsCount, _resolveLives(liveProvider));
       return SliverPadding(
-        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+        padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 24),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: feedItems.length,
@@ -144,11 +188,17 @@ class TrendingWallGridWidget extends StatelessWidget {
               final row = item as List<dynamic>;
 
               // Only apply featured layout for the first row of "All" filter in main grid on phones if all 3 items are Walls
-              if (index == 0 && !isActionGrid && filterIndex == 0 && row.length == 3 && row.every((element) => element is Walls) && !ResponsiveHelper.isTablet(context)) {
+              if (index == 0 &&
+                  !isActionGrid &&
+                  filterIndex == 0 &&
+                  row.length == 3 &&
+                  row.every((element) => element is Walls) &&
+                  !ResponsiveHelper.isTablet(context)) {
                 return _buildFeaturedRow(row.cast<Walls>(), context);
               }
 
-              return _buildWallRow(row, columnsCount, context);
+              return AppearAnimation(
+                  child: _buildWallRow(row, columnsCount, context));
             },
           ),
         ),
@@ -168,7 +218,8 @@ class TrendingWallGridWidget extends StatelessWidget {
               // Left: Large Featured
               Expanded(
                 flex: 2,
-                child: _buildImgUI(rowWalls[0], context, isFeatured: true, rank: 1),
+                child: _buildImgUI(rowWalls[0], context,
+                    isFeatured: true, rank: 1),
               ),
               const SizedBox(width: 10),
               // Right: Two Small Featured
@@ -179,14 +230,16 @@ class TrendingWallGridWidget extends StatelessWidget {
                     Expanded(
                       child: AspectRatio(
                         aspectRatio: 0.55,
-                        child: _buildImgUI(rowWalls[1], context, isSmallFeatured: true, rank: 2),
+                        child: _buildImgUI(rowWalls[1], context,
+                            isSmallFeatured: true, rank: 2),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Expanded(
                       child: AspectRatio(
                         aspectRatio: 0.55,
-                        child: _buildImgUI(rowWalls[2], context, isSmallFeatured: true, rank: 3),
+                        child: _buildImgUI(rowWalls[2], context,
+                            isSmallFeatured: true, rank: 3),
                       ),
                     ),
                   ],
@@ -200,7 +253,8 @@ class TrendingWallGridWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
+  Widget _buildWallRow(
+      List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -212,17 +266,35 @@ class TrendingWallGridWidget extends StatelessWidget {
               child: i < rowItems.length
                   ? AspectRatio(
                       aspectRatio: 0.55,
-                      child: rowItems[i] is Walls
-                          ? _buildImgUI(rowItems[i] as Walls, context)
-                          : const SponsoredAdCard(
-                              adUnitId: SponsoredAdCard.homepageGridNativeAdUnitId,
-                            ),
+                      child: _buildTile(rowItems[i], context),
                     )
                   : const SizedBox(),
             ),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildTile(dynamic item, BuildContext context) {
+    if (item is Walls) return _buildImgUI(item, context);
+    if (item is LiveWallpaper) {
+      return Hero(
+        tag: 'live_${item.id}',
+        child: LiveWallCard(
+          wall: item,
+          onTap: () => Navigator.push(
+            context,
+            WallpaperRoute.pager(
+                items: _resolveLives(
+                    Provider.of<LiveWallpaperProvider>(context, listen: false)),
+                initial: item),
+          ),
+        ),
+      );
+    }
+    return const SponsoredAdCard(
+      adUnitId: SponsoredAdCard.homepageGridNativeAdUnitId,
     );
   }
 
@@ -272,7 +344,8 @@ class TrendingWallGridWidget extends StatelessWidget {
                 top: isFeatured ? 16 : 10,
                 left: isFeatured ? 16 : 10,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     gradient: _getRankGradient(rank),
                     borderRadius: BorderRadius.circular(20),
@@ -315,6 +388,12 @@ class TrendingWallGridWidget extends StatelessWidget {
             ),
             if (!isFeatured && !isSmallFeatured)
               VerifyIconWidget(visibility: !wall.isPremium)
+            else if (isFeatured)
+              VerifyIconWidget(
+                visibility: !wall.isPremium,
+                alignment: Alignment.topRight,
+                padding: 16,
+              ),
           ],
         ),
       ),

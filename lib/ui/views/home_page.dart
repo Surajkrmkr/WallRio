@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
-import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class HomePage extends StatefulWidget {
@@ -71,8 +71,8 @@ class _HomePageState extends State<HomePage> {
         precacheImage(
           CachedNetworkImageProvider(wall.thumbnail),
           context,
-          onError: (e, s) =>
-              logger.w('Error precaching static thumbnail ${wall.thumbnail}: $e'),
+          onError: (e, s) => logger
+              .w('Error precaching static thumbnail ${wall.thumbnail}: $e'),
         );
       }
     }
@@ -107,14 +107,15 @@ class _HomePageState extends State<HomePage> {
         children: [
           Expanded(
             child: CustomScrollView(
-              primary: false,
+              controller: Provider.of<Navigation>(context, listen: false)
+                  .tabController(0),
+              physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 const SliverAppBarWidget(
                     showLogo: false,
                     showSearchBtn: true,
                     text: "Wall",
                     secondaryText: "Rio",
-                    userProfileIconRight: false,
                     showUserProfileIcon: true,
                     showSaleChip: true),
                 SliverToBoxAdapter(child: BannerWidget()),
@@ -132,12 +133,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   SliverToBoxAdapter(
-                      child: _buildSectionHeader(context, "Explore Feed")),
+                      child: _buildSectionHeader(context, "Explore Feed",
+                          subtitle: "Handpicked walls, live picks mixed in")),
                 ],
                 if (_filterIndex == 3)
                   const LiveWallsGridSliver()
                 else
-                  TrendingWallGridWidget(filterIndex: _filterIndex),
+                  TrendingWallGridWidget(
+                      key: ValueKey('home_grid_$_filterIndex'),
+                      filterIndex: _filterIndex),
               ],
             ),
           ),
@@ -161,29 +165,30 @@ class _HomePageState extends State<HomePage> {
               _buildSectionHeader(
                 context,
                 "Trending Live",
-                onViewAll: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LivePage()),
-                ),
+                subtitle: "Motion wallpapers everyone's loving",
+                onViewAll: () => Provider.of<Navigation>(context, listen: false)
+                    .setIndex = 1,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SizedBox(
-                height: 190,
+                height: 200,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
                   itemCount: liveWalls.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final wall = liveWalls[index];
                     return SizedBox(
-                      width: 115,
+                      width: 112,
                       child: LiveWallCard(
                         wall: wall,
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => LiveDetailPage(wall: wall),
+                          WallpaperRoute.pager(
+                            items: liveWalls,
+                            initial: wall,
                           ),
                         ),
                       ),
@@ -214,32 +219,29 @@ class _HomePageState extends State<HomePage> {
               _buildSectionHeader(
                 context,
                 "Desktop Wallpapers",
-                onViewAll: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DesktopWallpapersPage(
-                      initialWalls: displayList,
-                    ),
-                  ),
-                ),
+                subtitle: "Crisp 16:10 picks for your Mac & PC",
+                onViewAll: () => Provider.of<Navigation>(context, listen: false)
+                    .setIndex = 4,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SizedBox(
                 height: 140,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
                   itemCount: displayList.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final wall = displayList[index];
 
                     return GestureDetector(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              DesktopWallpaperDetailPage(wallModel: wall),
+                        WallpaperRoute.pager(
+                          desktop: true,
+                          items: displayList,
+                          initial: wall,
                         ),
                       ),
                       child: Container(
@@ -252,13 +254,6 @@ class _HomePageState extends State<HomePage> {
                                 : Colors.black.withValues(alpha: 0.06),
                             width: 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDarkMode ? 0.28 : 0.08),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(21),
@@ -286,64 +281,68 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title,
-      {VoidCallback? onViewAll}) {
+      {String? subtitle, VoidCallback? onViewAll}) {
+    final colors = context.appColors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            width: 4,
-            height: 18,
-            decoration: BoxDecoration(
-              color: context.appColors.accent,
-              borderRadius: BorderRadius.circular(4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        letterSpacing: -0.4,
+                      ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-          ),
-          if (onViewAll != null) ...[
-            const Spacer(),
+          if (onViewAll != null)
             GestureDetector(
-              onTap: onViewAll,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: context.appColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: context.appColors.accent.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onViewAll();
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 2),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'View all',
+                      'See all',
                       style: TextStyle(
-                        color: context.appColors.accent,
-                        fontSize: 11,
+                        color: colors.accent,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 12,
-                      color: context.appColors.accent,
-                    ),
+                    const SizedBox(width: 2),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 18, color: colors.accent),
                   ],
                 ),
               ),
             ),
-          ],
         ],
       ),
     );
@@ -362,45 +361,75 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? whiteColor : const Color(0xFF1C1C1E);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        height: 44,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: bgDark2Color,
+          color: isDark ? bgDark2Color : const Color(0xFFF1F1F5),
           borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: fg.withValues(alpha: 0.05)),
         ),
-        child: Row(
-          children: List.generate(
-            _filters.length,
-            (i) => Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _filterIndex = i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment(
+                  -1.0 + _filterIndex * (2.0 / (_filters.length - 1)), 0),
+              child: FractionallySizedBox(
+                widthFactor: 1 / _filters.length,
+                heightFactor: 1,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: i == _filterIndex
-                        ? context.appColors.accent
-                        : Colors.transparent,
+                    color: context.appColors.accent,
                     borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.appColors.accent.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    _filters[i],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: i == _filterIndex
-                          ? whiteColor
-                          : whiteColor.withValues(alpha: 0.55),
-                      fontWeight:
-                          i == _filterIndex ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 14,
+                ),
+              ),
+            ),
+            Row(
+              children: List.generate(
+                _filters.length,
+                (i) => Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      if (i == _filterIndex) return;
+                      HapticFeedback.selectionClick();
+                      setState(() => _filterIndex = i);
+                    },
+                    child: Center(
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 220),
+                        style: TextStyle(
+                          fontFamily: appFontFamily,
+                          color: i == _filterIndex
+                              ? whiteColor
+                              : fg.withValues(alpha: 0.55),
+                          fontWeight: i == _filterIndex
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          fontSize: 13.5,
+                        ),
+                        child: Text(_filters[i]),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -40,13 +40,17 @@ class ProgressionModel {
   List<String> redeemedCollections;
   List<String> completedMilestones;
   List<RewardTransaction> transactionHistory;
-  
+
   // Daily Tracking
   int dailyAdViews;
   int dailyDownloads;
   int dailyApplies;
   int dailyShares; // Track daily app shares
   DateTime lastAdViewDate;
+
+  // Streak freeze: one free freeze is refilled every 7 days.
+  int streakFreezes;
+  DateTime? lastFreezeRefill;
 
   ProgressionModel({
     this.diamondsBalance = 0,
@@ -63,6 +67,8 @@ class ProgressionModel {
     this.dailyApplies = 0,
     this.dailyShares = 0,
     required this.lastAdViewDate,
+    this.streakFreezes = 1,
+    this.lastFreezeRefill,
   })  : redeemedCollections = redeemedCollections ?? [],
         completedMilestones = completedMilestones ?? [],
         transactionHistory = transactionHistory ?? [];
@@ -73,24 +79,29 @@ class ProgressionModel {
       lifetimeDiamondsEarned: json['lifetimeDiamondsEarned'] ?? 0,
       currentStreak: json['currentStreak'] ?? 0,
       longestStreak: json['longestStreak'] ?? 0,
-      lastActiveDate: json['lastActiveDate'] != null 
+      lastActiveDate: json['lastActiveDate'] != null
           ? DateTime.parse(json['lastActiveDate'])
           : DateTime.now().subtract(const Duration(days: 1)),
-      lastCheckInDate: json['lastCheckInDate'] != null 
+      lastCheckInDate: json['lastCheckInDate'] != null
           ? DateTime.parse(json['lastCheckInDate'])
           : DateTime.now().subtract(const Duration(days: 1)),
       redeemedCollections: List<String>.from(json['redeemedCollections'] ?? []),
       completedMilestones: List<String>.from(json['completedMilestones'] ?? []),
       transactionHistory: (json['transactionHistory'] as List?)
               ?.map((e) => RewardTransaction.fromJson(e))
-              .toList() ?? [],
+              .toList() ??
+          [],
       dailyAdViews: json['dailyAdViews'] ?? 0,
       dailyDownloads: json['dailyDownloads'] ?? 0,
       dailyApplies: json['dailyApplies'] ?? 0,
       dailyShares: json['dailyShares'] ?? 0,
-      lastAdViewDate: json['lastAdViewDate'] != null 
+      lastAdViewDate: json['lastAdViewDate'] != null
           ? DateTime.parse(json['lastAdViewDate'])
           : DateTime.now().subtract(const Duration(days: 1)),
+      streakFreezes: json['streakFreezes'] ?? 1,
+      lastFreezeRefill: json['lastFreezeRefill'] != null
+          ? DateTime.parse(json['lastFreezeRefill'])
+          : null,
     );
   }
 
@@ -110,6 +121,8 @@ class ProgressionModel {
       'dailyApplies': dailyApplies,
       'dailyShares': dailyShares,
       'lastAdViewDate': lastAdViewDate.toIso8601String(),
+      'streakFreezes': streakFreezes,
+      'lastFreezeRefill': lastFreezeRefill?.toIso8601String(),
     };
   }
 }

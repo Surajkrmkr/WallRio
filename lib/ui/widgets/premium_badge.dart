@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/personalization_provider.dart';
+import 'package:wallrio/model/export.dart';
 
 class PremiumBadgeWidget extends StatelessWidget {
   const PremiumBadgeWidget({super.key});
@@ -10,8 +11,12 @@ class PremiumBadgeWidget extends StatelessWidget {
     return Consumer<PersonalizationProvider>(
       builder: (context, personalization, _) {
         final badgeKey = personalization.personalization?.activeBadge ?? 'none';
-        
+
         if (badgeKey == 'none') return const SizedBox.shrink();
+        // A "PRO" badge on a free account contradicts the Get PRO chip.
+        if (badgeKey == 'badge_pro' && !UserProfile.plusMember) {
+          return const SizedBox.shrink();
+        }
 
         IconData iconData;
         Color color;

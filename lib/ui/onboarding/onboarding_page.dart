@@ -28,7 +28,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         Provider.of<OnboardingProvider>(context, listen: false);
 
     int startPage = onboardingProvider.currentStep.clamp(0, 3);
-    if (Platform.isAndroid && FirebaseAuth.instance.currentUser != null && startPage == 0) {
+    if (Platform.isAndroid &&
+        FirebaseAuth.instance.currentUser != null &&
+        startPage == 0) {
       startPage = 1;
     }
     _pageController = PageController(initialPage: startPage);
@@ -71,7 +73,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _goToNextPage() async {
     if (!mounted) return;
     final provider = Provider.of<OnboardingProvider>(context, listen: false);
-    final currentPage = _pageController.hasClients ? (_pageController.page ?? 0).round() : 0;
+    final currentPage =
+        _pageController.hasClients ? (_pageController.page ?? 0).round() : 0;
     final nextStep = currentPage + 1;
     await provider.saveStep(nextStep);
     if (!mounted) return;

@@ -11,7 +11,8 @@ class DesktopFullscreenViewer extends StatefulWidget {
   const DesktopFullscreenViewer({super.key, required this.wallModel});
 
   @override
-  State<DesktopFullscreenViewer> createState() => _DesktopFullscreenViewerState();
+  State<DesktopFullscreenViewer> createState() =>
+      _DesktopFullscreenViewerState();
 }
 
 class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
@@ -134,7 +135,8 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
                 top: true,
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -176,7 +178,8 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(20),
@@ -208,58 +211,60 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
               ),
             ),
 
-          // Bottom Action Bar Overlay
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 20,
-            left: 20,
-            right: 20,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    width: 1,
+            // Bottom Action Bar Overlay
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => _downloadHandler(context),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size.zero,
-                        backgroundColor: context.appColors.accent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => _downloadHandler(context),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.zero,
+                          backgroundColor: context.appColors.accent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 22, vertical: 12),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 22, vertical: 12),
+                        icon: const Icon(Icons.download_rounded, size: 20),
+                        label: const Text(
+                          "Download Wallpaper",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 13),
+                        ),
                       ),
-                      icon: const Icon(Icons.download_rounded, size: 20),
-                      label: const Text(
-                        "Download Wallpaper",
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

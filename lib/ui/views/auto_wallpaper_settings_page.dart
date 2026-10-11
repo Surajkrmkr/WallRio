@@ -13,10 +13,12 @@ class AutoWallpaperSettingsPage extends StatefulWidget {
   const AutoWallpaperSettingsPage({super.key});
 
   @override
-  State<AutoWallpaperSettingsPage> createState() => _AutoWallpaperSettingsPageState();
+  State<AutoWallpaperSettingsPage> createState() =>
+      _AutoWallpaperSettingsPageState();
 }
 
-class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> with WidgetsBindingObserver {
+class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage>
+    with WidgetsBindingObserver {
   bool _isBatteryOptimizationDisabled = true;
   bool _isAutoStartAvailable = false;
   bool _hasClickedAutoStart = true;
@@ -86,44 +88,54 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
-                child: Consumer4<AutoWallpaperProvider, WallRio, SubscriptionProvider, ProgressionProvider>(
-                  builder: (context, autoWall, wallRio, subProvider, progression, _) {
+                child: Consumer4<AutoWallpaperProvider, WallRio,
+                    SubscriptionProvider, ProgressionProvider>(
+                  builder: (context, autoWall, wallRio, subProvider,
+                      progression, _) {
                     final isPlusMember = UserProfile.plusMember;
-                    
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (autoWall.isEnabled && !_isCheckingStatus) 
-                           _buildStatusBanner(isDarkMode),
+                        if (autoWall.isEnabled && !_isCheckingStatus)
+                          _buildStatusBanner(isDarkMode),
                         const SizedBox(height: 16),
-                        
                         _sectionTitle(context, 'Configuration'),
                         _sectionCardStyle(
                           context,
                           child: Column(
                             children: [
                               SwitchListTile(
-                                title: Text('Auto Change', style: Theme.of(context).textTheme.titleMedium),
-                                subtitle: Text('Rotate automatically', style: Theme.of(context).textTheme.labelSmall),
+                                title: Text('Auto Change',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium),
+                                subtitle: Text('Rotate automatically',
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall),
                                 value: autoWall.isEnabled,
                                 onChanged: (val) {
                                   autoWall.setEnabled(val);
                                   if (val) {
                                     showDialog(
                                       context: context,
-                                      builder: (context) => const BackgroundReliabilityDialog(),
+                                      builder: (context) =>
+                                          const BackgroundReliabilityDialog(),
                                     ).then((_) => _checkSystemStatus());
                                   }
                                 },
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18)),
                               ),
                               Opacity(
                                 opacity: autoWall.isEnabled ? 1.0 : 0.5,
                                 child: AbsorbPointer(
                                   absorbing: !autoWall.isEnabled,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       _divider(context),
                                       _tileHeader(context, 'Change Frequency'),
@@ -131,7 +143,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                         options: ['1H', '6H', '12H', '1D'],
                                         values: [60, 360, 720, 1440],
                                         selectedValue: autoWall.interval,
-                                        onSelected: (val) => autoWall.setInterval(val),
+                                        onSelected: (val) =>
+                                            autoWall.setInterval(val),
                                         isDarkMode: isDarkMode,
                                       ),
                                       const SizedBox(height: 16),
@@ -143,7 +156,6 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                           ),
                         ),
                         const SizedBox(height: 24),
-
                         _sectionTitle(context, 'Behavior'),
                         Opacity(
                           opacity: autoWall.isEnabled ? 1.0 : 0.5,
@@ -159,7 +171,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                     options: ['Home', 'Lock', 'Both'],
                                     values: [1, 2, 3],
                                     selectedValue: autoWall.wallLocation,
-                                    onSelected: (val) => autoWall.setLocation(val),
+                                    onSelected: (val) =>
+                                        autoWall.setLocation(val),
                                     isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 16),
@@ -169,8 +182,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                           ),
                         ),
                         const SizedBox(height: 24),
-
-                        _sectionTitle(context, 'Curated Sources', isPro: !isPlusMember),
+                        _sectionTitle(context, 'Curated Sources',
+                            isPro: !isPlusMember),
                         Opacity(
                           opacity: autoWall.isEnabled ? 1.0 : 0.5,
                           child: AbsorbPointer(
@@ -186,13 +199,18 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                       _buildSourceExpansion(
                                         context,
                                         title: 'Categories',
-                                        count: autoWall.selectedCategories.length,
+                                        count:
+                                            autoWall.selectedCategories.length,
                                         children: [
                                           _selectionList(
                                             context,
-                                            items: wallRio.categories?.keys.toList() ?? [],
-                                            selectedItems: autoWall.selectedCategories,
-                                            onToggle: (item) => autoWall.toggleCategory(item),
+                                            items: wallRio.categories?.keys
+                                                    .toList() ??
+                                                [],
+                                            selectedItems:
+                                                autoWall.selectedCategories,
+                                            onToggle: (item) =>
+                                                autoWall.toggleCategory(item),
                                           ),
                                         ],
                                       ),
@@ -200,15 +218,21 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                       _buildSourceExpansion(
                                         context,
                                         title: 'Collections',
-                                        count: autoWall.selectedCollections.length,
+                                        count:
+                                            autoWall.selectedCollections.length,
                                         children: [
                                           _collectionSelectionList(
                                             context,
                                             collections: wallRio.collections,
-                                            selectedItems: autoWall.selectedCollections,
-                                            onToggle: (item) => autoWall.toggleCollection(item),
-                                            hasAccess: (collection) => _hasAccessToCollection(
-                                                collection, subProvider, progression),
+                                            selectedItems:
+                                                autoWall.selectedCollections,
+                                            onToggle: (item) =>
+                                                autoWall.toggleCollection(item),
+                                            hasAccess: (collection) =>
+                                                _hasAccessToCollection(
+                                                    collection,
+                                                    subProvider,
+                                                    progression),
                                           ),
                                         ],
                                       ),
@@ -222,11 +246,12 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                         if (!isPlusMember)
                           Opacity(
                             opacity: autoWall.isEnabled ? 1.0 : 0.5,
-                            child: _proUpgradeHint('Upgrade to Pro to filter by categories & collections'),
+                            child: _proUpgradeHint(
+                                'Upgrade to Pro to filter by categories & collections'),
                           ),
                         const SizedBox(height: 24),
-
-                        _sectionTitle(context, 'Color Preference', isPro: !isPlusMember),
+                        _sectionTitle(context, 'Color Preference',
+                            isPro: !isPlusMember),
                         Opacity(
                           opacity: autoWall.isEnabled ? 1.0 : 0.5,
                           child: AbsorbPointer(
@@ -243,31 +268,44 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                                       spacing: 12,
                                       runSpacing: 12,
                                       children: wallRio.colors.map((color) {
-                                        final isSelected = autoWall.selectedColors.contains(color.toARGB32());
+                                        final isSelected = autoWall
+                                            .selectedColors
+                                            .contains(color.toARGB32());
                                         return GestureDetector(
-                                          onTap: () => autoWall.toggleColor(color.toARGB32()),
+                                          onTap: () => autoWall
+                                              .toggleColor(color.toARGB32()),
                                           child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 200),
+                                            duration: const Duration(
+                                                milliseconds: 200),
                                             width: 40,
                                             height: 40,
                                             decoration: BoxDecoration(
                                               color: color,
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: isSelected ? const Color(0xFF37C3A3) : Colors.white.withValues(alpha: 0.1),
+                                                color: isSelected
+                                                    ? const Color(0xFF37C3A3)
+                                                    : Colors.white
+                                                        .withValues(alpha: 0.1),
                                                 width: isSelected ? 3 : 1,
                                               ),
                                               boxShadow: [
                                                 if (isSelected)
                                                   BoxShadow(
-                                                    color: const Color(0xFF37C3A3).withValues(alpha: 0.3),
+                                                    color:
+                                                        const Color(0xFF37C3A3)
+                                                            .withValues(
+                                                                alpha: 0.3),
                                                     blurRadius: 8,
                                                     spreadRadius: 1,
                                                   )
                                               ],
                                             ),
                                             child: isSelected
-                                                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                                                ? const Icon(
+                                                    Icons.check_rounded,
+                                                    color: Colors.white,
+                                                    size: 18)
                                                 : null,
                                           ),
                                         );
@@ -282,7 +320,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                         if (!isPlusMember)
                           Opacity(
                             opacity: autoWall.isEnabled ? 1.0 : 0.5,
-                            child: _proUpgradeHint('PRO members can filter by specific color vibes'),
+                            child: _proUpgradeHint(
+                                'PRO members can filter by specific color vibes'),
                           ),
                       ],
                     );
@@ -298,7 +337,7 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
 
   Widget _buildStatusBanner(bool isDarkMode) {
     final healthy = _isReliabilityHealthy;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: GestureDetector(
@@ -313,20 +352,21 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: healthy 
-                ? const Color(0xFF37C3A3).withValues(alpha: 0.1) 
+            color: healthy
+                ? const Color(0xFF37C3A3).withValues(alpha: 0.1)
                 : Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: healthy 
-                  ? const Color(0xFF37C3A3).withValues(alpha: 0.2) 
-                  : Colors.orange.withValues(alpha: 0.2)
-            ),
+                color: healthy
+                    ? const Color(0xFF37C3A3).withValues(alpha: 0.2)
+                    : Colors.orange.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
               Icon(
-                healthy ? Icons.verified_user_rounded : Icons.warning_amber_rounded,
+                healthy
+                    ? Icons.verified_user_rounded
+                    : Icons.warning_amber_rounded,
                 size: 20,
                 color: healthy ? const Color(0xFF37C3A3) : Colors.orange,
               ),
@@ -336,11 +376,11 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    healthy 
-                        ? 'Background auto-rotation is fully optimized' 
+                    healthy
+                        ? 'Background auto-rotation is fully optimized'
                         : 'Tap here to fix background rotation issues',
                     style: TextStyle(
-                      fontSize: 13, 
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: healthy ? const Color(0xFF37C3A3) : Colors.orange,
                     ),
@@ -348,7 +388,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                 ),
               ),
               if (!healthy)
-                const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.orange),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 18, color: Colors.orange),
             ],
           ),
         ),
@@ -356,9 +397,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
     );
   }
 
-
-
-  Widget _sectionTitle(BuildContext context, String title, {bool isPro = false}) {
+  Widget _sectionTitle(BuildContext context, String title,
+      {bool isPro = false}) {
     return Padding(
       padding: const EdgeInsets.only(left: 0, bottom: 10),
       child: Row(
@@ -389,7 +429,10 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
               ),
               child: const Text(
                 'PRO',
-                style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white),
               ),
             ),
           ],
@@ -407,7 +450,10 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(fontSize: 10, color: Colors.orange[300], fontWeight: FontWeight.w600),
+            style: TextStyle(
+                fontSize: 10,
+                color: Colors.orange[300],
+                fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -435,7 +481,11 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withValues(alpha: 0.7),
               ),
         ),
       ),
@@ -465,14 +515,20 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
                   selected: isSelected,
                   onSelected: (_) => onSelected(values[index]),
                   selectedColor: const Color(0xFF37C3A3),
-                  backgroundColor: isDarkMode ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.04),
+                  backgroundColor: isDarkMode
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.black.withValues(alpha: 0.04),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
+                    color: isSelected
+                        ? Colors.white
+                        : (isDarkMode ? Colors.white70 : Colors.black87),
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   showCheckmark: false,
                   side: BorderSide.none,
                 ),
@@ -497,11 +553,15 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
     );
   }
 
-  Widget _buildSourceExpansion(BuildContext context, {required String title, required int count, required List<Widget> children}) {
+  Widget _buildSourceExpansion(BuildContext context,
+      {required String title,
+      required int count,
+      required List<Widget> children}) {
     return ExpansionTile(
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text('$count selected', style: Theme.of(context).textTheme.labelSmall),
+      subtitle: Text('$count selected',
+          style: Theme.of(context).textTheme.labelSmall),
       childrenPadding: EdgeInsets.zero,
       tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       children: children,
@@ -554,8 +614,9 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
     if (UserProfile.hasCollectionAccess) return true;
     final isRedeemed = progression.isCollectionUnlocked(collection.productId);
     final shortId = collection.productId.split('.').last;
-    final isPurchased = subProvider.purchasedCollections.contains(collection.productId) ||
-        subProvider.purchasedCollections.contains(shortId);
+    final isPurchased =
+        subProvider.purchasedCollections.contains(collection.productId) ||
+            subProvider.purchasedCollections.contains(shortId);
     return isRedeemed || isPurchased;
   }
 
@@ -566,7 +627,8 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
     required Function(String) onToggle,
     required bool Function(Collections) hasAccess,
   }) {
-    final hasCollectionAccess = UserProfile.plusMember && UserProfile.hasCollectionAccess;
+    final hasCollectionAccess =
+        UserProfile.plusMember && UserProfile.hasCollectionAccess;
 
     if (!hasCollectionAccess) {
       return Column(
@@ -593,8 +655,13 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
               itemBuilder: (context, index) {
                 final collection = collections[index];
                 return ListTile(
-                  title: Text(collection.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
-                  trailing: const Icon(Icons.lock_outline_rounded, size: 18, color: Colors.grey),
+                  title: Text(collection.name,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.grey)),
+                  trailing: const Icon(Icons.lock_outline_rounded,
+                      size: 18, color: Colors.grey),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                   dense: true,
                   onTap: () {
@@ -628,11 +695,13 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage> w
           return Opacity(
             opacity: isUnlocked ? 1.0 : 0.5,
             child: CheckboxListTile(
-              title: Text(collection.name, style: Theme.of(context).textTheme.bodyMedium),
+              title: Text(collection.name,
+                  style: Theme.of(context).textTheme.bodyMedium),
               secondary: isUnlocked
                   ? null
                   : Icon(Icons.lock_outline_rounded,
-                      size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
+                      size: 18,
+                      color: Theme.of(context).textTheme.bodyMedium?.color),
               value: isSelected,
               onChanged: isUnlocked ? (_) => onToggle(collection.name) : null,
               activeColor: const Color(0xFF37C3A3),

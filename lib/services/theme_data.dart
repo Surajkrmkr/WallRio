@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class WallRioThemeData {
@@ -13,8 +14,14 @@ class WallRioThemeData {
       ThemeData(
           useMaterial3: true,
           scaffoldBackgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
-          fontFamily: 'POCOTech',
+          fontFamily: appFontFamily,
           canvasColor: Colors.transparent,
+          splashFactory: InkSparkle.splashFactory,
+          pageTransitionsTheme: const PageTransitionsTheme(builders: {
+            TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
+          }),
           appBarTheme: AppBarTheme(
               backgroundColor: isDarkTheme ? bgDarkColor : whiteColor,
               surfaceTintColor: isDarkTheme ? bgDarkColor : whiteColor),
@@ -108,11 +115,20 @@ class WallRioThemeData {
               surfaceTintColor: isDarkTheme ? blackColor : whiteColor,
               showCheckmark: false),
           textTheme: TextTheme(
-              displayLarge:
-                  TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
-              displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: isDarkTheme ? whiteColor : const Color(0xFF2E2E2E)),
-              bodyLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              bodyMedium: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              displayLarge: TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.9,
+                  color: isDarkTheme ? whiteColor : const Color(0xFF1C1C1E)),
+              displayMedium: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  color: isDarkTheme ? whiteColor : const Color(0xFF1C1C1E)),
+              bodyLarge: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.1),
+              bodyMedium: const TextStyle(
+                  fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
           colorScheme: ColorScheme.fromSeed(
               seedColor: accent,
               brightness: isDarkTheme ? Brightness.dark : Brightness.light));
@@ -120,6 +136,8 @@ class WallRioThemeData {
   static ThemeData getDarkThemeData() =>
       ThemeData(brightness: Brightness.dark, useMaterial3: true);
 }
+
+const String appFontFamily = 'PlusJakartaSans';
 
 const Color whiteColor = Colors.white;
 const Color blackColor = Colors.black;

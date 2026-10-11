@@ -11,15 +11,25 @@ class ToastWidget {
       GlobalKey<NavigatorState>();
 
   static void showToast(String msg) {
-    if (Platform.isIOS) {
+    if (Platform.isIOS || Platform.isMacOS) {
       final context = navigatorKey.currentContext;
-      if (context == null) return;
-      // CNToastPosition.center leaves both top/bottom null in the package's
-      // Positioned.fill, which collapses it to the Stack's default
-      // top-start alignment instead of actually centering (package bug) —
-      // .top sets a real offset and avoids it.
-      CNToast.show(
-          context: context, message: msg, position: CNToastPosition.top);
+      if (context != null) {
+        try {
+          CNToast.show(
+              context: context, message: msg, position: CNToastPosition.top);
+          return;
+        } catch (_) {}
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        } catch (_) {}
+      }
       return;
     }
     Fluttertoast.showToast(

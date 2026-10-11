@@ -24,23 +24,24 @@ class CategoryPage extends StatelessWidget {
         builder: (context) => ImageBottomSheet(wallModel: model));
   }
 
-  void _onTapHandler(BuildContext context, dynamic model) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
+  void _onTapHandler(BuildContext context, dynamic model, List<Walls?> walls) {
+    Navigator.push(context, WallpaperRoute.pager(items: walls, initial: model));
   }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicatorWidget(
       child: CustomScrollView(
-        primary: false,
+        controller:
+            Provider.of<Navigation>(context, listen: false).tabController(3),
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           const SliverAppBarWidget(
+              showSaleChip: true,
               showLogo: false,
               showSearchBtn: true,
               text: "Categories",
               secondaryText: "",
-              userProfileIconRight: false,
               showUserProfileIcon: true),
           _buildCategoryUI(),
         ],
@@ -60,13 +61,13 @@ class CategoryPage extends StatelessWidget {
         return SliverFillRemaining(child: Center(child: Text(provider.error)));
       }
       return SliverPadding(
-        padding: const EdgeInsets.only(bottom: 24),
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 24),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: provider.categories!.length,
             (context, index) {
-              final categoryName =
-                  provider.categories!.keys.elementAt(index);
+              final categoryName = provider.categories!.keys.elementAt(index);
               final categoryWalls =
                   provider.categories!.values.elementAt(index);
               return TweenAnimationBuilder<double>(
@@ -80,8 +81,8 @@ class CategoryPage extends StatelessWidget {
                     child: child,
                   ),
                 ),
-                child: _buildCategorySection(
-                    categoryName, categoryWalls, context),
+                child:
+                    _buildCategorySection(categoryName, categoryWalls, context),
               );
             },
           ),
@@ -149,13 +150,11 @@ class CategoryPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    GridPage(categoryName: name, walls: walls),
+                builder: (_) => GridPage(categoryName: name, walls: walls),
               ),
             ),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: context.appColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
@@ -199,58 +198,45 @@ class CategoryPage extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: count,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, i) =>
-            _buildCard(walls[i]!, context, i),
+        itemBuilder: (context, i) => _buildCard(walls[i]!, context, walls),
       ),
     );
   }
 
-  Widget _buildCard(Walls wall, BuildContext context, int cardIndex) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 280 + cardIndex * 45),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) => Opacity(
-        opacity: value,
-        child: Transform.translate(
-          offset: Offset(24 * (1 - value), 0),
-          child: child,
-        ),
-      ),
-      child: Hero(
-        tag: wall.url,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            width: 120,
-            child: Stack(fit: StackFit.expand, children: [
-              CNImage(imageUrl: wall.thumbnail),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 70,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.black87],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+  Widget _buildCard(Walls wall, BuildContext context, List<Walls?> walls) {
+    return Hero(
+      tag: wall.url,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: 120,
+          child: Stack(fit: StackFit.expand, children: [
+            CNImage(imageUrl: wall.thumbnail),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 70,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.transparent, Colors.black87],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _onTapHandler(context, wall),
-                  onLongPress: () => _onLongPressHandler(context, wall),
-                  splashColor: blackColor.withValues(alpha: 0.3),
-                ),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _onTapHandler(context, wall, walls),
+                onLongPress: () => _onLongPressHandler(context, wall),
+                splashColor: blackColor.withValues(alpha: 0.3),
               ),
-              VerifyIconWidget(visibility: !wall.isPremium),
-            ]),
-          ),
+            ),
+            VerifyIconWidget(visibility: !wall.isPremium),
+          ]),
         ),
       ),
     );
@@ -284,8 +270,8 @@ class CategoryPage extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   itemCount: 5,
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (_, __) => const ShimmerWidget(
-                      height: 210, width: 120, radius: 16),
+                  itemBuilder: (_, __) =>
+                      const ShimmerWidget(height: 210, width: 120, radius: 16),
                 ),
               ),
             ],

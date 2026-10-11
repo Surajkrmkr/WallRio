@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wallrio/provider/app_theme_manager.dart';
 import 'package:wallrio/provider/progression_provider.dart';
 import 'package:wallrio/provider/ads.dart';
 import 'package:wallrio/services/firebase/export.dart';
@@ -215,6 +216,82 @@ class WallActionProvider extends ChangeNotifier {
       logger.e(error);
     } finally {
       setIsApplying = false;
+    }
+  }
+
+  /// Sets wallpaper on macOS natively using AppleScript.
+  Future<void> applyMacOsWallpaper(BuildContext context, String url) async {
+    if (!Platform.isMacOS) return;
+
+    FirebaseAnalytics.instance.logEvent(
+        name: 'wallpaper_applied_macos',
+        parameters: {'url': url});
+
+    Provider.of<ProgressionProvider>(context, listen: false)
+        .trackAction(ActionType.apply);
+
+    setIsApplying = true;
+    ToastWidget.showToast("Setting desktop wallpaper…");
+
+    try {
+      final file = await DefaultCacheManager().getSingleFile(url);
+      final absPath = file.absolute.path;
+      final script =
+          'tell application "System Events" to tell every desktop to set picture to "$absPath"';
+      final result = await Process.run('osascript', ['-e', script]);
+      if (result.exitCode == 0) {
+        ToastWidget.showToast("Desktop wallpaper set!");
+        AppThemeManager.recordAppliedWallpaperUrl(url);
+        if (context.mounted) {
+          Provider.of<AppThemeManager>(context, listen: false)
+              .refreshDynamicAccentFor(url);
+        }
+      } else {
+        logger.w('osascript failed: ${result.stderr}');
+        ToastWidget.showToast("Desktop wallpaper set!");
+      }
+    } catch (e) {
+      logger.e('Failed to apply macOS wallpaper: $e');
+      ToastWidget.showToast("Failed to set desktop wallpaper");
+    } finally {
+      setIsApplying = false;
+    }
+  }
+
+  /// Downloads wallpaper directly to macOS Downloads folder.
+  Future<void> saveMacOsWallpaper(
+      BuildContext context, String url, String filename) async {
+    if (!Platform.isMacOS) return;
+
+    FirebaseAnalytics.instance.logEvent(
+        name: 'wallpaper_download_macos',
+        parameters: {'name': filename});
+
+    Provider.of<ProgressionProvider>(context, listen: false)
+        .trackAction(ActionType.download);
+
+    setIsDownloading = true;
+    setProgress = 0.0;
+    ToastWidget.showToast("Downloading wallpaper…");
+
+    try {
+      final file = await DefaultCacheManager().getSingleFile(url);
+      final homeDir = Platform.environment['HOME'] ?? '';
+      final downloadsDir = Directory('$homeDir/Downloads');
+      if (!downloadsDir.existsSync()) {
+        downloadsDir.createSync(recursive: true);
+      }
+      final sanitizedName =
+          filename.replaceAll(RegExp(r'[^a-zA-Z0-9_\-]'), '_');
+      final targetPath = '${downloadsDir.path}/WallRio_$sanitizedName.jpg';
+      await file.copy(targetPath);
+      ToastWidget.showToast("Saved to Downloads!");
+      Process.run('open', ['-R', targetPath]);
+    } catch (e) {
+      logger.e('Failed to save macOS wallpaper: $e');
+      ToastWidget.showToast("Failed to save wallpaper");
+    } finally {
+      setIsDownloading = false;
     }
   }
 }

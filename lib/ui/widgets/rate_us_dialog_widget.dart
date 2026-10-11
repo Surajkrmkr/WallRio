@@ -17,7 +17,8 @@ class RateUsDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? bgDark2Color : Colors.white;
     final titleColor = isDark ? Colors.white : const Color(0xFF1A1D26);
-    final subtitleColor = isDark ? Colors.grey.shade400 : const Color(0xFF3A3D4A);
+    final subtitleColor =
+        isDark ? Colors.grey.shade400 : const Color(0xFF3A3D4A);
 
     final btnBg = isDark ? context.appColors.accent : const Color(0xFF191C26);
     final btnTextColor = isDark ? Colors.black : Colors.white;

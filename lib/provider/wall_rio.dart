@@ -142,13 +142,54 @@ class WallRio extends ChangeNotifier {
 
   Future<void> fetchDesktopWallpapers() async {
     try {
+      isLoading = true;
+      notifyListeners();
       final walls = await ApiServices.getDesktopData();
       if (walls.isNotEmpty) {
         desktopWallList = walls;
-        notifyListeners();
+
+        // Populate categories from desktop walls
+        final Map<String, List<Walls?>> desktopCats = {};
+        for (final wall in walls) {
+          final cat = wall.category.trim();
+          if (cat.isNotEmpty) {
+            desktopCats.putIfAbsent(cat, () => []).add(wall);
+          }
+        }
+        categories = desktopCats;
+
+        // Build collections from tags
+        final Map<String, List<Walls>> tagCollections = {};
+        for (final wall in walls) {
+          for (final tag in wall.tags) {
+            final cleanTag = tag.trim();
+            if (cleanTag.isNotEmpty && cleanTag.length > 2) {
+              tagCollections.putIfAbsent(cleanTag, () => []).add(wall);
+            }
+          }
+        }
+
+        int idCounter = 1;
+        final List<Collections> builtCollections = [];
+        tagCollections.forEach((tagName, wallList) {
+          if (wallList.length >= 2) {
+            builtCollections.add(Collections(
+              id: idCounter++,
+              productId: '',
+              name: tagName,
+              walls: wallList,
+            ));
+          }
+        });
+        if (builtCollections.isNotEmpty) {
+          collections = builtCollections;
+        }
       }
     } catch (e) {
       debugPrint('fetchDesktopWallpapers error: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 

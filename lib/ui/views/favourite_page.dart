@@ -7,7 +7,6 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/oauth/login_page.dart';
-import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class FavouritePage extends StatelessWidget {
@@ -27,28 +26,45 @@ class FavouritePage extends StatelessWidget {
   }
 
   void _onTapHandler(BuildContext context, dynamic model) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
+    final walls = Provider.of<FavouriteProvider>(context, listen: false)
+        .wallList
+        .reversed
+        .toList();
+    Navigator.push(context, WallpaperRoute.pager(items: walls, initial: model));
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    return CustomScrollView(
-      primary: false,
-      slivers: [
-        const SliverAppBarWidget(
-            showLogo: false,
-            showSearchBtn: true,
-            text: "Favourites",
-            secondaryText: "",
-            userProfileIconRight: false,
-            showUserProfileIcon: true),
-        if (!authProvider.isLoggedIn)
-          _buildGuestUI(context)
-        else
-          _buildListUI(context)
-      ],
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: RefreshIndicatorWidget(
+        onRefresh: () async {
+          if (authProvider.isLoggedIn) {
+            Provider.of<FavouriteProvider>(context, listen: false)
+                .getFavouritesFromFirebase();
+          }
+          await Future.delayed(const Duration(milliseconds: 800));
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            const SliverAppBarWidget(
+                showSaleChip: true,
+                showLogo: false,
+                showSearchBtn: true,
+                text: "Favourites",
+                secondaryText: "",
+                showBackBtn: true,
+                showFavouriteBtn: false,
+                showUserProfileIcon: true),
+            if (!authProvider.isLoggedIn)
+              _buildGuestUI(context)
+            else
+              _buildListUI(context)
+          ],
+        ),
+      ),
     );
   }
 
@@ -108,7 +124,8 @@ class FavouritePage extends StatelessWidget {
                     backgroundColor: context.appColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 4,
-                    shadowColor: context.appColors.accent.withValues(alpha: 0.4),
+                    shadowColor:
+                        context.appColors.accent.withValues(alpha: 0.4),
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
@@ -139,7 +156,9 @@ class FavouritePage extends StatelessWidget {
       allGridItems.add(walls[i]);
       wallCounter++;
 
-      if (!UserProfile.plusMember && wallCounter == 6 && (i + 1) < walls.length) {
+      if (!UserProfile.plusMember &&
+          wallCounter == 6 &&
+          (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
         wallCounter = 0;
       }
@@ -158,7 +177,9 @@ class FavouritePage extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember &&
+          (i + 1) % 4 == 0 &&
+          (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
@@ -225,20 +246,35 @@ class FavouritePage extends StatelessWidget {
                                     ? Hero(
                                         tag: (rowItems[i] as Walls).url,
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                           child: Stack(
                                             fit: StackFit.expand,
                                             children: [
-                                              CNImage(imageUrl: (rowItems[i] as Walls).thumbnail),
+                                              CNImage(
+                                                  imageUrl:
+                                                      (rowItems[i] as Walls)
+                                                          .thumbnail),
                                               Material(
                                                 color: Colors.transparent,
                                                 child: InkWell(
-                                                  onTap: () => _onTapHandler(context, rowItems[i] as Walls),
-                                                  onLongPress: () => _onLongPressHandler(context, rowItems[i] as Walls),
-                                                  splashColor: blackColor.withValues(alpha: 0.3),
+                                                  onTap: () => _onTapHandler(
+                                                      context,
+                                                      rowItems[i] as Walls),
+                                                  onLongPress: () =>
+                                                      _onLongPressHandler(
+                                                          context,
+                                                          rowItems[i] as Walls),
+                                                  splashColor: blackColor
+                                                      .withValues(alpha: 0.3),
                                                 ),
                                               ),
-                                              _buildImgDetailsUI(context, rowItems[i] as Walls),
+                                              _buildImgDetailsUI(context,
+                                                  rowItems[i] as Walls),
+                                              VerifyIconWidget(
+                                                  visibility:
+                                                      !(rowItems[i] as Walls)
+                                                          .isPremium),
                                             ],
                                           ),
                                         ),

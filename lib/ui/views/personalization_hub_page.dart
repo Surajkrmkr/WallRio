@@ -22,7 +22,8 @@ void showFramesSheet(BuildContext context) {
   _showPersonalizationSheet(context, showFrames: true);
 }
 
-void _showPersonalizationSheet(BuildContext context, {required bool showFrames}) {
+void _showPersonalizationSheet(BuildContext context,
+    {required bool showFrames}) {
   final screenHeight = MediaQuery.sizeOf(context).height;
   CNBottomSheet.show(
     context: context,
@@ -40,39 +41,179 @@ void _showPersonalizationSheet(BuildContext context, {required bool showFrames})
 /// "App Icon" card in the Personalization card grid, so both read the same
 /// data instead of two copies drifting apart.
 const List<Map<String, dynamic>> kAppIconCatalog = [
-  {'key': 'icon_default', 'name': 'Default', 'unlock': 0, 'imageAsset': 'assets/app_icon/icon_default.png'},
-  {'key': 'icon_cosmic_galaxy', 'name': 'Cosmic Galaxy', 'unlock': 0, 'imageAsset': 'assets/app_icon/icon_cosmic_galaxy.png'},
-  {'key': 'icon_aurora', 'name': 'Aurora', 'unlock': 0, 'imageAsset': 'assets/app_icon/icon_aurora.png'},
-  {'key': 'icon_diamond', 'name': 'Diamond', 'unlock': 1, 'imageAsset': 'assets/app_icon/icon_diamond.png'},
-  {'key': 'icon_electric_plasma', 'name': 'Electric Plasma', 'unlock': 2, 'imageAsset': 'assets/app_icon/icon_electric_plasma.png'},
-  {'key': 'icon_emerald_energy', 'name': 'Emerald Energy', 'unlock': 3, 'imageAsset': 'assets/app_icon/icon_emerald_energy.png'},
-  {'key': 'icon_gold_luxury', 'name': 'Gold Luxury', 'unlock': 4, 'imageAsset': 'assets/app_icon/icon_gold_luxury.png'},
-  {'key': 'icon_holographic_crystal', 'name': 'Holo Crystal', 'unlock': 5, 'imageAsset': 'assets/app_icon/icon_holographic_crystal.png'},
-  {'key': 'icon_ice_crystal', 'name': 'Ice Crystal', 'unlock': 6, 'imageAsset': 'assets/app_icon/icon_ice_crystal.png'},
-  {'key': 'icon_jelly_glass', 'name': 'Jelly Glass', 'unlock': 7, 'imageAsset': 'assets/app_icon/icon_jelly_glass.png'},
-  {'key': 'icon_liquid_chrome', 'name': 'Liquid Chrome', 'unlock': 8, 'imageAsset': 'assets/app_icon/icon_liquid_chrome.png'},
-  {'key': 'icon_liquid_glass', 'name': 'Liquid Glass', 'unlock': 9, 'imageAsset': 'assets/app_icon/icon_liquid_glass.png'},
-  {'key': 'icon_marble', 'name': 'Marble', 'unlock': 10, 'imageAsset': 'assets/app_icon/icon_marble.png'},
-  {'key': 'icon_molten_lava', 'name': 'Molten Lava', 'unlock': 11, 'imageAsset': 'assets/app_icon/icon_molten_lava.png'},
-  {'key': 'icon_neon_glow', 'name': 'Neon Glow', 'unlock': 12, 'imageAsset': 'assets/app_icon/icon_neon_glow.png'},
-  {'key': 'icon_obsidian_glass', 'name': 'Obsidian Glass', 'unlock': 13, 'imageAsset': 'assets/app_icon/icon_obsidian_glass.png'},
-  {'key': 'icon_prism_glass', 'name': 'Prism Glass', 'unlock': 14, 'imageAsset': 'assets/app_icon/icon_prism_glass.png'},
-  {'key': 'icon_rose_gold', 'name': 'Rose Gold', 'unlock': 15, 'imageAsset': 'assets/app_icon/icon_rose_gold.png'},
-  {'key': 'icon_ruby_crystal', 'name': 'Ruby Crystal', 'unlock': 16, 'imageAsset': 'assets/app_icon/icon_ruby_crystal.png'},
-  {'key': 'icon_titanium', 'name': 'Titanium', 'unlock': 18, 'imageAsset': 'assets/app_icon/icon_titanium.png'},
+  {
+    'key': 'icon_default',
+    'name': 'Default',
+    'unlock': 0,
+    'imageAsset': 'assets/app_icon/icon_default.webp'
+  },
+  {
+    'key': 'icon_cosmic_galaxy',
+    'name': 'Cosmic Galaxy',
+    'unlock': 0,
+    'imageAsset': 'assets/app_icon/icon_cosmic_galaxy.webp'
+  },
+  {
+    'key': 'icon_aurora',
+    'name': 'Aurora',
+    'unlock': 0,
+    'imageAsset': 'assets/app_icon/icon_aurora.webp'
+  },
+  {
+    'key': 'icon_diamond',
+    'name': 'Diamond',
+    'unlock': 1,
+    'imageAsset': 'assets/app_icon/icon_diamond.webp'
+  },
+  {
+    'key': 'icon_electric_plasma',
+    'name': 'Electric Plasma',
+    'unlock': 2,
+    'imageAsset': 'assets/app_icon/icon_electric_plasma.webp'
+  },
+  {
+    'key': 'icon_emerald_energy',
+    'name': 'Emerald Energy',
+    'unlock': 3,
+    'imageAsset': 'assets/app_icon/icon_emerald_energy.webp'
+  },
+  {
+    'key': 'icon_gold_luxury',
+    'name': 'Gold Luxury',
+    'unlock': 4,
+    'imageAsset': 'assets/app_icon/icon_gold_luxury.webp'
+  },
+  {
+    'key': 'icon_holographic_crystal',
+    'name': 'Holo Crystal',
+    'unlock': 5,
+    'imageAsset': 'assets/app_icon/icon_holographic_crystal.webp'
+  },
+  {
+    'key': 'icon_ice_crystal',
+    'name': 'Ice Crystal',
+    'unlock': 6,
+    'imageAsset': 'assets/app_icon/icon_ice_crystal.webp'
+  },
+  {
+    'key': 'icon_jelly_glass',
+    'name': 'Jelly Glass',
+    'unlock': 7,
+    'imageAsset': 'assets/app_icon/icon_jelly_glass.webp'
+  },
+  {
+    'key': 'icon_liquid_chrome',
+    'name': 'Liquid Chrome',
+    'unlock': 8,
+    'imageAsset': 'assets/app_icon/icon_liquid_chrome.webp'
+  },
+  {
+    'key': 'icon_liquid_glass',
+    'name': 'Liquid Glass',
+    'unlock': 9,
+    'imageAsset': 'assets/app_icon/icon_liquid_glass.webp'
+  },
+  {
+    'key': 'icon_marble',
+    'name': 'Marble',
+    'unlock': 10,
+    'imageAsset': 'assets/app_icon/icon_marble.webp'
+  },
+  {
+    'key': 'icon_molten_lava',
+    'name': 'Molten Lava',
+    'unlock': 11,
+    'imageAsset': 'assets/app_icon/icon_molten_lava.webp'
+  },
+  {
+    'key': 'icon_neon_glow',
+    'name': 'Neon Glow',
+    'unlock': 12,
+    'imageAsset': 'assets/app_icon/icon_neon_glow.webp'
+  },
+  {
+    'key': 'icon_obsidian_glass',
+    'name': 'Obsidian Glass',
+    'unlock': 13,
+    'imageAsset': 'assets/app_icon/icon_obsidian_glass.webp'
+  },
+  {
+    'key': 'icon_prism_glass',
+    'name': 'Prism Glass',
+    'unlock': 14,
+    'imageAsset': 'assets/app_icon/icon_prism_glass.webp'
+  },
+  {
+    'key': 'icon_rose_gold',
+    'name': 'Rose Gold',
+    'unlock': 15,
+    'imageAsset': 'assets/app_icon/icon_rose_gold.webp'
+  },
+  {
+    'key': 'icon_ruby_crystal',
+    'name': 'Ruby Crystal',
+    'unlock': 16,
+    'imageAsset': 'assets/app_icon/icon_ruby_crystal.webp'
+  },
+  {
+    'key': 'icon_titanium',
+    'name': 'Titanium',
+    'unlock': 18,
+    'imageAsset': 'assets/app_icon/icon_titanium.webp'
+  },
 ];
 
 /// Profile frame catalog — shared between the Frames tab and the compact
 /// "Profile Frame" card.
 const List<Map<String, dynamic>> kProfileFrameCatalog = [
-  {'key': 'frame_none', 'name': 'No Frame', 'unlock': 0, 'icon': Icons.account_circle_rounded},
-  {'key': 'frame_gold_vip', 'name': 'Gold VIP', 'unlock': 0, 'imageAsset': 'assets/frame_gold_vip.png'},
-  {'key': 'frame_neon_v2', 'name': 'Neon Pulse', 'unlock': 0, 'imageAsset': 'assets/frame_neon_v2.png'},
-  {'key': 'frame_aurora', 'name': 'Aurora', 'unlock': 0, 'imageAsset': 'assets/frame_aurora.png'},
-  {'key': 'frame_galaxy', 'name': 'Galaxy', 'unlock': 0, 'imageAsset': 'assets/frame_galaxy.png'},
-  {'key': 'frame_glossy', 'name': 'Glossy', 'unlock': 0, 'imageAsset': 'assets/frame_glossy.png'},
-  {'key': 'frame_metal_fire', 'name': 'Metal Fire', 'unlock': 0, 'imageAsset': 'assets/frame_metal_fire.png'},
-  {'key': 'frame_fifa', 'name': 'FIFA', 'unlock': 0, 'imageAsset': 'assets/frame_fifa.png'},
+  {
+    'key': 'frame_none',
+    'name': 'No Frame',
+    'unlock': 0,
+    'icon': Icons.account_circle_rounded
+  },
+  {
+    'key': 'frame_gold_vip',
+    'name': 'Gold VIP',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_gold_vip.webp'
+  },
+  {
+    'key': 'frame_neon_v2',
+    'name': 'Neon Pulse',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_neon_v2.webp'
+  },
+  {
+    'key': 'frame_aurora',
+    'name': 'Aurora',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_aurora.webp'
+  },
+  {
+    'key': 'frame_galaxy',
+    'name': 'Galaxy',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_galaxy.webp'
+  },
+  {
+    'key': 'frame_glossy',
+    'name': 'Glossy',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_glossy.webp'
+  },
+  {
+    'key': 'frame_metal_fire',
+    'name': 'Metal Fire',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_metal_fire.webp'
+  },
+  {
+    'key': 'frame_fifa',
+    'name': 'FIFA',
+    'unlock': 0,
+    'imageAsset': 'assets/frame_fifa.webp'
+  },
 ];
 
 class PersonalizationHubPage extends StatelessWidget {
@@ -163,10 +304,10 @@ class PersonalizationHubPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           effectiveShowFrames
-                              ? _buildProfileFramesTab(context,
-                                  personalization, isDarkMode, hasSub)
-                              : _buildAppIconsTab(context, personalization,
-                                  isDarkMode, hasSub),
+                              ? _buildProfileFramesTab(
+                                  context, personalization, isDarkMode, hasSub)
+                              : _buildAppIconsTab(
+                                  context, personalization, isDarkMode, hasSub),
                           if (!hasSub) ...[
                             const SizedBox(height: 24),
                             Padding(
@@ -220,21 +361,23 @@ class PersonalizationHubPage extends StatelessWidget {
             itemCount: icons.length,
             itemBuilder: (context, index) {
               final iconData = icons[index];
-              final isUnlocked =
+              final isDefault = iconData['key'] == 'icon_default';
+              final isUnlocked = isDefault ||
                   provider.isItemUnlocked(iconData['key'] as String);
               final isActive =
-                  provider.personalization?.activeAppIcon == iconData['key'];
+                  (provider.personalization?.activeAppIcon ?? 'icon_default') ==
+                      iconData['key'];
 
               return _buildIconCard(
                 context: context,
                 name: iconData['name'] as String,
                 imageAsset: iconData['imageAsset'] as String,
-                isUnlocked: hasSub && isUnlocked,
+                isUnlocked: isDefault || (hasSub && isUnlocked),
                 isActive: isActive,
                 unlockMonth: iconData['unlock'] as int,
                 isDarkMode: isDarkMode,
                 onTap: () {
-                  if (!hasSub) {
+                  if (!hasSub && !isDefault) {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -288,10 +431,12 @@ class PersonalizationHubPage extends StatelessWidget {
             itemCount: frames.length,
             itemBuilder: (context, index) {
               final frameData = frames[index];
-              final isUnlocked =
+              final isDefault = frameData['key'] == 'frame_none';
+              final isUnlocked = isDefault ||
                   provider.isItemUnlocked(frameData['key'] as String);
               final isActive =
-                  provider.personalization?.activeProfileFrame ==
+                  (provider.personalization?.activeProfileFrame ??
+                          'frame_none') ==
                       frameData['key'];
 
               return _buildFrameCard(
@@ -299,12 +444,12 @@ class PersonalizationHubPage extends StatelessWidget {
                 name: frameData['name'] as String,
                 icon: frameData['icon'] as IconData?,
                 imageAsset: frameData['imageAsset'] as String?,
-                isUnlocked: hasSub && isUnlocked,
+                isUnlocked: isDefault || (hasSub && isUnlocked),
                 isActive: isActive,
                 unlockMonth: frameData['unlock'] as int,
                 isDarkMode: isDarkMode,
                 onTap: () {
-                  if (!hasSub) {
+                  if (!hasSub && !isDefault) {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -342,7 +487,7 @@ class PersonalizationHubPage extends StatelessWidget {
     } catch (_) {
       active = items.first;
     }
- 
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -355,7 +500,9 @@ class PersonalizationHubPage extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDarkMode ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06),
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.black.withValues(alpha: 0.06),
         ),
         boxShadow: [
           BoxShadow(
@@ -371,7 +518,11 @@ class PersonalizationHubPage extends StatelessWidget {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF2C5364), Color(0xFF203A43), Color(0xFF0F2027)],
+                colors: [
+                  Color(0xFF2C5364),
+                  Color(0xFF203A43),
+                  Color(0xFF0F2027)
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -469,7 +620,9 @@ class PersonalizationHubPage extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDarkMode ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06),
+              color: isDarkMode
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.06),
             ),
             child: active['imageAsset'] != null
                 ? ClipOval(
@@ -539,7 +692,9 @@ class PersonalizationHubPage extends StatelessWidget {
           border: Border.all(
             color: isActive
                 ? context.appColors.accent
-                : (isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                : (isDarkMode
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08)),
             width: isActive ? 3.0 : 1.0,
           ),
           boxShadow: isActive
@@ -660,8 +815,8 @@ class PersonalizationHubPage extends StatelessWidget {
                 child: Container(
                   height: 3,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(22)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(22)),
                     gradient: LinearGradient(
                       colors: [
                         context.appColors.accent.withValues(alpha: 0),
@@ -672,7 +827,6 @@ class PersonalizationHubPage extends StatelessWidget {
                   ),
                 ),
               ),
-
             Positioned.fill(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -749,7 +903,6 @@ class PersonalizationHubPage extends StatelessWidget {
                 ),
               ),
             ),
-
             if (!isUnlocked)
               Positioned(
                 top: 10,
@@ -773,8 +926,8 @@ class PersonalizationHubPage extends StatelessWidget {
   // ──────────────────────────────────────────────────────────
   // STATUS CHIP — Active / Locked badge
   // ──────────────────────────────────────────────────────────
-  Widget _buildStatusChip(BuildContext context, bool isActive,
-      bool isUnlocked, int unlockMonth, bool isDarkMode) {
+  Widget _buildStatusChip(BuildContext context, bool isActive, bool isUnlocked,
+      int unlockMonth, bool isDarkMode) {
     if (isActive) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -800,7 +953,7 @@ class PersonalizationHubPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
-          '${unlockMonth}M+',
+          unlockMonth > 0 ? '${unlockMonth}M+' : 'PRO',
           style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w800,
@@ -814,52 +967,37 @@ class PersonalizationHubPage extends StatelessWidget {
   }
 
   Widget _buildSubscribeButton(BuildContext context) {
-    return Container(
+    final colors = context.appColors;
+    return SizedBox(
       width: double.infinity,
-      height: 54,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFFC00), Color(0xFFFFE600)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(27),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFE600).withValues(alpha: 0.35),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(27),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OnboardingScreen4(
-                  onComplete: () => Navigator.pop(context),
-                ),
-              ),
-            );
-          },
-          child: const Center(
-            child: Text(
-              'GET WALLRIO+ TO UNLOCK ALL ICONS',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
+      height: 52,
+      child: FilledButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OnboardingScreen4(
+                onComplete: () => Navigator.pop(context),
               ),
             ),
+          );
+        },
+        style: FilledButton.styleFrom(
+          backgroundColor: colors.accent,
+          foregroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        icon: const Icon(Icons.workspace_premium_rounded, size: 20),
+        label: const Text(
+          'Unlock all with WallRio Pro',
+          style: TextStyle(
+            fontFamily: appFontFamily,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
     );
   }
-
 }

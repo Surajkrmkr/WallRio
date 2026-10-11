@@ -9,9 +9,11 @@ class SponsoredAdCard extends StatefulWidget {
   final String adUnitId;
 
   // Homepage Grid Ad Unit ID
-  static const String homepageGridNativeAdUnitId = 'ca-app-pub-4861691653340010/6870759126';
+  static const String homepageGridNativeAdUnitId =
+      'ca-app-pub-4861691653340010/6870759126';
   // Default Native Ad Unit ID for other screens / carousels
-  static const String defaultNativeAdUnitId = 'ca-app-pub-4861691653340010/7683720298';
+  static const String defaultNativeAdUnitId =
+      'ca-app-pub-4861691653340010/7683720298';
 
   const SponsoredAdCard({
     super.key,
@@ -31,7 +33,8 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
   bool _isLoading = false;
 
   @override
-  bool get wantKeepAlive => _isAdLoaded || _nativeAd != null || _bannerAd != null;
+  bool get wantKeepAlive =>
+      _isAdLoaded || _nativeAd != null || _bannerAd != null;
 
   @override
   void initState() {
@@ -51,7 +54,8 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
       return;
     }
     _isLoading = true;
-    debugPrint('[NativeTelemetry][LOAD_CALL] ts=${DateTime.now().toIso8601String()} '
+    debugPrint(
+        '[NativeTelemetry][LOAD_CALL] ts=${DateTime.now().toIso8601String()} '
         'type=NativeAd unitId=${widget.adUnitId} source=SponsoredAdCard.initState');
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
@@ -67,7 +71,8 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
         },
         onAdFailedToLoad: (ad, err) {
           _isLoading = false;
-          debugPrint('[NativeTelemetry] NativeAd failed to load ($err), trying fallback...');
+          debugPrint(
+              '[NativeTelemetry] NativeAd failed to load ($err), trying fallback...');
           ad.dispose();
           _nativeAd = null;
           _loadBannerFallback();
@@ -91,7 +96,8 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
     }
     _isLoading = true;
     // DIAGNOSTIC ONLY: fallback ad load, also independent of BannerAdManager.
-    debugPrint('[NativeTelemetry][LOAD_CALL] ts=${DateTime.now().toIso8601String()} '
+    debugPrint(
+        '[NativeTelemetry][LOAD_CALL] ts=${DateTime.now().toIso8601String()} '
         'type=BannerFallback unitId=${widget.adUnitId} source=SponsoredAdCard.onNativeAdFailed');
     _bannerAd = BannerAd(
       adUnitId: widget.adUnitId,
@@ -169,10 +175,8 @@ class _SponsoredAdCardState extends State<SponsoredAdCard>
               width: 300,
               height: 250,
               child: _nativeAd != null
-                  ? AdWidget(
-                      key: ValueKey(_nativeAd.hashCode), ad: _nativeAd!)
-                  : AdWidget(
-                      key: ValueKey(_bannerAd.hashCode), ad: _bannerAd!),
+                  ? AdWidget(key: ValueKey(_nativeAd.hashCode), ad: _nativeAd!)
+                  : AdWidget(key: ValueKey(_bannerAd.hashCode), ad: _bannerAd!),
             ),
           ),
         ),

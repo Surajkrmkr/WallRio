@@ -20,11 +20,25 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasSub = Provider.of<SubscriptionProvider>(context).subscriptionDaysLeft.isNotEmpty;
+    final hasSub = Provider.of<SubscriptionProvider>(context)
+        .subscriptionDaysLeft
+        .isNotEmpty;
 
     final sections = [
       _topBanners(context),
-      _personalizationSection(context, hasSub),
+      if (!hasSub)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 20),
+          child: StreakCalendarWidget(),
+        ),
+      if (Platform.isMacOS)
+        _sectionCard(
+          context,
+          label: 'Display',
+          children: [_darkModeTile(context)],
+        )
+      else
+        _personalizationSection(context, hasSub),
       if (!hasSub)
         _sectionCard(
           context,
@@ -34,10 +48,8 @@ class SettingsPage extends StatelessWidget {
                 icon: Icons.diamond_rounded,
                 title: 'Rewards Hub',
                 subtitle: 'Earn diamonds & track progress',
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const RewardsHubPage()))),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RewardsHubPage()))),
           ],
         ),
       _sectionCard(
@@ -58,8 +70,7 @@ class SettingsPage extends StatelessWidget {
               title: 'Clear Cache',
               subtitle: 'Remove locally cached data',
               onTap: () => showDialog(
-                  context: context,
-                  builder: (_) => const ClearCacheWidget())),
+                  context: context, builder: (_) => const ClearCacheWidget())),
         ],
       ),
       _sectionCard(
@@ -69,42 +80,44 @@ class SettingsPage extends StatelessWidget {
           _tile(context,
               icon: Icons.star_rounded,
               title: 'Rate WallRio',
-              subtitle: Platform.isIOS ? 'Help us improve WallRio' : 'Rate us on Google Play',
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (dialogContext) => RateUsDialog(
-                    onRateNow: () {
-                      Navigator.pop(dialogContext);
-                      if (!Platform.isIOS && !hasSub) {
-                        Provider.of<ProgressionProvider>(context, listen: false)
-                            .trackAction(ActionType.rateApp);
-                      }
-                      launch(Platform.isAndroid
-                          ? 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio'
-                          : 'https://apps.apple.com/app/wallrio/id6789848688');
-                    },
-                    onDismiss: () => Navigator.pop(dialogContext),
-                  ),
-                );
-              }),
+              subtitle: Platform.isIOS
+                  ? 'Help us improve WallRio'
+                  : 'Rate us on Google Play', onTap: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) => RateUsDialog(
+                onRateNow: () {
+                  Navigator.pop(dialogContext);
+                  if (!Platform.isIOS && !hasSub) {
+                    Provider.of<ProgressionProvider>(context, listen: false)
+                        .trackAction(ActionType.rateApp);
+                  }
+                  launch(Platform.isAndroid
+                      ? 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio'
+                      : 'https://apps.apple.com/app/wallrio/id6789848688');
+                },
+                onDismiss: () => Navigator.pop(dialogContext),
+              ),
+            );
+          }),
           _tile(context,
               icon: Icons.share_rounded,
               title: 'Share WallRio',
-              subtitle: 'Share app with friends',
-              onTap: () {
-                if (!hasSub) {
-                  Provider.of<ProgressionProvider>(context, listen: false)
-                      .trackAction(ActionType.shareApp);
-                }
-                // ignore: deprecated_member_use
-                Share.share('Check out WallRio for amazing 4K & Live wallpapers! https://play.google.com/store/apps/dev?id=5668598285863173548');
-              }),
+              subtitle: 'Share app with friends', onTap: () {
+            if (!hasSub) {
+              Provider.of<ProgressionProvider>(context, listen: false)
+                  .trackAction(ActionType.shareApp);
+            }
+            // ignore: deprecated_member_use
+            Share.share(
+                'Check out WallRio for amazing 4K & Live wallpapers! https://play.google.com/store/apps/dev?id=5668598285863173548');
+          }),
           _tile(context,
               icon: Icons.apps_rounded,
               title: 'More Apps',
               subtitle: 'Check out our other apps',
-              onTap: () => launch('https://play.google.com/store/apps/dev?id=5668598285863173548')),
+              onTap: () => launch(
+                  'https://play.google.com/store/apps/dev?id=5668598285863173548')),
           _socialRow(context),
         ],
       ),
@@ -117,8 +130,9 @@ class SettingsPage extends StatelessWidget {
                 icon: Icons.restore_rounded,
                 title: 'Restore Purchases',
                 subtitle: 'Restore previous in-app purchases',
-                onTap: () => Provider.of<SubscriptionProvider>(context, listen: false)
-                    .restorePurchases()),
+                onTap: () =>
+                    Provider.of<SubscriptionProvider>(context, listen: false)
+                        .restorePurchases()),
           _tile(context,
               icon: Icons.help_outline_rounded,
               title: 'Support',
@@ -157,35 +171,41 @@ class SettingsPage extends StatelessWidget {
             _tile(context,
                 icon: Icons.bug_report_rounded,
                 title: 'Clear Purchase Prefs',
-                subtitle: 'Reset local purchase & collection state in SharedPreferences',
+                subtitle:
+                    'Reset local purchase & collection state in SharedPreferences',
                 onTap: () async {
-                  final subProvider =
-                      Provider.of<SubscriptionProvider>(context, listen: false);
-                  final progProvider =
-                      Provider.of<ProgressionProvider>(context, listen: false);
-                  await subProvider.clearPurchaseSharedPreferences();
-                  await progProvider.clearUnlockedCollections();
-                  ToastWidget.showToast('Debug: Cleared purchase & collection SharedPreferences');
-                }),
+              final subProvider =
+                  Provider.of<SubscriptionProvider>(context, listen: false);
+              final progProvider =
+                  Provider.of<ProgressionProvider>(context, listen: false);
+              await subProvider.clearPurchaseSharedPreferences();
+              await progProvider.clearUnlockedCollections();
+              ToastWidget.showToast(
+                  'Debug: Cleared purchase & collection SharedPreferences');
+            }),
             _tile(context,
                 icon: Icons.restart_alt_rounded,
                 title: 'Clear Onboarding Prefs',
-                subtitle: 'Reset onboarding completion state in SharedPreferences',
+                subtitle:
+                    'Reset onboarding completion state in SharedPreferences',
                 onTap: () async {
-                  final onboardingProvider =
-                      Provider.of<OnboardingProvider>(context, listen: false);
-                  await onboardingProvider.clearOnboardingState();
-                  ToastWidget.showToast('Debug: Cleared onboarding SharedPreferences');
-                }),
+              final onboardingProvider =
+                  Provider.of<OnboardingProvider>(context, listen: false);
+              await onboardingProvider.clearOnboardingState();
+              ToastWidget.showToast(
+                  'Debug: Cleared onboarding SharedPreferences');
+            }),
             _tile(context,
                 icon: Icons.refresh_rounded,
                 title: 'Reset UMP Consent (EEA Test)',
-                subtitle: 'Reset UMP consent status and re-gather with EEA geography',
+                subtitle:
+                    'Reset UMP consent status and re-gather with EEA geography',
                 onTap: () async {
-                  await ConsentInformation.instance.reset();
-                  await ConsentManager.instance.gatherConsent(debugEea: true);
-                  ToastWidget.showToast('Debug: Reset UMP consent & requested with EEA geography');
-                }),
+              await ConsentInformation.instance.reset();
+              await ConsentManager.instance.gatherConsent(debugEea: true);
+              ToastWidget.showToast(
+                  'Debug: Reset UMP consent & requested with EEA geography');
+            }),
           ],
         ),
       _bottomAccountActions(context),
@@ -306,7 +326,9 @@ class SettingsPage extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           subtitle: Text(
-            authProvider.email.isNotEmpty ? authProvider.email : 'Signed In User',
+            authProvider.email.isNotEmpty
+                ? authProvider.email
+                : 'Signed In User',
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ),
@@ -350,10 +372,11 @@ class SettingsPage extends StatelessWidget {
               trailing: Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 13,
-                color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+                color:
+                    Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
               ),
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
             ),
             ListTile(
               onTap: () => _confirmAccountDeletion(context, authProvider),
@@ -386,8 +409,8 @@ class SettingsPage extends StatelessWidget {
                 size: 13,
                 color: Colors.redAccent.withValues(alpha: 0.5),
               ),
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
             ),
           ],
         );
@@ -395,14 +418,16 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  void _confirmAccountDeletion(BuildContext context, AuthProvider authProvider) {
+  void _confirmAccountDeletion(
+      BuildContext context, AuthProvider authProvider) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.redAccent, size: 28),
             SizedBox(width: 10),
             Text('Delete Account?'),
           ],
@@ -461,7 +486,8 @@ class SettingsPage extends StatelessWidget {
             },
             child: const Text(
               'Delete Account',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -536,8 +562,8 @@ class SettingsPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: whiteColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(30),
@@ -580,38 +606,69 @@ class SettingsPage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 20),
       child: Consumer2<PersonalizationProvider, AppThemeManager>(
         builder: (context, personalization, themeManager, _) {
+          final colors = context.appColors;
+          final rows = [
+            _appIconCard(context, personalization, hasSub),
+            _profileFrameCard(context, personalization, hasSub),
+            _themeCard(context, themeManager),
+            _widgetCard(context),
+          ];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _sectionLabel(context, 'Personalization'),
-              const SizedBox(height: 10),
-              // 2x2 grid: App Icon / Profile Frame / Theme / Widget.
               Row(
                 children: [
-                  Expanded(
-                      child: SizedBox(
-                          height: 132,
-                          child: _appIconCard(context, personalization, hasSub))),
-                  const SizedBox(width: 14),
-                  Expanded(
-                      child: SizedBox(
-                          height: 132,
-                          child: _profileFrameCard(context, personalization, hasSub))),
+                  Expanded(child: _sectionLabel(context, 'Personalization')),
+                  // One PRO hint for the whole group instead of a pill per item.
+                  if (!hasSub && !UserProfile.plusMember)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors.accentContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.workspace_premium_rounded,
+                              size: 13, color: colors.accent),
+                          const SizedBox(width: 4),
+                          Text(
+                            'PRO',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                              color: colors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                      child: SizedBox(
-                          height: 132,
-                          child: _themeCard(context, themeManager))),
-                  const SizedBox(width: 14),
-                  Expanded(
-                      child: SizedBox(
-                          height: 132,
-                          child: _widgetCard(context))),
-                ],
+              const SizedBox(height: 10),
+              Material(
+                color: colors.card,
+                borderRadius: BorderRadius.circular(18),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    for (int i = 0; i < rows.length; i++) ...[
+                      rows[i],
+                      if (i < rows.length - 1)
+                        Divider(
+                          height: 1,
+                          indent: 74,
+                          endIndent: 16,
+                          color: Theme.of(context)
+                              .primaryColorLight
+                              .withValues(alpha: 0.08),
+                        ),
+                    ],
+                  ],
+                ),
               ),
             ],
           );
@@ -625,71 +682,49 @@ class SettingsPage extends StatelessWidget {
     required Widget preview,
     required String title,
     required String currentLabel,
-    required bool showProBadge,
     required VoidCallback onTap,
     bool disabled = false,
   }) {
     final colors = context.appColors;
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: Opacity(
-        opacity: disabled ? 0.45 : 1.0,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.divider),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Opacity(
+      opacity: disabled ? 0.45 : 1.0,
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
             children: [
-              // Fixed-size square preview, left-aligned with the text below;
-              // the PRO badge (if any) floats to the far right.
-              Row(
-                children: [
-                  preview,
-                  const Spacer(),
-                  if (showProBadge)
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colors.accentContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'PRO',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                          color: colors.accent,
-                        ),
+              SizedBox(width: 44, height: 44, child: Center(child: preview)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: appFontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
                       ),
                     ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textTertiary,
+                    const SizedBox(height: 2),
+                    Text(
+                      currentLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: appFontFamily,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                currentLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: colors.textPrimary,
-                ),
-              ),
+              Icon(Icons.chevron_right_rounded, color: colors.textTertiary),
             ],
           ),
         ),
@@ -708,13 +743,12 @@ class SettingsPage extends StatelessWidget {
     return _personalizationCard(
       context: context,
       disabled: !Platform.isAndroid,
-      showProBadge: !hasSub,
       preview: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Image.asset(
           active['imageAsset'] as String,
-          width: 64,
-          height: 64,
+          width: 44,
+          height: 44,
           fit: BoxFit.cover,
         ),
       ),
@@ -738,8 +772,7 @@ class SettingsPage extends StatelessWidget {
 
     return _personalizationCard(
       context: context,
-      showProBadge: !hasSub,
-      preview: PremiumAvatar(imageUrl: authProvider.photoUrl, radius: 32),
+      preview: PremiumAvatar(imageUrl: authProvider.photoUrl, radius: 20),
       title: 'Profile Frame',
       currentLabel: active['name'] as String,
       onTap: () => showFramesSheet(context),
@@ -765,19 +798,16 @@ class SettingsPage extends StatelessWidget {
 
     return _personalizationCard(
       context: context,
-      showProBadge: !UserProfile.plusMember,
       preview: Container(
-        width: 44,
-        height: 44,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: palette.primary,
-          boxShadow: [
-            BoxShadow(
-                color: palette.primary.withValues(alpha: 0.35),
-                blurRadius: 10,
-                offset: const Offset(0, 3)),
-          ],
+          gradient: LinearGradient(
+            colors: [palette.primary, manager.accent.palette.secondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
       ),
       title: 'Theme',
@@ -792,7 +822,6 @@ class SettingsPage extends StatelessWidget {
     final colors = context.appColors;
     return _personalizationCard(
       context: context,
-      showProBadge: !UserProfile.plusMember,
       preview: Container(
         width: 44,
         height: 44,
@@ -800,7 +829,7 @@ class SettingsPage extends StatelessWidget {
           color: colors.accentContainer,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(Icons.widgets_rounded, color: colors.accent, size: 24),
+        child: Icon(Icons.widgets_rounded, color: colors.accent, size: 22),
       ),
       title: 'Widget',
       currentLabel: 'Home screen',
@@ -902,8 +931,8 @@ class SettingsPage extends StatelessWidget {
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           );
         }
         return SwitchListTile(
@@ -917,8 +946,8 @@ class SettingsPage extends StatelessWidget {
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         );
       },
     );
@@ -929,7 +958,9 @@ class SettingsPage extends StatelessWidget {
     final mode = LivePreviewManager.instance.qualityMode;
     final modeLabel = mode == 'high'
         ? 'High (Always play)'
-        : (mode == 'datasaver' ? 'Data Saver (Thumbnails only)' : 'Auto (Balanced)');
+        : (mode == 'datasaver'
+            ? 'Data Saver (Thumbnails only)'
+            : 'Auto (Balanced)');
 
     return ListTile(
       leading: _tileIcon(context, Icons.video_settings_rounded),
@@ -939,7 +970,8 @@ class SettingsPage extends StatelessWidget {
         showDialog(
           context: context,
           builder: (dialogContext) => SimpleDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text('Live Preview Quality'),
             children: [
               SimpleDialogOption(
@@ -987,20 +1019,16 @@ class SettingsPage extends StatelessWidget {
   }) {
     return ListTile(
       onTap: onTap,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: _tileIcon(context, icon),
       title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle:
-          Text(subtitle, style: Theme.of(context).textTheme.labelSmall),
+      subtitle: Text(subtitle, style: Theme.of(context).textTheme.labelSmall),
       trailing: Icon(
         Icons.arrow_forward_ios_rounded,
         size: 13,
-        color:
-            Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
+        color: Theme.of(context).primaryColorLight.withValues(alpha: 0.35),
       ),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     );
   }
 
@@ -1103,8 +1131,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  static void launch(String url) => launchUrl(Uri.parse(url),
-      mode: LaunchMode.externalApplication);
+  static void launch(String url) =>
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
 
 class _AnimatedSubscriptionBanner extends StatefulWidget {
@@ -1116,7 +1144,8 @@ class _AnimatedSubscriptionBanner extends StatefulWidget {
 }
 
 class __AnimatedSubscriptionBannerState
-    extends State<_AnimatedSubscriptionBanner> with SingleTickerProviderStateMixin {
+    extends State<_AnimatedSubscriptionBanner>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   List<Walls> _bannerWalls = [];
   bool _isLocalLoaded = false;
@@ -1142,7 +1171,8 @@ class __AnimatedSubscriptionBannerState
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final List<String>? savedIds = prefs.getStringList('settings_banner_wallpaper_ids');
+      final List<String>? savedIds =
+          prefs.getStringList('settings_banner_wallpaper_ids');
 
       List<Walls> matched = [];
       if (savedIds != null && savedIds.isNotEmpty) {
@@ -1192,8 +1222,8 @@ class __AnimatedSubscriptionBannerState
             context,
             MaterialPageRoute(
               builder: (_) => OnboardingScreen4(
-                onComplete: () => Navigator.popUntil(
-                    context, (route) => route.isFirst),
+                onComplete: () =>
+                    Navigator.popUntil(context, (route) => route.isFirst),
               ),
             ),
           ),
@@ -1224,8 +1254,11 @@ class __AnimatedSubscriptionBannerState
                               final totalSingleSetWidth =
                                   wallsToUse.length * cardWidth;
 
-                              final maxScroll = (totalSingleSetWidth * 2) - MediaQuery.of(context).size.width + 40;
-                              final dx = -(_animController.value * maxScroll).clamp(0.0, totalSingleSetWidth * 1.5);
+                              final maxScroll = (totalSingleSetWidth * 2) -
+                                  MediaQuery.of(context).size.width +
+                                  40;
+                              final dx = -(_animController.value * maxScroll)
+                                  .clamp(0.0, totalSingleSetWidth * 1.5);
 
                               final doubleWalls = [
                                 ...wallsToUse,

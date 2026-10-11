@@ -10,5 +10,8 @@ PRODUCT_NAME = wallrio
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.shadowteam.wallrio
 
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM = NJK933T45N
+
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2022 com.example. All rights reserved.

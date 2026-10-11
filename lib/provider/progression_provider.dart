@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/services/streak_reminder.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
@@ -14,11 +14,14 @@ enum ActionType {
   rewardedAd,
   rateApp,
   shareApp,
+  followX,
 }
 
 class ProgressionProvider extends ChangeNotifier {
   static const String keyProgressionData = "local_progression_v2";
-  
+  static const String followXUrl = "https://x.com/4XDesigns";
+  static const int followXReward = 20;
+
   ProgressionModel? _progression;
   ProgressionModel? get progression => _progression;
 
@@ -30,7 +33,7 @@ class ProgressionProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final localData = prefs.getString(keyProgressionData);
-      
+
       if (localData != null) {
         _progression = ProgressionModel.fromJson(json.decode(localData));
       } else {
@@ -40,8 +43,9 @@ class ProgressionProvider extends ChangeNotifier {
           lastAdViewDate: DateTime.now().subtract(const Duration(days: 1)),
         );
       }
-      
+
       _checkDailyReset();
+      _rescheduleReminder();
       notifyListeners();
     } catch (e) {
       logger.e("Error fetching progression: $e");
@@ -54,28 +58,37 @@ class ProgressionProvider extends ChangeNotifier {
   /// Checks if a new day has started.
   Future<void> _checkDailyReset() async {
     if (_progression == null) return;
-    
+
     final now = DateTime.now();
     final lastActive = _progression!.lastActiveDate;
     final lastAd = _progression!.lastAdViewDate;
-    
+
     bool needsUpdate = false;
 
     if (!_isSameDay(now, lastActive)) {
-      if (_isYesterday(lastActive, now)) {
-        _progression!.currentStreak += 1;
-      } else {
-        _progression!.currentStreak = 1;
-      }
-      
-      if (_progression!.currentStreak > _progression!.longestStreak) {
-        _progression!.longestStreak = _progression!.currentStreak;
-      }
-      
       _progression!.lastActiveDate = now;
       needsUpdate = true;
-      
-      _checkMilestones();
+    }
+
+    // Streak advances on check-in; here we only detect missed days.
+    final p = _progression!;
+    final missedDays = _daysBetween(p.lastCheckInDate, now) - 1;
+    if (p.currentStreak > 0 && missedDays > 0) {
+      if (missedDays == 1 && p.streakFreezes > 0) {
+        p.streakFreezes -= 1;
+        p.lastCheckInDate = now.subtract(const Duration(days: 1));
+        ToastWidget.showToast("❄️ Streak freeze used — your streak is safe!");
+      } else {
+        p.currentStreak = 0;
+      }
+      needsUpdate = true;
+    }
+
+    final refill = p.lastFreezeRefill;
+    if (refill == null || _daysBetween(refill, now) >= 7) {
+      p.streakFreezes = 1;
+      p.lastFreezeRefill = now;
+      needsUpdate = true;
     }
 
     if (!_isSameDay(now, lastAd)) {
@@ -97,12 +110,55 @@ class ProgressionProvider extends ChangeNotifier {
     return _isSameDay(DateTime.now(), _progression!.lastCheckInDate);
   }
 
+  /// Today's task: set or save at least one wallpaper (Pro members skip it).
+  bool get dailyTaskDone {
+    final p = _progression;
+    if (p == null) return false;
+    return UserProfile.plusMember || p.dailyDownloads + p.dailyApplies >= 1;
+  }
+
+  /// Day within the current 7-day cycle that today's check-in counts as (1-7).
+  int get checkInDayOfCycle {
+    final streak = _progression?.currentStreak ?? 0;
+    final next = isCheckedInToday() ? streak : streak + 1;
+    return ((next - 1) % 7) + 1;
+  }
+
+  /// Reward for today's check-in grows through the week: +1 … +7.
+  int get todayCheckInReward => checkInDayOfCycle;
+
+  int get streakFreezes => _progression?.streakFreezes ?? 0;
+
+  bool get followedX =>
+      _progression?.completedMilestones.contains('followed_x') ?? false;
+
   Future<void> manualCheckIn() async {
-    if (_progression == null || isCheckedInToday()) return;
-    
-    _progression!.lastCheckInDate = DateTime.now();
-    _grantDiamonds(5, "Daily Check-in", isCredit: true);
+    if (_progression == null || isCheckedInToday() || !dailyTaskDone) return;
+    final p = _progression!;
+    final now = DateTime.now();
+
+    p.currentStreak =
+        _isYesterday(p.lastCheckInDate, now) ? p.currentStreak + 1 : 1;
+    if (p.currentStreak > p.longestStreak) p.longestStreak = p.currentStreak;
+    p.lastCheckInDate = now;
+
+    _grantDiamonds(((p.currentStreak - 1) % 7) + 1,
+        "Day ${((p.currentStreak - 1) % 7) + 1} Check-in",
+        isCredit: true);
+    _checkMilestones();
     await _persistLocal();
+    _rescheduleReminder();
+  }
+
+  void _rescheduleReminder() {
+    if (UserProfile.plusMember) {
+      StreakReminder.cancel();
+      return;
+    }
+    StreakReminder.schedule(
+      checkedInToday: isCheckedInToday(),
+      currentStreak: _progression?.currentStreak ?? 0,
+    );
   }
 
   void _checkMilestones() {
@@ -111,9 +167,11 @@ class ProgressionProvider extends ChangeNotifier {
     final milestones = [7, 14, 30, 60, 90];
     for (int milestone in milestones) {
       final milestoneKey = "streak_$milestone";
-      if (streak >= milestone && !_progression!.completedMilestones.contains(milestoneKey)) {
+      if (streak >= milestone &&
+          !_progression!.completedMilestones.contains(milestoneKey)) {
         _progression!.completedMilestones.add(milestoneKey);
-        _grantDiamonds(milestone * 10, "$milestone Day Streak Bonus!", isCredit: true);
+        _grantDiamonds(milestone * 10, "$milestone Day Streak Bonus!",
+            isCredit: true);
       }
     }
   }
@@ -125,6 +183,12 @@ class ProgressionProvider extends ChangeNotifier {
   bool _isYesterday(DateTime last, DateTime current) {
     final yesterday = current.subtract(const Duration(days: 1));
     return _isSameDay(last, yesterday);
+  }
+
+  int _daysBetween(DateTime from, DateTime to) {
+    final a = DateTime(from.year, from.month, from.day);
+    final b = DateTime(to.year, to.month, to.day);
+    return b.difference(a).inDays;
   }
 
   Future<void> trackAction(ActionType type) async {
@@ -161,11 +225,13 @@ class ProgressionProvider extends ChangeNotifier {
         reason = "Ad Reward";
         break;
       case ActionType.rateApp:
-        if (Platform.isIOS) break;
-        if (!_progression!.completedMilestones.contains('rated_5_stars')) {
-          _progression!.completedMilestones.add('rated_5_stars');
-          reward = 20;
-          reason = "5-Star Rating Bonus";
+        // Rewarding ratings violates Google Play policy; no diamonds here.
+        break;
+      case ActionType.followX:
+        if (!_progression!.completedMilestones.contains('followed_x')) {
+          _progression!.completedMilestones.add('followed_x');
+          reward = followXReward;
+          reason = "Followed us on X";
         }
         break;
       case ActionType.shareApp:
@@ -174,7 +240,8 @@ class ProgressionProvider extends ChangeNotifier {
           reward = 5;
           reason = "App Shared";
         } else {
-          ToastWidget.showToast("You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
+          ToastWidget.showToast(
+              "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
         }
         break;
       default:
@@ -189,7 +256,7 @@ class ProgressionProvider extends ChangeNotifier {
 
   void _grantDiamonds(int amount, String reason, {required bool isCredit}) {
     if (_progression == null) return;
-    
+
     if (isCredit) {
       _progression!.diamondsBalance += amount;
       _progression!.lifetimeDiamondsEarned += amount;
@@ -198,16 +265,19 @@ class ProgressionProvider extends ChangeNotifier {
     }
 
     // Add to history
-    _progression!.transactionHistory.insert(0, RewardTransaction(
-      timestamp: DateTime.now(),
-      reason: reason,
-      amount: amount,
-      isCredit: isCredit,
-    ));
+    _progression!.transactionHistory.insert(
+        0,
+        RewardTransaction(
+          timestamp: DateTime.now(),
+          reason: reason,
+          amount: amount,
+          isCredit: isCredit,
+        ));
 
     // Keep history manageable (last 50)
     if (_progression!.transactionHistory.length > 50) {
-      _progression!.transactionHistory = _progression!.transactionHistory.sublist(0, 50);
+      _progression!.transactionHistory =
+          _progression!.transactionHistory.sublist(0, 50);
     }
 
     if (isCredit) ToastWidget.showToast("+$amount 💎 $reason");
@@ -215,8 +285,9 @@ class ProgressionProvider extends ChangeNotifier {
   }
 
   Future<bool> redeemCollection(String collectionId, int cost) async {
-    if (_progression == null || _progression!.diamondsBalance < cost) return false;
-    
+    if (_progression == null || _progression!.diamondsBalance < cost)
+      return false;
+
     if (!_progression!.redeemedCollections.contains("col_$collectionId")) {
       _progression!.redeemedCollections.add("col_$collectionId");
       _grantDiamonds(cost, "Unlocked Collection", isCredit: false);
@@ -236,8 +307,9 @@ class ProgressionProvider extends ChangeNotifier {
   }
 
   Future<bool> redeemWallpaper(String wallId, int cost) async {
-    if (_progression == null || _progression!.diamondsBalance < cost) return false;
-    
+    if (_progression == null || _progression!.diamondsBalance < cost)
+      return false;
+
     if (!_progression!.redeemedCollections.contains("wall_$wallId")) {
       _progression!.redeemedCollections.add("wall_$wallId");
       _grantDiamonds(cost, "Unlocked Wallpaper", isCredit: false);
@@ -252,7 +324,8 @@ class ProgressionProvider extends ChangeNotifier {
   }
 
   Future<bool> redeemLiveWallpaper(String wallId, int cost) async {
-    if (_progression == null || _progression!.diamondsBalance < cost) return false;
+    if (_progression == null || _progression!.diamondsBalance < cost)
+      return false;
 
     if (!_progression!.redeemedCollections.contains("live_$wallId")) {
       _progression!.redeemedCollections.add("live_$wallId");
@@ -268,11 +341,13 @@ class ProgressionProvider extends ChangeNotifier {
   }
 
   bool isCollectionUnlocked(String collectionId) {
-    return _progression?.redeemedCollections.contains("col_$collectionId") ?? false;
+    return _progression?.redeemedCollections.contains("col_$collectionId") ??
+        false;
   }
 
   Future<bool> deductDiamonds(int amount, String reason) async {
-    if (_progression == null || _progression!.diamondsBalance < amount) return false;
+    if (_progression == null || _progression!.diamondsBalance < amount)
+      return false;
     _grantDiamonds(amount, reason, isCredit: false);
     await _persistLocal();
     return true;
@@ -289,7 +364,8 @@ class ProgressionProvider extends ChangeNotifier {
     if (_progression == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(keyProgressionData, json.encode(_progression!.toJson()));
+      await prefs.setString(
+          keyProgressionData, json.encode(_progression!.toJson()));
     } catch (e) {
       logger.e("Local persist error: $e");
     }

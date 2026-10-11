@@ -22,6 +22,10 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   void initState() {
+    if (Platform.isMacOS) {
+      super.initState();
+      return;
+    }
     _checkInAppUpdate();
     final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
     firebaseAuth.authStateChanges().listen((event) {
@@ -46,7 +50,9 @@ class _SplashPageState extends State<SplashPage> {
 
     Future.delayed(Duration.zero, () async {
       await onboardingProvider.loadState();
-      if (!onboardingProvider.isCompleted && Platform.isIOS && firebaseAuth.currentUser != null) {
+      if (!onboardingProvider.isCompleted &&
+          Platform.isIOS &&
+          firebaseAuth.currentUser != null) {
         try {
           await firebaseAuth.signOut();
           await GoogleSignIn.instance.signOut();
@@ -63,7 +69,9 @@ class _SplashPageState extends State<SplashPage> {
       }
       if (mounted) setState(() => _onboardingLoaded = true);
     });
-    FlutterNativeSplash.remove();
+    if (Platform.isAndroid || Platform.isIOS) {
+      FlutterNativeSplash.remove();
+    }
     super.initState();
   }
 
@@ -71,10 +79,11 @@ class _SplashPageState extends State<SplashPage> {
     final subscriptionProvider =
         Provider.of<SubscriptionProvider>(context, listen: false);
     subscriptionProvider.checkPastPurchases(email: email);
-    
+
     // Also fetch progression data
     Provider.of<ProgressionProvider>(context, listen: false).fetchProgression();
-    Provider.of<PersonalizationProvider>(context, listen: false).fetchPersonalization();
+    Provider.of<PersonalizationProvider>(context, listen: false)
+        .fetchPersonalization();
   }
 
   void _checkInAppUpdate() {
@@ -82,7 +91,8 @@ class _SplashPageState extends State<SplashPage> {
     if (Platform.isAndroid) {
       final plugin = InAppUpdateFlutter();
       plugin.checkUpdateAndroid().then((info) async {
-        if (info.updateAvailability == UpdateAvailabilityAndroid.updateAvailable) {
+        if (info.updateAvailability ==
+            UpdateAvailabilityAndroid.updateAvailable) {
           if (info.isImmediateUpdateAllowed) {
             await plugin.startImmediateUpdateAndroid();
           } else if (info.isFlexibleUpdateAllowed) {
@@ -107,14 +117,16 @@ class _SplashPageState extends State<SplashPage> {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
       final bundleId = packageInfo.packageName;
-      
-      final response = await Dio().get('https://itunes.apple.com/lookup?bundleId=$bundleId');
+
+      final response =
+          await Dio().get('https://itunes.apple.com/lookup?bundleId=$bundleId');
       if (response.statusCode == 200 && response.data != null) {
         final results = response.data['results'];
         if (results != null && results.isNotEmpty) {
           final latestVersion = results[0]['version'];
           if (_isVersionNewer(currentVersion, latestVersion)) {
-            await InAppUpdateFlutter().showUpdateForIos(appStoreId: '6789848688');
+            await InAppUpdateFlutter()
+                .showUpdateForIos(appStoreId: '6789848688');
           }
         }
       }
@@ -144,6 +156,9 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isMacOS) {
+      return const NavigationPage();
+    }
     final Size size = MediaQuery.of(context).size;
 
     if (!_onboardingLoaded) return _getShimmer(size);
@@ -157,8 +172,8 @@ class _SplashPageState extends State<SplashPage> {
               return _getShimmer(size);
             }
 
-            // Route to onboarding if not yet completed
-            if (!onboarding.isCompleted) {
+            // Route to onboarding if not yet completed (mobile only)
+            if (!onboarding.isCompleted && !Platform.isMacOS) {
               return const OnboardingPage();
             }
 
@@ -168,7 +183,7 @@ class _SplashPageState extends State<SplashPage> {
               UserProfile.setUserData(snapshot.data!);
             }
 
-            if (Platform.isIOS || isLoggedIn) {
+            if (Platform.isIOS || Platform.isMacOS || isLoggedIn) {
               return Consumer<SubscriptionProvider>(
                 builder: (context, provider, _) {
                   return provider.isSubscriptionLoading

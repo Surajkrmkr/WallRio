@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,9 +35,12 @@ class _FullImageState extends State<FullImage> {
       if (!mounted) return;
       final provider = Provider.of<WallRio>(context, listen: false);
       setState(() {
-        _recommendedWalls = RecommendationService.getRecommendedWalls(widget.wallModel, provider.originalWallList);
+        _recommendedWalls = RecommendationService.getRecommendedWalls(
+            widget.wallModel, provider.originalWallList);
         _sameCategoryWalls = provider.originalWallList
-            .where((w) => w.category == widget.wallModel.category && w.id != widget.wallModel.id)
+            .where((w) =>
+                w.category == widget.wallModel.category &&
+                w.id != widget.wallModel.id)
             .take(12)
             .toList();
       });
@@ -114,6 +118,7 @@ class _FullImageState extends State<FullImage> {
       backgroundColor: Colors.black,
       body: Hero(
         tag: widget.wallModel.url,
+        flightShuttleBuilder: heroImageShuttle(widget.wallModel.thumbnail),
         child: Material(
           type: MaterialType.transparency,
           child: Stack(
@@ -132,7 +137,7 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildDraggableBottomSheet() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return DraggableScrollableSheet(
       initialChildSize: 0.40,
       minChildSize: 0.28,
@@ -157,7 +162,8 @@ class _FullImageState extends State<FullImage> {
                           const Color(0xFFF8F9FA).withValues(alpha: 0.95),
                         ],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
                   color: isDarkMode
                       ? Colors.white.withValues(alpha: 0.12)
@@ -269,7 +275,8 @@ class _FullImageState extends State<FullImage> {
                         if (widget.wallModel.isPremium) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -376,7 +383,9 @@ class _FullImageState extends State<FullImage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.87)
+                    : Colors.black87,
               ),
             ),
           ],
@@ -420,7 +429,8 @@ class _FullImageState extends State<FullImage> {
         children: [
           Row(
             children: [
-              Icon(Icons.palette_outlined, size: 14, color: context.appColors.accent),
+              Icon(Icons.palette_outlined,
+                  size: 14, color: context.appColors.accent),
               const SizedBox(width: 6),
               Text(
                 'Color palette',
@@ -496,7 +506,8 @@ class _FullImageState extends State<FullImage> {
               MaterialPageRoute(
                 builder: (_) => GridPage(
                   categoryName: widget.wallModel.category,
-                  walls: Provider.of<WallRio>(context, listen: false).originalWallList,
+                  walls: Provider.of<WallRio>(context, listen: false)
+                      .originalWallList,
                 ),
               ),
             ),
@@ -512,8 +523,6 @@ class _FullImageState extends State<FullImage> {
       ],
     );
   }
-
-
 
   Widget _buildRelatedCarousel(List<Walls> walls) {
     return _buildRecommendationGridCarousel(walls);
@@ -553,7 +562,7 @@ class _FullImageState extends State<FullImage> {
           return GestureDetector(
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => FullImage(wallModel: wall)),
+              WallpaperRoute(builder: (_) => FullImage(wallModel: wall)),
             ),
             child: Container(
               width: 100,
@@ -654,17 +663,31 @@ class _FullImageState extends State<FullImage> {
 
   Widget _buildImageUI() {
     return Positioned.fill(
-      child: SizedBox.expand(
-        child: CNImage(
-          imageUrl: widget.wallModel.url,
-          isOriginalImg: true,
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Already-cached grid thumbnail keeps the hero landing seamless
+          // while the full-resolution image streams in on top.
+          CNImage(imageUrl: widget.wallModel.thumbnail),
+          CachedNetworkImage(
+            imageUrl: widget.wallModel.url,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+            memCacheHeight: (MediaQuery.of(context).size.height *
+                    MediaQuery.of(context).devicePixelRatio)
+                .round(),
+            fadeInDuration: Duration.zero,
+            placeholder: (_, __) => const SizedBox.shrink(),
+            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildActionBtnUI() {
-    final actionProvider = Provider.of<WallActionProvider>(context, listen: true);
+    final actionProvider =
+        Provider.of<WallActionProvider>(context, listen: true);
     final isDownloading = actionProvider.isDownloading;
     final progress = actionProvider.progress;
 
@@ -673,7 +696,8 @@ class _FullImageState extends State<FullImage> {
         style: FilledButton.styleFrom(
           backgroundColor: context.appColors.accent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: EdgeInsets.zero,
         ),
         onPressed: () => UserProfile.plusMember ||
@@ -696,7 +720,8 @@ class _FullImageState extends State<FullImage> {
                   const SizedBox(width: 8),
                   Text(
                     '${(progress * 100).toInt()}%',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ],
               )
@@ -709,7 +734,8 @@ class _FullImageState extends State<FullImage> {
                   Flexible(
                     child: Text(
                       Platform.isAndroid ? "Download" : "Save",
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -726,7 +752,8 @@ class _FullImageState extends State<FullImage> {
               ? Colors.white.withValues(alpha: 0.15)
               : context.appColors.accent.withValues(alpha: 0.15),
           foregroundColor: isDarkMode ? Colors.white : context.appColors.accent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: EdgeInsets.zero,
         ),
         onPressed: () => UserProfile.plusMember ||
@@ -738,7 +765,9 @@ class _FullImageState extends State<FullImage> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wallpaper_rounded, size: 18, color: isDarkMode ? Colors.white : context.appColors.accent),
+            Icon(Icons.wallpaper_rounded,
+                size: 18,
+                color: isDarkMode ? Colors.white : context.appColors.accent),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -798,149 +827,149 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
 
     return glassSheetBackground(
       Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: supportsGlassSheet ? Colors.transparent : sheetColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-                width: 40,
-                height: 4,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: supportsGlassSheet ? Colors.transparent : sheetColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(10))),
+              const SizedBox(height: 24),
+              const Text('Unlock Premium Wallpaper',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(10))),
-            const SizedBox(height: 24),
-            const Text('Unlock Premium Wallpaper',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.03)
-                    : Colors.black.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.05)),
-              ),
-              child: Row(
-                children: [
-                  const Text('💎', style: TextStyle(fontSize: 32)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('$balance / ${widget.cost} Diamonds',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 4),
-                        Text(
-                            canAfford
-                                ? 'You have enough diamonds!'
-                                : 'Watch ads to earn more diamonds',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: canAfford
-                                    ? const Color(0xFF37C3A3)
-                                    : Colors.orangeAccent)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (canAfford)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isRedeeming
-                      ? null
-                      : () async {
-                          setState(() => _isRedeeming = true);
-                          final success = await widget.progression
-                              .deductDiamonds(
-                                  widget.cost, "Unlocked Wallpaper");
-                          if (success) {
-                            ToastWidget.showToast("Wallpaper Unlocked! 💎");
-                            widget.onUnlocked();
-                          } else {
-                            setState(() => _isRedeeming = false);
-                            ToastWidget.showToast("Redemption failed.");
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF37C3A3),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isRedeeming
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : Text('REDEEM ${widget.cost} DIAMONDS',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  color: isDarkMode
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                      color: isDarkMode
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.05)),
                 ),
-              )
-            else
+                child: Row(
+                  children: [
+                    const Text('💎', style: TextStyle(fontSize: 32)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('$balance / ${widget.cost} Diamonds',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Text(
+                              canAfford
+                                  ? 'You have enough diamonds!'
+                                  : 'Watch ads to earn more diamonds',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: canAfford
+                                      ? const Color(0xFF37C3A3)
+                                      : Colors.orangeAccent)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (canAfford)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isRedeeming
+                        ? null
+                        : () async {
+                            setState(() => _isRedeeming = true);
+                            final success = await widget.progression
+                                .deductDiamonds(
+                                    widget.cost, "Unlocked Wallpaper");
+                            if (success) {
+                              ToastWidget.showToast("Wallpaper Unlocked! 💎");
+                              widget.onUnlocked();
+                            } else {
+                              setState(() => _isRedeeming = false);
+                              ToastWidget.showToast("Redemption failed.");
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF37C3A3),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: _isRedeeming
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : Text('REDEEM ${widget.cost} DIAMONDS',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  ),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const RewardsHubPage()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                      foregroundColor: isDarkMode ? Colors.white : Colors.black,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                    ),
+                    child: const Text('GET DIAMONDS',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  ),
+                ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const RewardsHubPage()));
+                          builder: (context) => OnboardingScreen4(
+                              onComplete: () => Navigator.pop(context)),
+                        ));
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.1),
-                    foregroundColor: isDarkMode ? Colors.white : Colors.black,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                  ),
-                  child: const Text('GET DIAMONDS',
+                  child: const Text('Unlock ALL with Pro',
                       style: TextStyle(
-                          fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          color: Colors.grey, fontWeight: FontWeight.w700)),
                 ),
               ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OnboardingScreen4(
-                            onComplete: () => Navigator.pop(context)),
-                      ));
-                },
-                child: const Text('Unlock ALL with Pro',
-                    style: TextStyle(
-                        color: Colors.grey, fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
       tint: sheetColor,
     );

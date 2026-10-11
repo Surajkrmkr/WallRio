@@ -3,7 +3,8 @@ import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class CNImage extends StatelessWidget {
-  const CNImage({super.key, required this.imageUrl, this.isOriginalImg = false});
+  const CNImage(
+      {super.key, required this.imageUrl, this.isOriginalImg = false});
   final String? imageUrl;
   final bool isOriginalImg;
 
@@ -13,7 +14,9 @@ class CNImage extends StatelessWidget {
     // preview, a fixed 1080 cap left the image visibly upscaled/blurry on
     // taller, higher-density screens — match it to the actual device instead.
     final targetHeight = isOriginalImg
-        ? (MediaQuery.of(context).size.height * MediaQuery.of(context).devicePixelRatio).round()
+        ? (MediaQuery.of(context).size.height *
+                MediaQuery.of(context).devicePixelRatio)
+            .round()
         : 800;
     return CachedNetworkImage(
       filterQuality: FilterQuality.high,

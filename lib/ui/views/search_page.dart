@@ -74,8 +74,7 @@ class SearchPage extends StatelessWidget {
             _buildChipsUI(),
             _buildHeaderUI("Top Picks", context),
             SliverToBoxAdapter(child: SizedBox(height: 10)),
-            const TrendingWallGridWidget(
-                isShuffled: false, isActionGrid: true)
+            const TrendingWallGridWidget(isShuffled: false, isActionGrid: true)
           ]),
         ),
       ),
@@ -171,7 +170,8 @@ class SearchPage extends StatelessWidget {
             onTap: navigateToSearch,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
+              fillColor:
+                  Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
               hintText: 'Search by wall name, tags, etc',
               hintStyle: const TextStyle(fontSize: 14),
               prefixIcon:

@@ -98,7 +98,8 @@ class _OnboardingScreen3State extends State<OnboardingScreen3> {
     }
     final names = categories.keys.toList();
     final isTablet = ResponsiveHelper.isTablet(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     if (isTablet) {
       final int crossAxisCount = isLandscape ? 4 : 3;

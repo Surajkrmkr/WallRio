@@ -20,26 +20,28 @@ class NotificationService {
 
   Future<void> init() async {
     // 1. Request iOS & Android System Notification Permissions
-    await Permission.notification.request();
+    if (Platform.isAndroid || Platform.isIOS) {
+      await Permission.notification.request();
+    }
 
-    if (Platform.isIOS) {
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-      logger.i('[NotificationService] iOS FCM Permission Status: ${settings.authorizationStatus}');
-      
+    if (Platform.isIOS || Platform.isMacOS) {
       try {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        logger.i('[NotificationService] Apple FCM Permission Status: ${settings.authorizationStatus}');
+        
         final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        logger.i('[NotificationService] iOS APNs Token: $apnsToken');
+        logger.i('[NotificationService] Apple APNs Token: $apnsToken');
       } catch (e) {
-        logger.w('[NotificationService] Error fetching iOS APNs Token: $e');
+        logger.w('[NotificationService] Error fetching Apple APNs Token: $e');
       }
     }
 
-    // 2. Configure Local Notification Settings for Android & iOS (Darwin)
+    // 2. Configure Local Notification Settings for Android & Apple (Darwin)
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
 
@@ -54,6 +56,7 @@ class NotificationService {
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
+      macOS: initializationSettingsDarwin,
     );
 
     await flutterLocalNotificationsPlugin.initialize(

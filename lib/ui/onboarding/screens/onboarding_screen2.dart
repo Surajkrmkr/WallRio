@@ -89,9 +89,11 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
     });
   }
 
-  Widget _buildGridSection(List<Walls> walls, bool hasWalls, BuildContext context) {
+  Widget _buildGridSection(
+      List<Walls> walls, bool hasWalls, BuildContext context) {
     final isTablet = ResponsiveHelper.isTablet(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     final int crossAxisCount = isTablet ? (isLandscape ? 6 : 5) : 3;
     final itemCount = hasWalls ? walls.length : 24;
 
@@ -107,7 +109,7 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
           child: Transform(
             transform: Matrix4.identity()
               ..setEntry(3, 2, perspectiveEntry) // perspective depth
-              ..rotateX(tiltAngle),               // backward tilt
+              ..rotateX(tiltAngle), // backward tilt
             alignment: Alignment.center,
             child: Transform.scale(
               scaleX: isTablet ? (isLandscape ? 1.25 : 1.18) : 1.0,
@@ -258,8 +260,8 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
                   children: const [
                     Text(
                       "Start Exploring",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 17),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
                     ),
                     SizedBox(width: 10),
                     Text("→", style: TextStyle(fontSize: 18)),

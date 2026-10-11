@@ -20,7 +20,7 @@ class LoginPage extends StatelessWidget {
           children: [
             Align(
                 alignment: Alignment.topCenter,
-                child: Image.asset("assets/login_bg.png")),
+                child: Image.asset("assets/login_bg.webp")),
             Container(
               height: MediaQuery.of(context).size.height * 0.6,
               decoration: BoxDecoration(
@@ -54,7 +54,8 @@ class LoginPage extends StatelessWidget {
                             .textTheme
                             .displayLarge!
                             .copyWith(fontSize: 35),
-                        colors: gradientColorMap[GradientAccentType.defaultType]!,
+                        colors:
+                            gradientColorMap[GradientAccentType.defaultType]!,
                       ),
                       Text("Team Shadow",
                           style: Theme.of(context)
@@ -88,10 +89,13 @@ class LoginPage extends StatelessWidget {
                                       onTap: provider.isLoading
                                           ? null
                                           : () async {
-                                              final ok = await provider.signIn();
+                                              final ok =
+                                                  await provider.signIn();
                                               if (ok) onSuccess();
                                             },
-                                      icon: Image.asset("assets/google_logo.png", height: 26),
+                                      icon: Image.asset(
+                                          "assets/google_logo.png",
+                                          height: 26),
                                       tooltip: "Sign In with Google",
                                     ),
                                     if (Platform.isIOS) ...[
@@ -100,10 +104,12 @@ class LoginPage extends StatelessWidget {
                                         onTap: provider.isLoading
                                             ? null
                                             : () async {
-                                                final ok = await provider.signInWithApple();
+                                                final ok = await provider
+                                                    .signInWithApple();
                                                 if (ok) onSuccess();
                                               },
-                                        icon: const Icon(Icons.apple, color: Colors.black, size: 30),
+                                        icon: const Icon(Icons.apple,
+                                            color: Colors.black, size: 30),
                                         tooltip: "Sign In with Apple",
                                       ),
                                     ],
@@ -119,7 +125,8 @@ class LoginPage extends StatelessWidget {
                                         Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (_) => const NavigationPage()),
+                                              builder: (_) =>
+                                                  const NavigationPage()),
                                         );
                                       }
                                     },
@@ -138,7 +145,8 @@ class LoginPage extends StatelessWidget {
                           }
 
                           return provider.isLoading
-                              ? ShimmerWidget.withWidget(buildButtons(), context)
+                              ? ShimmerWidget.withWidget(
+                                  buildButtons(), context)
                               : buildButtons();
                         },
                       ),

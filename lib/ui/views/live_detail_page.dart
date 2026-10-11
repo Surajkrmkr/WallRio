@@ -35,11 +35,14 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     _initVideo();
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
-      final liveProvider = Provider.of<LiveWallpaperProvider>(context, listen: false);
+      final liveProvider =
+          Provider.of<LiveWallpaperProvider>(context, listen: false);
       final wallRio = Provider.of<WallRio>(context, listen: false);
       setState(() {
-        _recommendedLive = RecommendationService.getRecommendedLiveWalls(widget.wall, liveProvider.wallList);
-        _recommendedStatic = RecommendationService.getRecommendedStaticForLive(widget.wall, wallRio.originalWallList);
+        _recommendedLive = RecommendationService.getRecommendedLiveWalls(
+            widget.wall, liveProvider.wallList);
+        _recommendedStatic = RecommendationService.getRecommendedStaticForLive(
+            widget.wall, wallRio.originalWallList);
       });
       Provider.of<WallDetails>(context, listen: false)
         ..getColorPalette(widget.wall.thumbnail)
@@ -65,12 +68,23 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         setState(() => _isVideoInitialized = true);
         _videoController!
           ..setLooping(true)
-          ..setVolume(0)
-          ..play();
+          ..setVolume(0);
+        if (_focused) _videoController!.play();
       }
     } catch (_) {
       if (mounted) setState(() => _hasVideoError = true);
     }
+  }
+
+  bool _focused = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _focused = WallpaperCardFocus.of(context);
+    final controller = _videoController;
+    if (controller == null || !_isVideoInitialized) return;
+    _focused ? controller.play() : controller.pause();
   }
 
   void _onVideoUpdate() {
@@ -141,6 +155,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
       backgroundColor: Colors.black,
       body: Hero(
         tag: 'live_${widget.wall.id}',
+        flightShuttleBuilder: heroImageShuttle(widget.wall.thumbnail),
         child: Material(
           type: MaterialType.transparency,
           child: Stack(
@@ -160,7 +175,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   Widget _buildVideoBackground() {
     return Positioned.fill(
       child: SizedBox.expand(
-        child: _isVideoInitialized && _videoController != null && !_hasVideoError
+        child: _isVideoInitialized &&
+                _videoController != null &&
+                !_hasVideoError
             ? FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
@@ -230,7 +247,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                           const Color(0xFFF8F9FA).withValues(alpha: 0.95),
                         ],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
                   color: isDarkMode
                       ? Colors.white.withValues(alpha: 0.12)
@@ -342,7 +360,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: context.appColors.accent,
                       borderRadius: BorderRadius.circular(6),
@@ -358,7 +377,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   ),
                   if (widget.wall.isPremium)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -420,13 +440,15 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     final platformName = Platform.isIOS ? 'iOS' : 'Android';
     SharePlus.instance.share(
       ShareParams(
-        text: 'Check out WallRio – Premium wallpapers for $platformName: $appLink',
+        text:
+            'Check out WallRio – Premium wallpapers for $platformName: $appLink',
       ),
     );
   }
 
   void _copyColor(Color color) async {
-    final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    final hex =
+        '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
     await Clipboard.setData(ClipboardData(text: hex));
     ToastWidget.showToast("Color copied");
   }
@@ -486,7 +508,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.87)
+                    : Colors.black87,
               ),
             ),
           ],
@@ -520,7 +544,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.palette_outlined, size: 14, color: context.appColors.accent),
+              Icon(Icons.palette_outlined,
+                  size: 14, color: context.appColors.accent),
               const SizedBox(width: 6),
               Text(
                 'Color palette',
@@ -612,7 +637,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
           return GestureDetector(
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => LiveDetailPage(wall: wall)),
+              WallpaperRoute(builder: (_) => LiveDetailPage(wall: wall)),
             ),
             child: Container(
               width: 100,
@@ -674,7 +699,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
           return GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => FullImage(wallModel: wall)),
+              WallpaperRoute(builder: (_) => FullImage(wallModel: wall)),
             ),
             child: Container(
               width: 100,
@@ -763,7 +788,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
               style: FilledButton.styleFrom(
                 backgroundColor: context.appColors.accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 padding: EdgeInsets.zero,
               ),
               onPressed: () {
@@ -789,8 +815,10 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                 backgroundColor: isDarkMode
                     ? Colors.white.withValues(alpha: 0.15)
                     : context.appColors.accent.withValues(alpha: 0.15),
-                foregroundColor: isDarkMode ? Colors.white : context.appColors.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                foregroundColor:
+                    isDarkMode ? Colors.white : context.appColors.accent,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 padding: EdgeInsets.zero,
               ),
               onPressed: () => _handleUnlockLiveWallpaper(progression),
@@ -808,7 +836,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
       );
     }
 
-    final actionProvider = Provider.of<WallActionProvider>(context, listen: true);
+    final actionProvider =
+        Provider.of<WallActionProvider>(context, listen: true);
     final isDownloading = actionProvider.isDownloading;
     final progress = actionProvider.progress;
 
@@ -817,7 +846,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         style: FilledButton.styleFrom(
           backgroundColor: context.appColors.accent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: EdgeInsets.zero,
         ),
         onPressed: _downloadHandler,
@@ -836,7 +866,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   const SizedBox(width: 8),
                   Text(
                     '${(progress * 100).toInt()}%',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ],
               )
@@ -847,7 +878,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   const SizedBox(width: 6),
                   Text(
                     Platform.isAndroid ? "Download" : "Save",
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 14),
                   ),
                 ],
               ),
@@ -861,14 +893,17 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
               ? Colors.white.withValues(alpha: 0.15)
               : context.appColors.accent.withValues(alpha: 0.15),
           foregroundColor: isDarkMode ? Colors.white : context.appColors.accent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: EdgeInsets.zero,
         ),
         onPressed: _applyHandler,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wallpaper_rounded, size: 18, color: isDarkMode ? Colors.white : context.appColors.accent),
+            Icon(Icons.wallpaper_rounded,
+                size: 18,
+                color: isDarkMode ? Colors.white : context.appColors.accent),
             const SizedBox(width: 6),
             Text(
               Platform.isAndroid ? "Apply" : "Share",
@@ -1000,8 +1035,8 @@ class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
                   ),
                   child: const Text(
                     'GET DIAMONDS',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w900, letterSpacing: 1),
                   ),
                 ),
               ),

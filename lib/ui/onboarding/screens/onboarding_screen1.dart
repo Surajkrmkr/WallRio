@@ -43,7 +43,8 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
   @override
   Widget build(BuildContext context) {
     final isTablet = ResponsiveHelper.isTablet(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Consumer<WallRio>(builder: (context, wallRio, _) {
       final walls = wallRio.originalWallList.isEmpty
@@ -86,7 +87,8 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
 
   Widget _buildCarouselSection(BuildContext context, List<Walls> walls) {
     final isTablet = ResponsiveHelper.isTablet(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     if (walls.isEmpty) {
       return Center(
@@ -95,15 +97,16 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
           child: _PhoneFrame(
             isCenter: true,
             child: ShimmerWidget(
-                height: double.infinity, width: double.infinity, radius: isTablet ? 20 : 34),
+                height: double.infinity,
+                width: double.infinity,
+                radius: isTablet ? 20 : 34),
           ),
         ),
       );
     }
 
-    final double viewportFraction = isTablet
-        ? (isLandscape ? 0.45 : 0.60)
-        : 0.70;
+    final double viewportFraction =
+        isTablet ? (isLandscape ? 0.45 : 0.60) : 0.70;
     final double enlargeFactor = isTablet ? 0.22 : 0.36;
 
     return Padding(
@@ -205,7 +208,8 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
                                       final ok = await authProvider.signIn();
                                       if (ok && mounted) widget.onSignedIn();
                                     },
-                              icon: Image.asset("assets/google_logo.png", height: 26),
+                              icon: Image.asset("assets/google_logo.png",
+                                  height: 26),
                               tooltip: "Sign In with Google",
                             ),
                             if (Platform.isIOS) ...[
@@ -214,10 +218,12 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
                                 onTap: authProvider.isLoading
                                     ? null
                                     : () async {
-                                        final ok = await authProvider.signInWithApple();
+                                        final ok = await authProvider
+                                            .signInWithApple();
                                         if (ok && mounted) widget.onSignedIn();
                                       },
-                                icon: const Icon(Icons.apple, color: Colors.black, size: 30),
+                                icon: const Icon(Icons.apple,
+                                    color: Colors.black, size: 30),
                                 tooltip: "Sign In with Apple",
                               ),
                             ],
@@ -264,7 +270,9 @@ class _PhoneFrame extends StatelessWidget {
     final bool isTablet = ResponsiveHelper.isTablet(context);
     final String frameAsset = isTablet
         ? "assets/frame_ipad.png"
-        : (Platform.isAndroid ? "assets/frame_android.png" : "assets/frame.png");
+        : (Platform.isAndroid
+            ? "assets/frame_android.png"
+            : "assets/frame.png");
     final double targetAspectRatio = isTablet
         ? (735 / 1024)
         : (Platform.isAndroid ? (473 / 988) : (217 / 450));
@@ -312,9 +320,8 @@ class _PhoneFrame extends StatelessWidget {
                         ? constraints.maxHeight * 0.015
                         : constraints.maxHeight * 0.02);
 
-                final double innerRadius = isTablet
-                    ? 16
-                    : (Platform.isAndroid ? 28 : 30);
+                final double innerRadius =
+                    isTablet ? 16 : (Platform.isAndroid ? 28 : 30);
 
                 return Stack(
                   fit: StackFit.expand,

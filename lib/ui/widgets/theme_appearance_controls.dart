@@ -45,7 +45,8 @@ class ThemeModeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = <_ThemeModeOption>[
-      _ThemeModeOption(AppThemeMode.system, Icons.brightness_auto_rounded, 'System'),
+      _ThemeModeOption(
+          AppThemeMode.system, Icons.brightness_auto_rounded, 'System'),
       _ThemeModeOption(AppThemeMode.light, Icons.light_mode_rounded, 'Light'),
       _ThemeModeOption(AppThemeMode.dark, Icons.dark_mode_rounded, 'Dark'),
     ];
@@ -202,13 +203,13 @@ class DynamicAccentTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         title: const Text('Adapt accent to your wallpaper'),
-        subtitle:
-            const Text('Match WallRio to your current wallpaper.'),
+        subtitle: const Text('Match WallRio to your current wallpaper.'),
         trailing: locked
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock_rounded, size: 16, color: Colors.white54),
+                  const Icon(Icons.lock_rounded,
+                      size: 16, color: Colors.white54),
                   const SizedBox(width: 8),
                   toggle,
                 ],

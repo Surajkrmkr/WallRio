@@ -10,10 +10,12 @@ class BackgroundReliabilityDialog extends StatefulWidget {
   const BackgroundReliabilityDialog({super.key});
 
   @override
-  State<BackgroundReliabilityDialog> createState() => _BackgroundReliabilityDialogState();
+  State<BackgroundReliabilityDialog> createState() =>
+      _BackgroundReliabilityDialogState();
 }
 
-class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialog> with WidgetsBindingObserver {
+class _BackgroundReliabilityDialogState
+    extends State<BackgroundReliabilityDialog> with WidgetsBindingObserver {
   bool _isAutoStartAvailable = false;
   bool _hasClickedAutoStart = false;
   bool _isBatteryOptimizationDisabled = false;
@@ -59,9 +61,9 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
 
   @override
   Widget build(BuildContext context) {
-    
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator(color: context.appColors.accent));
+      return Center(
+          child: CircularProgressIndicator(color: context.appColors.accent));
     }
 
     return SimpleDialog(
@@ -79,10 +81,12 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
         Text(
           'Wallpapers change most reliably when these system settings are adjusted:',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 14, height: 1.4),
+          style: Theme.of(context)
+              .textTheme
+              .labelSmall
+              ?.copyWith(fontSize: 14, height: 1.4),
         ),
         const SizedBox(height: 24),
-        
         if (_isAutoStartAvailable) ...[
           _buildStep(
             context,
@@ -98,7 +102,6 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
           ),
           const SizedBox(height: 16),
         ],
-
         _buildStep(
           context,
           title: 'Battery: No Restrictions',
@@ -109,7 +112,6 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
             _checkStatus();
           },
         ),
-
         const SizedBox(height: 32),
         PrimaryBtnWidget(
           btnText: "DONE",
@@ -119,14 +121,15 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
     );
   }
 
-  Widget _buildStep(BuildContext context, {
-    required String title, 
-    required String description, 
+  Widget _buildStep(
+    BuildContext context, {
+    required String title,
+    required String description,
     required bool isCompleted,
     required VoidCallback onTap,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTap: isCompleted ? null : onTap,
       child: Container(
@@ -134,10 +137,14 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
         decoration: BoxDecoration(
           color: isCompleted
               ? context.appColors.accent.withValues(alpha: 0.05)
-              : (isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+              : (isDarkMode
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isCompleted ? context.appColors.accent.withValues(alpha: 0.2) : Colors.transparent,
+            color: isCompleted
+                ? context.appColors.accent.withValues(alpha: 0.2)
+                : Colors.transparent,
           ),
         ),
         child: Row(
@@ -146,12 +153,18 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: isCompleted ? context.appColors.accent : (isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+                color: isCompleted
+                    ? context.appColors.accent
+                    : (isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.1)),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isCompleted ? Icons.check_rounded : Icons.arrow_forward_rounded,
-                color: isCompleted ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black54),
+                color: isCompleted
+                    ? Colors.white
+                    : (isDarkMode ? Colors.white70 : Colors.black54),
                 size: 18,
               ),
             ),
@@ -163,14 +176,17 @@ class _BackgroundReliabilityDialogState extends State<BackgroundReliabilityDialo
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 15,
-                      color: isCompleted ? context.appColors.accent : null,
-                    ),
+                          fontSize: 15,
+                          color: isCompleted ? context.appColors.accent : null,
+                        ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     isCompleted ? 'Configuration Complete' : description,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 12),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(fontSize: 12),
                   ),
                 ],
               ),

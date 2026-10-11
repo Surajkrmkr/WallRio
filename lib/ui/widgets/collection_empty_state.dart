@@ -34,13 +34,15 @@ class CollectionEmptyState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               "No collections yet",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: fg),
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w800, color: fg),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.5), height: 1.4),
+              style: TextStyle(
+                  fontSize: 13, color: fg.withValues(alpha: 0.5), height: 1.4),
             ),
           ],
         ),

@@ -12,7 +12,8 @@ class ShimmerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
         baseColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.2),
-        highlightColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.5),
+        highlightColor:
+            Theme.of(context).primaryColorLight.withValues(alpha: 0.5),
         child: Container(
           height: height,
           width: width,
@@ -25,7 +26,8 @@ class ShimmerWidget extends StatelessWidget {
   static Widget withWidget(Widget child, context) {
     return Shimmer.fromColors(
         baseColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.2),
-        highlightColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.5),
+        highlightColor:
+            Theme.of(context).primaryColorLight.withValues(alpha: 0.5),
         child: IgnorePointer(child: child));
   }
 }

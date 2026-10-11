@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
-import 'package:wallrio/ui/views/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class GridPage extends StatefulWidget {
@@ -38,7 +37,8 @@ class _GridPageState extends State<GridPage> {
       });
     }
     scrollController.addListener(() {
-      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 500) {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent - 500) {
         Provider.of<WallRio>(context, listen: false).loadMore();
       }
     });
@@ -48,15 +48,19 @@ class _GridPageState extends State<GridPage> {
   bool _hasAccessToCollection() {
     if (widget.collection == null) return true;
     if (UserProfile.hasCollectionAccess) return true;
-    
-    final progression = Provider.of<ProgressionProvider>(context, listen: false);
-    final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-    
-    final isRedeemed = progression.isCollectionUnlocked(widget.collection!.productId);
+
+    final progression =
+        Provider.of<ProgressionProvider>(context, listen: false);
+    final subProvider =
+        Provider.of<SubscriptionProvider>(context, listen: false);
+
+    final isRedeemed =
+        progression.isCollectionUnlocked(widget.collection!.productId);
     final shortId = widget.collection!.productId.split('.').last;
-    final isPurchased = subProvider.purchasedCollections.contains(widget.collection!.productId) ||
-                        subProvider.purchasedCollections.contains(shortId);
-    
+    final isPurchased = subProvider.purchasedCollections
+            .contains(widget.collection!.productId) ||
+        subProvider.purchasedCollections.contains(shortId);
+
     return isRedeemed || isPurchased;
   }
 
@@ -93,8 +97,12 @@ class _GridPageState extends State<GridPage> {
       _showUnlockBottomSheet();
       return;
     }
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
+    final provider = Provider.of<WallRio>(context, listen: false);
+    Navigator.push(
+        context,
+        WallpaperRoute.pager(
+            items: widget.isSearchMode ? provider.queryWallList : widget.walls,
+            initial: model));
   }
 
   void _cancelSearchBar(BuildContext context) {
@@ -132,7 +140,9 @@ class _GridPageState extends State<GridPage> {
         allGridItems.add(walls[i]);
         wallCounter++;
 
-        if (!UserProfile.plusMember && wallCounter == 6 && (i + 1) < walls.length) {
+        if (!UserProfile.plusMember &&
+            wallCounter == 6 &&
+            (i + 1) < walls.length) {
           allGridItems.add('AD_TILE');
           wallCounter = 0;
         }
@@ -152,7 +162,9 @@ class _GridPageState extends State<GridPage> {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember &&
+          (i + 1) % 4 == 0 &&
+          (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
@@ -167,7 +179,7 @@ class _GridPageState extends State<GridPage> {
         final walls = widget.isSearchMode
             ? List<Walls?>.from(provider.queryWallList)
             : widget.walls;
-        
+
         final pagedWalls = walls.length > provider.visibleCount
             ? walls.sublist(0, provider.visibleCount)
             : walls;
@@ -184,7 +196,8 @@ class _GridPageState extends State<GridPage> {
                   placementName: 'GridChunkBanner',
                 );
               }
-              return _buildWallRow(item as List<dynamic>, columnsCount, context);
+              return _buildWallRow(
+                  item as List<dynamic>, columnsCount, context);
             },
           ),
         );
@@ -192,7 +205,8 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
-  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
+  Widget _buildWallRow(
+      List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -237,8 +251,6 @@ class _GridPageState extends State<GridPage> {
     );
   }
 
-
-
   Widget _buildSearchBarUI() {
     return SliverToBoxAdapter(
       child: Padding(
@@ -259,7 +271,8 @@ class _GridPageState extends State<GridPage> {
             autofocus: true,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
+              fillColor:
+                  Theme.of(context).primaryColorLight.withValues(alpha: 0.05),
               hintText: 'Search by wall name, tags, etc',
               hintStyle: const TextStyle(fontSize: 14),
               suffixIcon: IconButton(

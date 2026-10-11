@@ -16,10 +16,12 @@ class DesktopWallpaperDetailPage extends StatefulWidget {
   const DesktopWallpaperDetailPage({super.key, required this.wallModel});
 
   @override
-  State<DesktopWallpaperDetailPage> createState() => _DesktopWallpaperDetailPageState();
+  State<DesktopWallpaperDetailPage> createState() =>
+      _DesktopWallpaperDetailPageState();
 }
 
-class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage> {
+class _DesktopWallpaperDetailPageState
+    extends State<DesktopWallpaperDetailPage> {
   bool _isSessionUnlocked = false;
   List<Walls> _relatedWalls = [];
   List<Walls> _moreLikeThisWalls = [];
@@ -236,9 +238,9 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             BackBtnWidget(color: isDarkMode ? Colors.white : Colors.black),
+            const SizedBox(width: 8),
             Row(
               children: [
                 Container(
@@ -265,34 +267,47 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Consumer<FavouriteProvider>(
-                  builder: (context, provider, _) {
-                    final bool isFav = provider.isSelectedAsFav(widget.wallModel.url, id: widget.wallModel.id);
-                    if (provider.isLoading) {
-                      return IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.favorite_border_rounded, color: isDarkMode ? Colors.white : Colors.black87),
-                      );
-                    }
-                    return IconButton(
-                      onPressed: () => UserProfile.plusMember
-                          ? isFav
-                              ? provider.removeFromFav(id: widget.wallModel.id)
-                              : provider.addToFav(context, wall: widget.wallModel)
-                          : _showExploreProDialog(context),
-                      icon: Icon(
-                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: isFav ? Colors.redAccent : (isDarkMode ? Colors.white : Colors.black87),
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFavouriteButton(bool isDarkMode) {
+    return Consumer<FavouriteProvider>(
+      builder: (context, provider, _) {
+        final bool isFav = provider.isSelectedAsFav(widget.wallModel.url,
+            id: widget.wallModel.id);
+        return SizedBox(
+          height: 52,
+          width: 52,
+          child: IconButton(
+            onPressed: provider.isLoading
+                ? null
+                : () => UserProfile.plusMember
+                    ? isFav
+                        ? provider.removeFromFav(id: widget.wallModel.id)
+                        : provider.addToFav(context, wall: widget.wallModel)
+                    : _showExploreProDialog(context),
+            style: IconButton.styleFrom(
+              backgroundColor: (isDarkMode ? Colors.white : Colors.black)
+                  .withValues(alpha: 0.08),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            icon: Icon(
+              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              color: isFav
+                  ? Colors.redAccent
+                  : (isDarkMode ? Colors.white : Colors.black),
+              size: 22,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -322,33 +337,33 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
               ),
             ],
           ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: InteractiveViewer(
-                  clipBehavior: Clip.none,
-                  minScale: 1.0,
-                  maxScale: 3.0,
-                  child: CachedNetworkImage(
-                    imageUrl: widget.wallModel.thumbnail,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const ShimmerWidget(
-                      height: double.infinity,
-                      width: double.infinity,
-                      radius: 24,
-                    ),
-                    errorWidget: (context, url, error) => const Icon(
-                      Icons.broken_image_rounded,
-                      size: 48,
-                    ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: InteractiveViewer(
+                clipBehavior: Clip.none,
+                minScale: 1.0,
+                maxScale: 3.0,
+                child: CachedNetworkImage(
+                  imageUrl: widget.wallModel.thumbnail,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const ShimmerWidget(
+                    height: double.infinity,
+                    width: double.infinity,
+                    radius: 24,
+                  ),
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.broken_image_rounded,
+                    size: 48,
                   ),
                 ),
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildInformationPanel(BuildContext context, bool isDarkMode) {
@@ -376,8 +391,7 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: context.appColors.accent,
                   borderRadius: BorderRadius.circular(12),
@@ -409,8 +423,8 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
             spacing: 10,
             runSpacing: 10,
             children: [
-              _buildMetaChip(context, Icons.aspect_ratio_rounded, resolution,
-                  isDarkMode),
+              _buildMetaChip(
+                  context, Icons.aspect_ratio_rounded, resolution, isDarkMode),
               _buildMetaChip(
                   context, Icons.sd_storage_rounded, fileSize, isDarkMode),
               _buildMetaChip(context, Icons.screen_search_desktop_rounded,
@@ -429,8 +443,8 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: (isDarkMode ? Colors.white : Colors.black)
-            .withValues(alpha: 0.06),
+        color:
+            (isDarkMode ? Colors.white : Colors.black).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDarkMode ? Colors.white : Colors.black)
@@ -461,7 +475,8 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
   }
 
   void _copyColor(Color color) async {
-    final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    final hex =
+        '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
     await Clipboard.setData(ClipboardData(text: hex));
     ToastWidget.showToast("Color copied");
   }
@@ -661,14 +676,16 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
   }
 
   // Reusable 16:10 Landscape Desktop Card Tile with top-left Pro diamond icon only
-  Widget _buildDesktopCardTile(Walls wall, BuildContext context, bool isDarkMode) {
+  Widget _buildDesktopCardTile(
+      Walls wall, BuildContext context, bool isDarkMode) {
     return AspectRatio(
       aspectRatio: 16 / 10,
       child: GestureDetector(
         onTap: () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
+            WallpaperRoute(
+              zoom: true,
               builder: (_) => DesktopWallpaperDetailPage(wallModel: wall),
             ),
           );
@@ -751,7 +768,7 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
                 ),
                 icon: const Icon(Icons.download_rounded, size: 22),
                 label: const Text(
-                  "DOWNLOAD WALLPAPER",
+                  "DOWNLOAD",
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
@@ -761,6 +778,8 @@ class _DesktopWallpaperDetailPageState extends State<DesktopWallpaperDetailPage>
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          _buildFavouriteButton(isDarkMode),
           const SizedBox(width: 12),
           // Share Action Button
           SizedBox(
@@ -918,7 +937,8 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text('REDEEM ${widget.cost} DIAMONDS',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8)),
                   ),
                 )
               else

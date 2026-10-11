@@ -1,265 +1,236 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallrio/provider/export.dart';
+import 'package:wallrio/services/export.dart';
 import 'package:wallrio/ui/views/rewards_hub_page.dart';
+import 'package:wallrio/ui/widgets/diamond_text.dart';
 
+/// Shared streak card used in the profile sheet, Settings and Rewards Hub.
 class StreakCalendarWidget extends StatelessWidget {
-  const StreakCalendarWidget({super.key});
+  const StreakCalendarWidget({super.key, this.openHubOnTap = true});
+
+  /// False inside the Rewards Hub itself.
+  final bool openHubOnTap;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProgressionProvider>(
-      builder: (context, provider, _) {
-        final hasSub = Provider.of<SubscriptionProvider>(context).subscriptionDaysLeft.isNotEmpty;
-        if (hasSub) return const SizedBox.shrink();
-        
+    return Consumer2<ProgressionProvider, SubscriptionProvider>(
+      builder: (context, provider, sub, _) {
+        if (sub.subscriptionDaysLeft.isNotEmpty) return const SizedBox.shrink();
         final progression = provider.progression;
         if (progression == null) return const SizedBox.shrink();
 
-        final bool checkedIn = provider.isCheckedInToday();
-        final int currentStreak = progression.currentStreak;
+        final colors = context.appColors;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final checkedIn = provider.isCheckedInToday();
+        final taskDone = provider.dailyTaskDone;
+        final streak = progression.currentStreak;
+        final reward = provider.todayCheckInReward;
+        // Days already completed in the current 7-day cycle.
+        final doneInCycle =
+            streak == 0 ? 0 : (checkedIn ? ((streak - 1) % 7) + 1 : streak % 7);
 
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const RewardsHubPage()),
+        final String subtitle = checkedIn
+            ? 'Done for today · come back tomorrow'
+            : taskDone
+                ? 'Check in now to earn +$reward 💎'
+                : 'Set or save 1 wallpaper to unlock check-in';
+
+        final card = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              colors: [
+                colors.accent.withValues(alpha: isDark ? 0.22 : 0.14),
+                colors.secondary.withValues(alpha: isDark ? 0.10 : 0.06),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFFD700), Color(0xFFF7B540)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  // Background 3D Diamond with enhanced depth
-                  Positioned(
-                    top: -25,
-                    right: -25,
-                    child: Opacity(
-                      opacity: 0.4,
-                      child: Transform.rotate(
-                        angle: 0.2,
-                        child: SizedBox(
-                          width: 158,
-                          height: 158,
-                          child: Stack(
-                            children: [
-                              // 3D Depth Layer (Side of the diamond)
-                              Positioned(
-                                top: 6,
-                                right: 0,
-                                child: Icon(
-                                  Icons.diamond_rounded,
-                                  size: 147,
-                                  color: Colors.orange.shade900,
-                                ),
-                              ),
-                              // Main Faceted Face
-                              ShaderMask(
-                                shaderCallback: (rect) => LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.orange.shade300,
-                                    Colors.orange.shade600,
-                                    Colors.orange.shade800,
-                                  ],
-                                  stops: const [0.1, 0.5, 0.9],
-                                ).createShader(rect),
-                                child: const Icon(
-                                  Icons.diamond_rounded,
-                                  size: 147,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              // Top Highlight/Reflection
-                              Positioned(
-                                top: 2,
-                                left: 10,
-                                child: Icon(
-                                  Icons.diamond_rounded,
-                                  size: 143,
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: colors.accent,
+                      shape: BoxShape.circle,
                     ),
+                    child: const Icon(Icons.local_fire_department_rounded,
+                        color: Colors.white, size: 24),
                   ),
-                  
-                  Padding(
-                    padding: const EdgeInsets.all(24),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                _build3DIcon(checkedIn),
-                                const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Weekly Streak',
-                                      style: TextStyle(
-                                        fontSize: 18, 
-                                        fontWeight: FontWeight.w900, 
-                                        letterSpacing: 0.5,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '$currentStreak Day${currentStreak == 1 ? '' : 's'} Active',
-                                      style: const TextStyle(
-                                        fontSize: 12, 
-                                        fontWeight: FontWeight.w700, 
-                                        color: Color(0xFFFFE4E1),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            if (!checkedIn)
-                              _buildPulseButton(provider)
-                            else
-                              const Icon(Icons.verified_rounded, color: Colors.white, size: 28),
-                          ],
+                        Text(
+                          '$streak-day streak',
+                          style: TextStyle(
+                            fontFamily: appFontFamily,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: colors.textPrimary,
+                          ),
                         ),
-                        const SizedBox(height: 28),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(7, (index) {
-                            final bool isPassed = (currentStreak % 7 > index) || (currentStreak > 0 && currentStreak % 7 == 0);
-                            final bool isCurrent = (currentStreak % 7 == index);
-                            
-                            return _build3DDaySlot(index, isPassed, isCurrent && !checkedIn);
-                          }),
+                        const SizedBox(height: 2),
+                        DiamondText(
+                          subtitle,
+                          style: TextStyle(
+                            fontFamily: appFontFamily,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  Tooltip(
+                    message: 'Streak freeze: saves your streak if you miss '
+                        'one day. Refills every 7 days.',
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.ac_unit_rounded,
+                              size: 13, color: Color(0xFF4FC3F7)),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${provider.streakFreezes}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  for (int i = 0; i < 7; i++) ...[
+                    if (i > 0) const SizedBox(width: 6),
+                    Expanded(
+                      child: _DayPill(
+                        day: i + 1,
+                        done: i < doneInCycle,
+                        today: !checkedIn && i == doneInCycle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: FilledButton(
+                  onPressed: checkedIn || !taskDone
+                      ? null
+                      : () {
+                          HapticFeedback.mediumImpact();
+                          provider.manualCheckIn();
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.accent,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        colors.accent.withValues(alpha: 0.15),
+                    disabledForegroundColor: colors.textSecondary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: DiamondText(
+                    checkedIn
+                        ? '✓ Checked in'
+                        : taskDone
+                            ? 'Check in · +$reward 💎'
+                            : 'Save or set a wallpaper first',
+                    style: const TextStyle(
+                        fontFamily: appFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
           ),
+        );
+
+        if (!openHubOnTap) return card;
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RewardsHubPage()),
+          ),
+          child: card,
         );
       },
     );
   }
+}
 
-  Widget _build3DIcon(bool active) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          active ? Icons.local_fire_department_rounded : Icons.bolt_rounded,
-          color: Colors.white,
-          size: 26,
-        ),
-      ),
-    );
-  }
+class _DayPill extends StatelessWidget {
+  const _DayPill({required this.day, required this.done, required this.today});
 
-  Widget _buildPulseButton(ProgressionProvider provider) {
-    return GestureDetector(
-      onTap: () => provider.manualCheckIn(),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Text(
-          'CHECK-IN',
-          style: TextStyle(
-            color: Color(0xFFF7B540), 
-            fontSize: 11, 
-            fontWeight: FontWeight.w900, 
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
+  final int day;
+  final bool done;
+  final bool today;
 
-  Widget _build3DDaySlot(int index, bool isPassed, bool isCurrent) {
-    final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          width: 38,
-          height: 42,
-          decoration: BoxDecoration(
-            color: isPassed ? Colors.white : Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isCurrent 
-                  ? Colors.white 
-                  : (isPassed ? Colors.white.withValues(alpha: 0.2) : Colors.transparent),
-              width: isCurrent ? 2 : 1,
-            ),
-            boxShadow: isPassed ? [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              )
-            ] : null,
-          ),
-          child: Center(
-            child: isPassed 
-                ? const Icon(Icons.check_rounded, color: Color(0xFFF7B540), size: 18)
-                : Text(
-                    days[index],
-                    style: const TextStyle(
-                      fontSize: 13, 
-                      fontWeight: FontWeight.w900, 
-                      color: Colors.white70,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 8),
         Container(
-          width: 4,
-          height: 4,
+          height: 36,
           decoration: BoxDecoration(
-            color: isPassed ? Colors.white : Colors.white24,
-            shape: BoxShape.circle,
+            color: done
+                ? colors.accent
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(12),
+            border: today ? Border.all(color: colors.accent, width: 2) : null,
+          ),
+          alignment: Alignment.center,
+          child: done
+              ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+              : Text(
+                  '+$day',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: today ? colors.accent : colors.textSecondary,
+                  ),
+                ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Day $day',
+          style: TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+            color: colors.textTertiary,
           ),
         ),
       ],

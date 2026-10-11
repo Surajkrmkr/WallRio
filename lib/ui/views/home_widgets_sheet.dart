@@ -88,7 +88,8 @@ class _HomeWidgetsSheetState extends State<HomeWidgetsSheet>
 
   Future<void> _loadAllPreviews() async {
     for (final spec in _kWidgetSpecs) {
-      final items = await HomeWidgetLaunchService.getCachedWidgetItems(spec.type);
+      final items =
+          await HomeWidgetLaunchService.getCachedWidgetItems(spec.type);
       if (!mounted) return;
       setState(() => _itemsByType[spec.type] = items);
     }
@@ -336,11 +337,13 @@ class _HomeWidgetsSheetState extends State<HomeWidgetsSheet>
               flex: 62,
               child: Row(
                 children: List.generate(slotCount, (i) {
-                  final item = items != null && i < items.length ? items[i] : null;
+                  final item =
+                      items != null && i < items.length ? items[i] : null;
                   final thumbPath = item?['thumbPath'] as String?;
                   return Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(right: i == slotCount - 1 ? 0 : 6),
+                      padding:
+                          EdgeInsets.only(right: i == slotCount - 1 ? 0 : 6),
                       child: AspectRatio(
                         aspectRatio: spec.portrait ? 0.55 : 1.4,
                         child: ClipRRect(

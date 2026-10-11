@@ -15,3 +15,4 @@ export 'personalization_hub_page.dart';
 export 'desktop_wallpapers_page.dart';
 export 'desktop_wallpaper_detail_page.dart';
 export 'desktop_fullscreen_viewer.dart';
+export 'macos/export.dart';

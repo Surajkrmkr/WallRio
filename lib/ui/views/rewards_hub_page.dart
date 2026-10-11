@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/services/app_theme_tokens.dart';
+import 'package:wallrio/services/responsive.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 import 'package:wallrio/provider/ads.dart';
 import 'package:share_plus/share_plus.dart';
@@ -18,7 +18,7 @@ class RewardsHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -26,7 +26,9 @@ class RewardsHubPage extends StatelessWidget {
           builder: (context, progressionProvider, _) {
             final progression = progressionProvider.progression;
             if (progressionProvider.isLoading || progression == null) {
-              return Center(child: CircularProgressIndicator(color: context.appColors.accent));
+              return Center(
+                  child: CircularProgressIndicator(
+                      color: context.appColors.accent));
             }
 
             return CustomScrollView(
@@ -40,34 +42,47 @@ class RewardsHubPage extends StatelessWidget {
                   text: 'Rewards Hub',
                 ),
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDiamondBalanceCard(context, progression.diamondsBalance, isDarkMode),
-                        const SizedBox(height: 12),
-                        _buildDataWarning(isDarkMode),
-                        const SizedBox(height: 24),
-                        _sectionTitle(context, 'What Diamonds Unlock'),
-                        _buildUnlockExamplesRow(context, isDarkMode),
-                        const SizedBox(height: 32),
-                        _sectionTitle(context, 'Earn Diamonds'),
-                        _buildQuestsList(context, progressionProvider, isDarkMode),
-                        if (progression.dailyShares >= 2) ...[
-                          const SizedBox(height: 16),
-                          _buildShareLimitWarning(context, isDarkMode),
-                        ],
-                        const SizedBox(height: 32),
-                        _buildStreakSection(context, progressionProvider, isDarkMode),
-                        const SizedBox(height: 32),
-                        _sectionTitle(context, 'Your Journey'),
-                        _buildMilestoneJourney(context, progression, isDarkMode),
-                        const SizedBox(height: 32),
-                        _sectionTitle(context, 'Transaction History'),
-                        _buildTransactionHistory(context, progression, isDarkMode),
-                        const SizedBox(height: 32),
-                      ],
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                          maxWidth:
+                              ResponsiveHelper.getMaxContentWidth(context)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDiamondBalanceCard(context,
+                                progression.diamondsBalance, isDarkMode),
+                            const SizedBox(height: 12),
+                            _buildDataWarning(isDarkMode),
+                            const SizedBox(height: 24),
+                            _sectionTitle(context, 'What Diamonds Unlock'),
+                            _buildUnlockExamplesRow(context, isDarkMode),
+                            const SizedBox(height: 32),
+                            _sectionTitle(context, 'Earn Diamonds'),
+                            _buildQuestsList(
+                                context, progressionProvider, isDarkMode),
+                            if (progression.dailyShares >= 2) ...[
+                              const SizedBox(height: 16),
+                              _buildShareLimitWarning(context, isDarkMode),
+                            ],
+                            const SizedBox(height: 32),
+                            _buildStreakSection(
+                                context, progressionProvider, isDarkMode),
+                            const SizedBox(height: 32),
+                            _sectionTitle(context, 'Your Journey'),
+                            _buildMilestoneJourney(
+                                context, progression, isDarkMode),
+                            const SizedBox(height: 32),
+                            _sectionTitle(context, 'Transaction History'),
+                            _buildTransactionHistory(
+                                context, progression, isDarkMode),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -79,13 +94,48 @@ class RewardsHubPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMilestoneJourney(BuildContext context, dynamic progression, bool isDarkMode) {
+  Widget _buildMilestoneJourney(
+      BuildContext context, dynamic progression, bool isDarkMode) {
     final List<Map<String, dynamic>> milestones = [
-      {'key': 'start', 'label': 'Beginner', 'desc': 'Started the journey', 'req': 0, 'icon': Icons.rocket_launch_rounded},
-      {'key': 'streak_7', 'label': 'Dedicated', 'desc': '7 Day Streak', 'req': 7, 'type': 'streak', 'icon': Icons.local_fire_department_rounded},
-      {'key': 'streak_30', 'label': 'Veteran', 'desc': '30 Day Streak', 'req': 30, 'type': 'streak', 'icon': Icons.workspace_premium_rounded},
-      {'key': 'earner_500', 'label': 'Diamond Hunter', 'desc': 'Earned 500 💎', 'req': 500, 'type': 'earned', 'icon': Icons.diamond_rounded},
-      {'key': 'streak_90', 'label': 'Legendary', 'desc': '90 Day Streak', 'req': 90, 'type': 'streak', 'icon': Icons.stars_rounded},
+      {
+        'key': 'start',
+        'label': 'Beginner',
+        'desc': 'Started the journey',
+        'req': 0,
+        'icon': Icons.rocket_launch_rounded
+      },
+      {
+        'key': 'streak_7',
+        'label': 'Dedicated',
+        'desc': '7 Day Streak',
+        'req': 7,
+        'type': 'streak',
+        'icon': Icons.local_fire_department_rounded
+      },
+      {
+        'key': 'streak_30',
+        'label': 'Veteran',
+        'desc': '30 Day Streak',
+        'req': 30,
+        'type': 'streak',
+        'icon': Icons.workspace_premium_rounded
+      },
+      {
+        'key': 'earner_500',
+        'label': 'Diamond Hunter',
+        'desc': 'Earned 500 💎',
+        'req': 500,
+        'type': 'earned',
+        'icon': Icons.diamond_rounded
+      },
+      {
+        'key': 'streak_90',
+        'label': 'Legendary',
+        'desc': '90 Day Streak',
+        'req': 90,
+        'type': 'streak',
+        'icon': Icons.stars_rounded
+      },
     ];
 
     return Container(
@@ -98,7 +148,7 @@ class RewardsHubPage extends StatelessWidget {
         children: List.generate(milestones.length, (index) {
           final m = milestones[index];
           bool isCompleted = false;
-          
+
           if (m['key'] == 'start') {
             isCompleted = true;
           } else if (m['type'] == 'streak') {
@@ -117,17 +167,33 @@ class RewardsHubPage extends StatelessWidget {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: isCompleted ? context.appColors.accent : (isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                        color: isCompleted
+                            ? context.appColors.accent
+                            : (isDarkMode
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.05)),
                         shape: BoxShape.circle,
-                        boxShadow: isCompleted ? [BoxShadow(color: context.appColors.accent.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 1)] : null,
+                        boxShadow: isCompleted
+                            ? [
+                                BoxShadow(
+                                    color: context.appColors.accent
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    spreadRadius: 1)
+                              ]
+                            : null,
                       ),
-                      child: Icon(m['icon'], color: isCompleted ? Colors.white : Colors.grey, size: 20),
+                      child: Icon(m['icon'],
+                          color: isCompleted ? Colors.white : Colors.grey,
+                          size: 20),
                     ),
                     if (index < milestones.length - 1)
                       Expanded(
                         child: Container(
                           width: 2,
-                          color: isCompleted ? context.appColors.accent.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.2),
+                          color: isCompleted
+                              ? context.appColors.accent.withValues(alpha: 0.5)
+                              : Colors.grey.withValues(alpha: 0.2),
                         ),
                       ),
                   ],
@@ -142,24 +208,36 @@ class RewardsHubPage extends StatelessWidget {
                         Text(
                           m['label'],
                           style: TextStyle(
-                            fontSize: 15, 
-                            fontWeight: FontWeight.w900, 
-                            color: isCompleted ? (isDarkMode ? Colors.white : Colors.black) : Colors.grey
-                          ),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: isCompleted
+                                  ? (isDarkMode ? Colors.white : Colors.black)
+                                  : Colors.grey),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        DiamondText(
                           m['desc'],
-                          style: TextStyle(fontSize: 11, color: isCompleted ? Colors.grey : Colors.grey.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: isCompleted
+                                  ? Colors.grey
+                                  : Colors.grey.withValues(alpha: 0.5),
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                   ),
                 ),
                 if (isCompleted)
-                  Icon(Icons.check_circle_rounded, color: context.appColors.accent, size: 20)
+                  Icon(Icons.check_circle_rounded,
+                      color: context.appColors.accent, size: 20)
                 else
-                   Text('LOCKED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.5), letterSpacing: 1)),
+                  Text('LOCKED',
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey.withValues(alpha: 0.5),
+                          letterSpacing: 1)),
               ],
             ),
           );
@@ -184,7 +262,10 @@ class RewardsHubPage extends StatelessWidget {
           Expanded(
             child: Text(
               'Clearing app data or uninstalling will remove your locally saved diamonds.',
-              style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -199,7 +280,8 @@ class RewardsHubPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.appColors.accent.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: context.appColors.accent.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -208,7 +290,11 @@ class RewardsHubPage extends StatelessWidget {
           Expanded(
             child: Text(
               "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.",
-              style: TextStyle(fontSize: 12, color: context.appColors.accent, fontWeight: FontWeight.w600, height: 1.4),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: context.appColors.accent,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4),
             ),
           ),
         ],
@@ -216,7 +302,8 @@ class RewardsHubPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDiamondBalanceCard(BuildContext context, int balance, bool isDarkMode) {
+  Widget _buildDiamondBalanceCard(
+      BuildContext context, int balance, bool isDarkMode) {
     final accent = context.appColors.accent;
     return Container(
       width: double.infinity,
@@ -244,21 +331,23 @@ class RewardsHubPage extends StatelessWidget {
         children: [
           Text(
             'DIAMOND BALANCE',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: accent),
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+                color: accent),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                '💎',
-                style: TextStyle(fontSize: 42),
-              ),
+              const DiamondIcon(size: 44),
               const SizedBox(width: 12),
               Text(
                 balance.toString(),
-                style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, height: 1),
+                style: const TextStyle(
+                    fontSize: 48, fontWeight: FontWeight.w900, height: 1),
               ),
             ],
           ),
@@ -274,7 +363,7 @@ class RewardsHubPage extends StatelessWidget {
   }
 
   Widget _buildUnlockExamplesRow(BuildContext context, bool isDarkMode) {
-    Widget exampleItem(String iconStr, String title, String costStr) {
+    Widget exampleItem(IconData icon, String title, String costStr) {
       return Expanded(
         child: Container(
           height: 110,
@@ -291,12 +380,21 @@ class RewardsHubPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(iconStr, style: const TextStyle(fontSize: 22)),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: context.appColors.accent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 18, color: context.appColors.accent),
+              ),
               Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                    fontSize: 10.5, fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
               Container(
@@ -305,7 +403,7 @@ class RewardsHubPage extends StatelessWidget {
                   color: context.appColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: DiamondText(
                   costStr,
                   style: TextStyle(
                     fontSize: 10.5,
@@ -322,94 +420,28 @@ class RewardsHubPage extends StatelessWidget {
 
     return Row(
       children: [
-        exampleItem('🖼️', 'Static Wallpaper', '20 💎'),
+        exampleItem(Icons.wallpaper_rounded, 'Static Wallpaper', '20 💎'),
         const SizedBox(width: 8),
-        exampleItem('🎥', 'Live Wallpaper', '30 💎'),
+        exampleItem(Icons.motion_photos_on_rounded, 'Live Wallpaper', '30 💎'),
         const SizedBox(width: 8),
-        exampleItem('🖥️', 'Desktop Wallpaper', '20 💎'),
+        exampleItem(Icons.laptop_mac_rounded, 'Desktop Wallpaper', '20 💎'),
       ],
     );
   }
 
-  Widget _buildStreakSection(BuildContext context, ProgressionProvider provider, bool isDarkMode) {
-    final progression = provider.progression!;
-    final bool checkedIn = provider.isCheckedInToday();
-    
+  Widget _buildStreakSection(
+      BuildContext context, ProgressionProvider provider, bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(context, 'Weekly Progress'),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(7, (index) {
-                  final dayNum = index + 1;
-                  final currentDayIndex = progression.currentStreak > 0 ? (progression.currentStreak - 1) % 7 : 0;
-                  final bool isCurrent = (index == currentDayIndex);
-                  final bool isPassed = (index < currentDayIndex) || (index == currentDayIndex && checkedIn);
-                  
-                  return Column(
-                    children: [
-                      Text('Day $dayNum', style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isPassed ? context.appColors.accent : (isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
-                          shape: BoxShape.circle,
-                          border: isCurrent && !checkedIn ? Border.all(color: context.appColors.accent, width: 2) : null,
-                        ),
-                        child: Center(
-                          child: isPassed 
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
-                              : Text('+$dayNum', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: isDarkMode ? Colors.white70 : Colors.black54)),
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
-              if (!checkedIn)
-                PrimaryBtnWidget(
-                  btnText: 'CHECK-IN TODAY',
-                  onTap: () => provider.manualCheckIn(),
-                )
-              else
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: context.appColors.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle_rounded, color: context.appColors.accent, size: 18),
-                        const SizedBox(width: 8),
-                        Text('CHECKED IN', style: TextStyle(color: context.appColors.accent, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1)),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        _sectionTitle(context, 'Daily Streak'),
+        const StreakCalendarWidget(openHubOnTap: false),
       ],
     );
   }
 
-  Widget _buildQuestsList(BuildContext context, ProgressionProvider provider, bool isDarkMode) {
+  Widget _buildQuestsList(
+      BuildContext context, ProgressionProvider provider, bool isDarkMode) {
     final progression = provider.progression!;
     return GridView.count(
       shrinkWrap: true,
@@ -427,36 +459,31 @@ class RewardsHubPage extends StatelessWidget {
           progressText: '${progression.dailyAdViews}/10',
           isDarkMode: isDarkMode,
           onTap: () {
-             Provider.of<AdsProvider>(context, listen: false).loadRewardedAd(context, onRewarded: () {
-               // Global tracking handles this, no action needed here.
-             });
+            Provider.of<AdsProvider>(context, listen: false)
+                .loadRewardedAd(context, onRewarded: () {
+              // Global tracking handles this, no action needed here.
+            });
           },
         ),
         _questCard(
           context: context,
-          icon: Icons.star_rate_rounded,
-          title: 'Rate App',
-          subtitle: Platform.isIOS ? 'Help us improve WallRio' : 'Instant 20 💎',
-          progressText: Platform.isIOS
-              ? null
-              : (progression.completedMilestones.contains('rated_5_stars') ? 'Done' : 'Collect'),
+          icon: Icons.alternate_email_rounded,
+          title: 'Follow us on X',
+          subtitle: 'Earn ${ProgressionProvider.followXReward} 💎',
+          progressText: provider.followedX ? 'Done' : 'Follow',
           isDarkMode: isDarkMode,
+          isActionable: !provider.followedX,
           onTap: () async {
-            if (_isRating) return;
-            if (!Platform.isIOS && progression.completedMilestones.contains('rated_5_stars')) return;
-            
+            if (_isRating || provider.followedX) return;
             _isRating = true;
             try {
-              final String url = Platform.isIOS
-                  ? 'https://apps.apple.com/app/wallrio/id6789848688'
-                  : 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
-              final launched = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+              final launched = await launchUrl(
+                  Uri.parse(ProgressionProvider.followXUrl),
+                  mode: LaunchMode.externalApplication);
               if (launched) {
-                if (!Platform.isIOS) {
-                  provider.trackAction(ActionType.rateApp);
-                }
+                provider.trackAction(ActionType.followX);
               } else {
-                ToastWidget.showToast(Platform.isIOS ? "Could not open App Store." : "Could not open Play Store.");
+                ToastWidget.showToast("Could not open X.");
               }
             } finally {
               _isRating = false;
@@ -467,17 +494,21 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.share_rounded,
           title: 'Invite',
-          subtitle: progression.dailyShares >= 2 ? 'Limit Reached' : 'Earn 5 💎',
-          progressText: '${progression.dailyShares >= 2 ? 2 : progression.dailyShares}/2',
+          subtitle:
+              progression.dailyShares >= 2 ? 'Limit Reached' : 'Earn 5 💎',
+          progressText:
+              '${progression.dailyShares >= 2 ? 2 : progression.dailyShares}/2',
           isDarkMode: isDarkMode,
           isActionable: progression.dailyShares < 2,
           onTap: () {
             if (progression.dailyShares >= 2) {
-              ToastWidget.showToast("You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
+              ToastWidget.showToast(
+                  "You've reached today's sharing reward limit. Come back tomorrow to earn more Diamonds.");
               return;
             }
             // ignore: deprecated_member_use
-            Share.share('Check out WallRio for amazing AMOLED wallpapers! https://play.google.com/store/apps/details?id=com.shadowteam.wallrio');
+            Share.share(
+                'Check out WallRio for amazing AMOLED wallpapers! https://play.google.com/store/apps/details?id=com.shadowteam.wallrio');
             provider.trackAction(ActionType.shareApp);
           },
         ),
@@ -485,8 +516,9 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.auto_awesome_rounded,
           title: 'Loyalty',
-          subtitle: 'Daily Rewards',
-          progressText: '${progression.currentStreak} Days',
+          subtitle: 'Longest streak',
+          progressText:
+              '${progression.longestStreak} day${progression.longestStreak == 1 ? '' : 's'}',
           isDarkMode: isDarkMode,
           onTap: () {},
           isActionable: false,
@@ -523,21 +555,34 @@ class RewardsHubPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isActionable ? context.appColors.accent.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+                      color: isActionable
+                          ? context.appColors.accent.withValues(alpha: 0.1)
+                          : Colors.grey.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, size: 22, color: isActionable ? context.appColors.accent : Colors.grey),
+                    child: Icon(icon,
+                        size: 22,
+                        color: isActionable
+                            ? context.appColors.accent
+                            : Colors.grey),
                   ),
                   if (isActionable)
-                    const Icon(Icons.arrow_outward_rounded, size: 14, color: Colors.grey),
+                    const Icon(Icons.arrow_outward_rounded,
+                        size: 14, color: Colors.grey),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                  DiamondText(subtitle,
+                      style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
               if (progressText != null && progressText.isNotEmpty)
@@ -545,18 +590,19 @@ class RewardsHubPage extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                    color: isDarkMode
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                    child: Text(
-                      progressText, 
-                      style: TextStyle(
-                        fontSize: 11, 
-                        fontWeight: FontWeight.w800, 
-                        color: isActionable ? (isDarkMode ? Colors.white70 : Colors.black87) : Colors.grey
-                      )
-                    ),
+                    child: Text(progressText,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: isActionable
+                                ? (isDarkMode ? Colors.white70 : Colors.black87)
+                                : Colors.grey)),
                   ),
                 ),
             ],
@@ -566,13 +612,15 @@ class RewardsHubPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionHistory(BuildContext context, dynamic progression, bool isDarkMode) {
+  Widget _buildTransactionHistory(
+      BuildContext context, dynamic progression, bool isDarkMode) {
     final history = progression.transactionHistory;
     if (history.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text('No transactions yet', style: Theme.of(context).textTheme.labelSmall),
+          child: Text('No transactions yet',
+              style: Theme.of(context).textTheme.labelSmall),
         ),
       );
     }
@@ -595,10 +643,14 @@ class RewardsHubPage extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: tx.isCredit ? context.appColors.accent.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                  backgroundColor: tx.isCredit
+                      ? context.appColors.accent.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
                   child: Icon(
                     tx.isCredit ? Icons.add_rounded : Icons.remove_rounded,
-                    color: tx.isCredit ? context.appColors.accent : Colors.redAccent,
+                    color: tx.isCredit
+                        ? context.appColors.accent
+                        : Colors.redAccent,
                     size: 20,
                   ),
                 ),
@@ -607,18 +659,24 @@ class RewardsHubPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tx.reason, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                      Text(tx.reason,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
-                      Text(DateFormat('MMM dd, hh:mm a').format(tx.timestamp), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                      Text(DateFormat('MMM dd, hh:mm a').format(tx.timestamp),
+                          style: const TextStyle(
+                              fontSize: 10, color: Colors.grey)),
                     ],
                   ),
                 ),
-                Text(
+                DiamondText(
                   '${tx.isCredit ? '+' : '-'}${tx.amount} 💎',
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
-                    color: tx.isCredit ? context.appColors.accent : Colors.redAccent,
+                    color: tx.isCredit
+                        ? context.appColors.accent
+                        : Colors.redAccent,
                   ),
                 ),
               ],

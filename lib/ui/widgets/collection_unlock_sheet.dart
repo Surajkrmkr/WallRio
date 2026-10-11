@@ -24,15 +24,19 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final subProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-      final progProvider = Provider.of<ProgressionProvider>(context, listen: false);
+      final subProvider =
+          Provider.of<SubscriptionProvider>(context, listen: false);
+      final progProvider =
+          Provider.of<ProgressionProvider>(context, listen: false);
 
       final String shortId = widget.collection.productId.split('.').last;
-      final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
-          ? widget.collection.productId
-          : 'com.wallrio.collection.${widget.collection.productId}';
+      final String fullProductId =
+          widget.collection.productId.startsWith('com.wallrio.collection.')
+              ? widget.collection.productId
+              : 'com.wallrio.collection.${widget.collection.productId}';
 
-      subProvider.fetchProducts({fullProductId, shortId, widget.collection.productId});
+      subProvider
+          .fetchProducts({fullProductId, shortId, widget.collection.productId});
 
       _purchaseSub = subProvider.successPurchasedStream.listen((success) {
         if (success) {
@@ -40,7 +44,8 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
           if (mounted) Navigator.pop(context, true);
         }
       });
-      _inAppSub = InAppPurchase.instance.purchaseStream.listen((purchaseDetailsList) {
+      _inAppSub =
+          InAppPurchase.instance.purchaseStream.listen((purchaseDetailsList) {
         for (var purchaseDetails in purchaseDetailsList) {
           if (purchaseDetails.status == PurchaseStatus.error ||
               purchaseDetails.status == PurchaseStatus.canceled) {
@@ -71,13 +76,18 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
     final subColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
 
     final String shortId = widget.collection.productId.split('.').last;
-    final String fullProductId = widget.collection.productId.startsWith('com.wallrio.collection.')
-        ? widget.collection.productId
-        : 'com.wallrio.collection.${widget.collection.productId}';
+    final String fullProductId =
+        widget.collection.productId.startsWith('com.wallrio.collection.')
+            ? widget.collection.productId
+            : 'com.wallrio.collection.${widget.collection.productId}';
 
-    final product = subProvider.products
-        .cast<dynamic>()
-        .firstWhere((p) => p != null && (p.id == fullProductId || p.id == shortId || p.id.endsWith(shortId)), orElse: () => null);
+    final product = subProvider.products.cast<dynamic>().firstWhere(
+        (p) =>
+            p != null &&
+            (p.id == fullProductId ||
+                p.id == shortId ||
+                p.id.endsWith(shortId)),
+        orElse: () => null);
 
     final wallCount = widget.collection.walls?.length ?? 0;
     final sheetColor = isDarkMode ? bgDark2Color : const Color(0xFFF2F2F7);
@@ -204,7 +214,8 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.appColors.accent,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: context.appColors.accent.withValues(alpha: 0.5),
+                  disabledBackgroundColor:
+                      context.appColors.accent.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
@@ -218,8 +229,11 @@ class _CollectionUnlockSheetState extends State<CollectionUnlockSheet> {
                             color: Colors.white, strokeWidth: 2.5),
                       )
                     : Text(
-                        product != null ? 'Unlock for ${product.price}' : 'Unlock Collection',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        product != null
+                            ? 'Unlock for ${product.price}'
+                            : 'Unlock Collection',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 16),
                       ),
               ),
             ),

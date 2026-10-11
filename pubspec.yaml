@@ -44,6 +44,7 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   flutter_launcher_icons: ^0.14.4
   flutter_local_notifications: ^22.0.1
+  timezone: ^0.11.0
   flutter_native_splash: ^2.4.7
   flutter_staggered_grid_view: ^0.7.0
   flutter_svg: ^2.2.4
@@ -96,17 +97,17 @@ flutter:
     - assets/icons/
 
   fonts:
-    - family: POCOTech
+    - family: PlusJakartaSans
       fonts:
-        - asset: font/POCOTech-cool-Light.otf
+        - asset: font/PlusJakartaSans-Light.ttf
           weight: 300
-        - asset: font/POCOTech-cool-Book.otf
+        - asset: font/PlusJakartaSans-Regular.ttf
           weight: 400
-        - asset: font/POCOTech-cool-Regular.otf
+        - asset: font/PlusJakartaSans-Medium.ttf
           weight: 500
-        - asset: font/POCOTech-cool-Medium.otf
+        - asset: font/PlusJakartaSans-SemiBold.ttf
           weight: 600
-        - asset: font/POCOTech-cool-SemiBold.otf
+        - asset: font/PlusJakartaSans-Bold.ttf
           weight: 700
-        - asset: font/POCOTech-cool-Bold.otf
+        - asset: font/PlusJakartaSans-ExtraBold.ttf
           weight: 800

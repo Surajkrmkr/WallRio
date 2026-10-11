@@ -3,7 +3,6 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
-import 'package:wallrio/ui/views/live_detail_page.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class LiveWallsGridSliver extends StatelessWidget {
@@ -62,7 +61,10 @@ class LiveWallsGridSliver extends StatelessWidget {
 
         final feedItems = _buildFeedItems(provider.wallList, columnsCount);
         return SliverPadding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+          padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.paddingOf(context).bottom + 24),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               childCount: feedItems.length,
@@ -74,7 +76,9 @@ class LiveWallsGridSliver extends StatelessWidget {
                     placementName: 'GridChunkBanner',
                   );
                 }
-                return _buildWallRow(item as List<dynamic>, columnsCount, context);
+                return AppearAnimation(
+                    child: _buildWallRow(
+                        item as List<dynamic>, columnsCount, context));
               },
             ),
           ),
@@ -83,7 +87,8 @@ class LiveWallsGridSliver extends StatelessWidget {
     );
   }
 
-  List<List<dynamic>> _buildItemList(List<LiveWallpaper> walls, int columnsCount) {
+  List<List<dynamic>> _buildItemList(
+      List<LiveWallpaper> walls, int columnsCount) {
     final allGridItems = <dynamic>[];
     int wallCounter = 0;
 
@@ -91,7 +96,9 @@ class LiveWallsGridSliver extends StatelessWidget {
       allGridItems.add(walls[i]);
       wallCounter++;
 
-      if (!UserProfile.plusMember && wallCounter == 6 && (i + 1) < walls.length) {
+      if (!UserProfile.plusMember &&
+          wallCounter == 6 &&
+          (i + 1) < walls.length) {
         allGridItems.add('AD_TILE');
         wallCounter = 0;
       }
@@ -110,14 +117,17 @@ class LiveWallsGridSliver extends StatelessWidget {
     final feed = <dynamic>[];
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
-      if (!UserProfile.plusMember && (i + 1) % 4 == 0 && (i + 1) < rows.length) {
+      if (!UserProfile.plusMember &&
+          (i + 1) % 4 == 0 &&
+          (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }
     }
     return feed;
   }
 
-  Widget _buildWallRow(List<dynamic> rowItems, int columnsCount, BuildContext context) {
+  Widget _buildWallRow(
+      List<dynamic> rowItems, int columnsCount, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -136,9 +146,12 @@ class LiveWallsGridSliver extends StatelessWidget {
                                 wall: rowItems[i] as LiveWallpaper,
                                 onTap: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        LiveDetailPage(wall: rowItems[i] as LiveWallpaper),
+                                  WallpaperRoute.pager(
+                                    items: Provider.of<LiveWallpaperProvider>(
+                                            context,
+                                            listen: false)
+                                        .wallList,
+                                    initial: rowItems[i] as LiveWallpaper,
                                   ),
                                 ),
                               ),

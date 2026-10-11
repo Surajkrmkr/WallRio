@@ -36,8 +36,7 @@ class ClearCacheWidget extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel")),
               OutlinedButton(
-                  onPressed: () => _clear(context),
-                  child: const Text("Clear")),
+                  onPressed: () => _clear(context), child: const Text("Clear")),
             ],
     );
   }

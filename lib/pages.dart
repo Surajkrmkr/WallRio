@@ -3,8 +3,8 @@ import 'package:wallrio/ui/views/export.dart';
 
 List<Widget> pages = [
   const HomePage(),
-  const LivePage(),
+  const LivePage(isTab: true),
   const CollectionPage(),
   const CategoryPage(),
-  const FavouritePage(),
+  const DesktopWallpapersPage(isTab: true),
 ];

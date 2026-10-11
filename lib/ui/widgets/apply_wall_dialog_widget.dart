@@ -9,7 +9,8 @@ class ApplyWallDialogWidget extends StatelessWidget {
   final String imgUrl;
   const ApplyWallDialogWidget({super.key, required this.imgUrl});
 
-  void applyWall(BuildContext context, {required String url, required int wallLocation}) =>
+  void applyWall(BuildContext context,
+          {required String url, required int wallLocation}) =>
       Provider.of<WallActionProvider>(context, listen: false)
           .applyWall(context, url: url, wallLocation: wallLocation);
 

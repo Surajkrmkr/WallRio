@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -91,7 +93,9 @@ class MyApp extends StatelessWidget {
 
 Future<void> initializationHandler() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  if (Platform.isAndroid || Platform.isIOS) {
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  }
 
   final prefs = await SharedPreferences.getInstance();
   UserProfile.setPlusMemberInfo(
@@ -107,17 +111,37 @@ Future<void> initializationHandler() async {
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
-  await FirebaseAppCheck.instance.activate();
-  await NotificationService().init();
-  // Google UMP (User Messaging Platform) CMP consent information update & Mobile Ads gating
-  ConsentManager.instance.gatherConsent();
-  await Workmanager().initialize(
-    callbackDispatcher,
-  );
+  try {
+    // ignore: deprecated_member_use
+    await FirebaseAppCheck.instance.activate(
+      appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+    );
+  } catch (e) {
+    logger.w('AppCheck activation skipped/failed: $e');
+  }
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    logger.w('NotificationService init error: $e');
+  }
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  // Google UMP is mobile-only (Android & iOS)
+  if (Platform.isAndroid || Platform.isIOS) {
+    ConsentManager.instance.gatherConsent();
+  }
+
+  // Workmanager is mobile-only
+  if (Platform.isAndroid || Platform.isIOS) {
+    await Workmanager().initialize(
+      callbackDispatcher,
+    );
+  }
+
+  if (Platform.isAndroid || Platform.isIOS) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+  }
 
   if (kReleaseMode) {
     FlutterError.onError = (FlutterErrorDetails details) {

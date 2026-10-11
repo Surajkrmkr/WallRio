@@ -13,8 +13,7 @@ class ImageBottomSheet extends StatelessWidget {
   void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.of(context)
       ..pop()
-      ..push(
-          MaterialPageRoute(builder: (context) => FullImage(wallModel: model)));
+      ..push(WallpaperRoute(builder: (context) => FullImage(wallModel: model)));
   }
 
   void _showPlusDialog(BuildContext context) {

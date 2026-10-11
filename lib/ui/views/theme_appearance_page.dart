@@ -157,7 +157,8 @@ class ThemeAppearanceSheet extends StatelessWidget {
           const Spacer(),
           IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
-            icon: Icon(Icons.close_rounded, color: context.appColors.textSecondary),
+            icon: Icon(Icons.close_rounded,
+                color: context.appColors.textSecondary),
           ),
         ],
       ),
@@ -297,7 +298,9 @@ class ThemeAppearanceSheet extends StatelessWidget {
                 color: theme.backgroundColorSet.card,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: selected ? theme.accentPalette.primary : Colors.transparent,
+                  color: selected
+                      ? theme.accentPalette.primary
+                      : Colors.transparent,
                   width: 2,
                 ),
               ),
@@ -329,13 +332,17 @@ class ThemeAppearanceSheet extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 2),
                   const Text(
                     'PRO',
                     style: TextStyle(
-                        fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white54),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white54),
                   ),
                 ],
               ),
@@ -345,5 +352,4 @@ class ThemeAppearanceSheet extends StatelessWidget {
       ),
     );
   }
-
 }

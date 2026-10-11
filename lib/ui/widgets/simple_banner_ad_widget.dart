@@ -17,22 +17,28 @@ class BannerAdUnits {
   static const String navbarBanner = 'ca-app-pub-4861691653340010/7977409939';
 
   /// 2. Homepage Grid Banner
-  static const String homepageGridBanner = 'ca-app-pub-4861691653340010/8536832813';
+  static const String homepageGridBanner =
+      'ca-app-pub-4861691653340010/8536832813';
 
   /// 3. Static Wallpaper Detail Page Banner
-  static const String staticDetailBanner = 'ca-app-pub-4861691653340010/8360553312';
+  static const String staticDetailBanner =
+      'ca-app-pub-4861691653340010/8360553312';
 
   /// 4. Live Wallpaper Detail Page & Dynamic Tab Banner
-  static const String liveWallpaperBanner = 'ca-app-pub-4861691653340010/3317099877';
+  static const String liveWallpaperBanner =
+      'ca-app-pub-4861691653340010/3317099877';
 
   /// 5. Desktop Wallpaper Detail + Desktop Page Banner
-  static const String desktopWallpaperBanner = 'ca-app-pub-4861691653340010/8689680209';
+  static const String desktopWallpaperBanner =
+      'ca-app-pub-4861691653340010/8689680209';
 
   /// 6. Categories View All Banner
-  static const String categoriesViewAllBanner = 'ca-app-pub-4861691653340010/8833150437';
+  static const String categoriesViewAllBanner =
+      'ca-app-pub-4861691653340010/8833150437';
 
   /// Fallback banner ID for iOS or unspecified placements
-  static const String iosBannerDefault = 'ca-app-pub-4861691653340010/2292486372';
+  static const String iosBannerDefault =
+      'ca-app-pub-4861691653340010/2292486372';
 
   static String resolveAdUnitId(String placementId) {
     if (Platform.isIOS) {
@@ -161,7 +167,8 @@ class _SimpleBannerAdWidgetState extends State<SimpleBannerAdWidget>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDarkMode ? 0.20 : 0.08),
+                  color:
+                      Colors.black.withValues(alpha: isDarkMode ? 0.20 : 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),

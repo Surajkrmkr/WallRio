@@ -32,20 +32,27 @@ class PrimaryBtnWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = forceDarkStyle || Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        forceDarkStyle || Theme.of(context).brightness == Brightness.dark;
     final resolvedColor = textColor ?? (isDark ? whiteColor : blackColor);
 
     final customStyle = ButtonStyle(
       backgroundColor: WidgetStateProperty.all(
-        isDark ? whiteColor.withValues(alpha: 0.1) : blackColor.withValues(alpha: 0.1),
+        isDark
+            ? whiteColor.withValues(alpha: 0.1)
+            : blackColor.withValues(alpha: 0.1),
       ),
       foregroundColor: WidgetStateProperty.all(resolvedColor),
       overlayColor: WidgetStateProperty.all(
-        isDark ? blackColor.withValues(alpha: 0.1) : whiteColor.withValues(alpha: 0.4),
+        isDark
+            ? blackColor.withValues(alpha: 0.1)
+            : whiteColor.withValues(alpha: 0.4),
       ),
       side: WidgetStateProperty.all(
         BorderSide(
-          color: isDark ? whiteColor.withValues(alpha: 0.2) : blackColor.withValues(alpha: 0.2),
+          color: isDark
+              ? whiteColor.withValues(alpha: 0.2)
+              : blackColor.withValues(alpha: 0.2),
           width: 1.0,
         ),
       ),
@@ -60,7 +67,8 @@ class PrimaryBtnWidget extends StatelessWidget {
     // provides that dim; this only removes the ripple animation on top of it.
     final button = Platform.isIOS
         ? Theme(
-            data: Theme.of(context).copyWith(splashFactory: NoSplash.splashFactory),
+            data: Theme.of(context)
+                .copyWith(splashFactory: NoSplash.splashFactory),
             child: content,
           )
         : content;
@@ -77,96 +85,97 @@ class PrimaryBtnWidget extends StatelessWidget {
   Widget _buildContent(BuildContext context, bool isDark, Color resolvedColor,
       ButtonStyle customStyle) {
     return isLoading
-            ? SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: resolvedColor.withValues(alpha: 0.25)),
-                      ),
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween(
-                              begin: 0, end: (progress ?? 0).clamp(0.0, 1.0)),
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, _) => FractionallySizedBox(
-                            widthFactor: progress == null ? 0 : value,
-                            child: Container(
-                              height: 50,
-                              color: context.appColors.accent.withValues(alpha: 0.9),
-                            ),
-                          ),
+        ? SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: resolvedColor.withValues(alpha: 0.25)),
+                  ),
+                ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TweenAnimationBuilder<double>(
+                      tween:
+                          Tween(begin: 0, end: (progress ?? 0).clamp(0.0, 1.0)),
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) => FractionallySizedBox(
+                        widthFactor: progress == null ? 0 : value,
+                        child: Container(
+                          height: 50,
+                          color:
+                              context.appColors.accent.withValues(alpha: 0.9),
                         ),
                       ),
                     ),
-                    if (progress == null)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(20)),
-                          child: LinearProgressIndicator(
-                            minHeight: 3,
-                            backgroundColor: Colors.transparent,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                context.appColors.accent),
-                          ),
-                        ),
+                  ),
+                ),
+                if (progress == null)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(20)),
+                      child: LinearProgressIndicator(
+                        minHeight: 3,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            context.appColors.accent),
                       ),
-                    Text(
-                      progress != null
-                          ? '${(progress!.clamp(0.0, 1.0) * 100).round()}%'
-                          : btnText,
-                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                          color: resolvedColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600),
                     ),
-                  ],
+                  ),
+                Text(
+                  progress != null
+                      ? '${(progress!.clamp(0.0, 1.0) * 100).round()}%'
+                      : btnText,
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      color: resolvedColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          )
+        : icon != null
+            ? OutlinedButton.icon(
+                style: customStyle,
+                icon: Container(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  height: 20,
+                  child: icon!,
+                ),
+                onPressed: _handleTap,
+                label: Text(
+                  btnText,
+                  maxLines: 1,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium!
+                      .copyWith(color: resolvedColor, fontSize: 14),
                 ),
               )
-            : icon != null
-                ? OutlinedButton.icon(
-                    style: customStyle,
-                    icon: Container(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      height: 20,
-                      child: icon!,
-                    ),
-                    onPressed: _handleTap,
-                    label: Text(
-                      btnText,
-                      maxLines: 1,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium!
-                          .copyWith(color: resolvedColor, fontSize: 14),
-                    ),
-                  )
-                : OutlinedButton(
-                    style: customStyle,
-                    onPressed: _handleTap,
-                    child: Center(
-                      child: Text(
-                        btnText,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium!
-                            .copyWith(color: resolvedColor, fontSize: 14),
-                      ),
-                    ),
-                  );
+            : OutlinedButton(
+                style: customStyle,
+                onPressed: _handleTap,
+                child: Center(
+                  child: Text(
+                    btnText,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium!
+                        .copyWith(color: resolvedColor, fontSize: 14),
+                  ),
+                ),
+              );
   }
 }
