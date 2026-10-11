@@ -68,7 +68,7 @@ class SliverAppBarWidget extends StatelessWidget {
               isActionReset: clearSearchedData,
             )
           : const SizedBox.shrink(),
-      titleSpacing: showBackBtn ? 0 : 20,
+      titleSpacing: showBackBtn ? 4 : 20,
       toolbarHeight: toolbarHeight,
       centerTitle: centeredTitle,
       title: Consumer<DarkThemeProvider>(
@@ -286,6 +286,7 @@ class _FloatingTopBarDelegate extends SliverPersistentHeaderDelegate {
               child: MediaQuery.removePadding(
                 context: context,
                 removeTop: true,
+                removeBottom: true,
                 child: bar,
               ),
             ),
