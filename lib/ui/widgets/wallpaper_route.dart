@@ -128,7 +128,8 @@ class WallpaperCardPager extends StatefulWidget {
   State<WallpaperCardPager> createState() => _CardPagerState();
 }
 
-class _CardPagerState extends State<WallpaperCardPager> with TickerProviderStateMixin {
+class _CardPagerState extends State<WallpaperCardPager>
+    with TickerProviderStateMixin {
   // A full-width PageView; card insets and neighbour peeking are drawn by
   // _CardSlot so expand/collapse can animate continuously.
   late final PageController _controller = PageController(
@@ -279,16 +280,19 @@ class _CardPagerState extends State<WallpaperCardPager> with TickerProviderState
                 animation: _controller,
                 builder: (context, child) {
                   final width = MediaQuery.sizeOf(context).width;
-                  final page = _controller.hasClients &&
+                  final page =
+                      _controller.hasClients &&
                           _controller.position.hasContentDimensions
                       ? _controller.page ?? widget.initialIndex.toDouble()
                       : widget.initialIndex.toDouble();
                   return Stack(
                     fit: StackFit.expand,
                     children: [
-                      for (var index = page.floor() - 1;
-                          index <= page.ceil() + 1;
-                          index++)
+                      for (
+                        var index = page.floor() - 1;
+                        index <= page.ceil() + 1;
+                        index++
+                      )
                         if (index >= 0 && index < widget.count)
                           Positioned(
                             key: ValueKey('wallpaper-peek-$index'),
@@ -325,35 +329,33 @@ class _CardPagerState extends State<WallpaperCardPager> with TickerProviderState
                   index: i,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: i == _current && !_expanded
-                        ? _toggleExpanded
-                        : null,
+                    onTap: i == _current && !_expanded ? _toggleExpanded : null,
                     child: RepaintBoundary(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Current and adjacent cards build the real page so the
-                        // details sheet is already there while swiping.
-                        (i == _current ||
-                                (_settled && (i - _current).abs() <= 1))
-                            ? HeroMode(
-                                enabled: i == _current,
-                                child: WallpaperCardFocus(
-                                  focused: i == _current,
-                                  expanded: _expanded && i == _current,
-                                  child: ChangeNotifierProvider(
-                                    key: ValueKey(i),
-                                    create: (_) => WallDetails(),
-                                    child: Builder(
-                                      builder: (context) =>
-                                          widget.pageBuilder(context, i),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Current and adjacent cards build the real page so the
+                          // details sheet is already there while swiping.
+                          (i == _current ||
+                                  (_settled && (i - _current).abs() <= 1))
+                              ? HeroMode(
+                                  enabled: i == _current,
+                                  child: WallpaperCardFocus(
+                                    focused: i == _current,
+                                    expanded: _expanded && i == _current,
+                                    child: ChangeNotifierProvider(
+                                      key: ValueKey(i),
+                                      create: (_) => WallDetails(),
+                                      child: Builder(
+                                        builder: (context) =>
+                                            widget.pageBuilder(context, i),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              )
-                            : _Preview(url: widget.thumbOf(i)),
-                      ],
-                    ),
+                                )
+                              : _Preview(url: widget.thumbOf(i)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -483,31 +485,31 @@ class WallpaperDetailsTransition extends StatelessWidget {
     return IgnorePointer(
       ignoring: !visible,
       child: AnimatedSwitcher(
-      duration: const Duration(milliseconds: 320),
-      reverseDuration: const Duration(milliseconds: 240),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      layoutBuilder: (currentChild, previousChildren) => Stack(
-        fit: StackFit.expand,
-        children: [...previousChildren, ?currentChild],
-      ),
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 0.16),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
+        duration: const Duration(milliseconds: 320),
+        reverseDuration: const Duration(milliseconds: 240),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          fit: StackFit.expand,
+          children: [...previousChildren, ?currentChild],
         ),
-      ),
-      child: visible
-          ? SizedBox.expand(
-              key: const ValueKey('wallpaper-details'),
-              child: builder(context),
-            )
-          : const SizedBox.shrink(key: ValueKey('hidden-details')),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.16),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
           ),
+        ),
+        child: visible
+            ? SizedBox.expand(
+                key: const ValueKey('wallpaper-details'),
+                child: builder(context),
+              )
+            : const SizedBox.shrink(key: ValueKey('hidden-details')),
+      ),
     );
   }
 }

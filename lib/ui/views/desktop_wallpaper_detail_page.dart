@@ -36,20 +36,26 @@ class _DesktopWallpaperDetailPageState
       final allDesktop = provider.desktopWallList;
 
       final recommended = RecommendationService.getRecommendedWalls(
-          widget.wallModel, allDesktop);
+        widget.wallModel,
+        allDesktop,
+      );
 
       final sameCatAndTags = allDesktop
-          .where((w) =>
-              w.id != widget.wallModel.id &&
-              (w.category == widget.wallModel.category ||
-                  w.tags.any((t) => widget.wallModel.tags.contains(t))))
+          .where(
+            (w) =>
+                w.id != widget.wallModel.id &&
+                (w.category == widget.wallModel.category ||
+                    w.tags.any((t) => widget.wallModel.tags.contains(t))),
+          )
           .toList();
 
       final explorePool = allDesktop
-          .where((w) =>
-              w.id != widget.wallModel.id &&
-              !recommended.contains(w) &&
-              !sameCatAndTags.contains(w))
+          .where(
+            (w) =>
+                w.id != widget.wallModel.id &&
+                !recommended.contains(w) &&
+                !sameCatAndTags.contains(w),
+          )
           .toList();
 
       setState(() {
@@ -69,8 +75,11 @@ class _DesktopWallpaperDetailPageState
   void _downloadHandler(BuildContext context) {
     final action = Provider.of<WallActionProvider>(context, listen: false);
     if (Platform.isAndroid) {
-      action.downloadImg(context, widget.wallModel.url,
-          "${widget.wallModel.name}_${widget.wallModel.id}");
+      action.downloadImg(
+        context,
+        widget.wallModel.url,
+        "${widget.wallModel.name}_${widget.wallModel.id}",
+      );
     } else {
       action.saveToPhotos(context, widget.wallModel.url);
     }
@@ -92,8 +101,10 @@ class _DesktopWallpaperDetailPageState
       return;
     }
 
-    final progression =
-        Provider.of<ProgressionProvider>(context, listen: false);
+    final progression = Provider.of<ProgressionProvider>(
+      context,
+      listen: false,
+    );
 
     CNBottomSheet.show(
       context: context,
@@ -141,11 +152,13 @@ class _DesktopWallpaperDetailPageState
       return '5K';
     }
     // 2K Detection (2560x1440, 1440p, QHD, 2K)
-    if (lowerTags.any((t) =>
-            t.contains('2k') ||
-            t.contains('2560') ||
-            t.contains('1440') ||
-            t.contains('qhd')) ||
+    if (lowerTags.any(
+          (t) =>
+              t.contains('2k') ||
+              t.contains('2560') ||
+              t.contains('1440') ||
+              t.contains('qhd'),
+        ) ||
         lowerName.contains('2k') ||
         lowerName.contains('2560') ||
         lowerName.contains('1440')) {
@@ -201,7 +214,10 @@ class _DesktopWallpaperDetailPageState
                       children: [
                         Hero(
                           tag: 'desktop_${widget.wallModel.url}',
-                          child: _buildLandscapeHeroPreview(context, isDarkMode),
+                          child: _buildLandscapeHeroPreview(
+                            context,
+                            isDarkMode,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         _buildInformationPanel(context, isDarkMode),
@@ -247,16 +263,21 @@ class _DesktopWallpaperDetailPageState
             Row(
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: context.appColors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.desktop_windows_rounded,
-                          color: context.appColors.accent, size: 13),
+                      Icon(
+                        Icons.desktop_windows_rounded,
+                        color: context.appColors.accent,
+                        size: 13,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         'DESKTOP',
@@ -281,8 +302,10 @@ class _DesktopWallpaperDetailPageState
   Widget _buildFavouriteButton(bool isDarkMode) {
     return Consumer<FavouriteProvider>(
       builder: (context, provider, _) {
-        final bool isFav = provider.isSelectedAsFav(widget.wallModel.url,
-            id: widget.wallModel.id);
+        final bool isFav = provider.isSelectedAsFav(
+          widget.wallModel.url,
+          id: widget.wallModel.id,
+        );
         return SizedBox(
           height: 52,
           width: 52,
@@ -290,10 +313,10 @@ class _DesktopWallpaperDetailPageState
             onPressed: provider.isLoading
                 ? null
                 : () => UserProfile.plusMember
-                    ? isFav
-                        ? provider.removeFromFav(id: widget.wallModel.id)
-                        : provider.addToFav(context, wall: widget.wallModel)
-                    : _showExploreProDialog(context),
+                      ? isFav
+                            ? provider.removeFromFav(id: widget.wallModel.id)
+                            : provider.addToFav(context, wall: widget.wallModel)
+                      : _showExploreProDialog(context),
             style: IconButton.styleFrom(
               backgroundColor: (isDarkMode ? Colors.white : Colors.black)
                   .withValues(alpha: 0.08),
@@ -323,9 +346,8 @@ class _DesktopWallpaperDetailPageState
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => DesktopFullscreenViewer(
-                wallModel: widget.wallModel,
-              ),
+              builder: (_) =>
+                  DesktopFullscreenViewer(wallModel: widget.wallModel),
             ),
           );
         },
@@ -356,10 +378,8 @@ class _DesktopWallpaperDetailPageState
                     width: double.infinity,
                     radius: 24,
                   ),
-                  errorWidget: (context, url, error) => const Icon(
-                    Icons.broken_image_rounded,
-                    size: 48,
-                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.broken_image_rounded, size: 48),
                 ),
               ),
             ),
@@ -386,10 +406,10 @@ class _DesktopWallpaperDetailPageState
                 child: Text(
                   widget.wallModel.name,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        letterSpacing: -0.3,
-                      ),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -415,8 +435,9 @@ class _DesktopWallpaperDetailPageState
             "Created by ${widget.wallModel.author.isNotEmpty ? widget.wallModel.author : 'WallRio Studio'}",
             style: TextStyle(
               fontSize: 13,
-              color: (isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.6),
+              color: (isDarkMode ? Colors.white : Colors.black).withValues(
+                alpha: 0.6,
+              ),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -427,13 +448,29 @@ class _DesktopWallpaperDetailPageState
             runSpacing: 10,
             children: [
               _buildMetaChip(
-                  context, Icons.aspect_ratio_rounded, resolution, isDarkMode),
+                context,
+                Icons.aspect_ratio_rounded,
+                resolution,
+                isDarkMode,
+              ),
               _buildMetaChip(
-                  context, Icons.sd_storage_rounded, fileSize, isDarkMode),
-              _buildMetaChip(context, Icons.screen_search_desktop_rounded,
-                  aspectRatio, isDarkMode),
-              _buildMetaChip(context, Icons.category_rounded,
-                  widget.wallModel.category, isDarkMode),
+                context,
+                Icons.sd_storage_rounded,
+                fileSize,
+                isDarkMode,
+              ),
+              _buildMetaChip(
+                context,
+                Icons.screen_search_desktop_rounded,
+                aspectRatio,
+                isDarkMode,
+              ),
+              _buildMetaChip(
+                context,
+                Icons.category_rounded,
+                widget.wallModel.category,
+                isDarkMode,
+              ),
             ],
           ),
         ],
@@ -442,34 +479,44 @@ class _DesktopWallpaperDetailPageState
   }
 
   Widget _buildMetaChip(
-      BuildContext context, IconData icon, String label, bool isDarkMode) {
+    BuildContext context,
+    IconData icon,
+    String label,
+    bool isDarkMode,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color:
-            (isDarkMode ? Colors.white : Colors.black).withValues(alpha: 0.06),
+        color: (isDarkMode ? Colors.white : Colors.black).withValues(
+          alpha: 0.06,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDarkMode ? Colors.white : Colors.black)
-              .withValues(alpha: 0.08),
+          color: (isDarkMode ? Colors.white : Colors.black).withValues(
+            alpha: 0.08,
+          ),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: 14,
-              color: (isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.7)),
+          Icon(
+            icon,
+            size: 14,
+            color: (isDarkMode ? Colors.white : Colors.black).withValues(
+              alpha: 0.7,
+            ),
+          ),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: (isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.85),
+              color: (isDarkMode ? Colors.white : Colors.black).withValues(
+                alpha: 0.85,
+              ),
             ),
           ),
         ],
@@ -518,9 +565,9 @@ class _DesktopWallpaperDetailPageState
               Text(
                 "Color Palette",
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -567,9 +614,9 @@ class _DesktopWallpaperDetailPageState
           child: Text(
             "Related Desktop Wallpapers",
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -609,9 +656,9 @@ class _DesktopWallpaperDetailPageState
           child: Text(
             "More Like This",
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -651,9 +698,9 @@ class _DesktopWallpaperDetailPageState
           Text(
             "Explore Similar Wallpapers",
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -680,7 +727,10 @@ class _DesktopWallpaperDetailPageState
 
   // Reusable 16:10 Landscape Desktop Card Tile with top-left Pro diamond icon only
   Widget _buildDesktopCardTile(
-      Walls wall, BuildContext context, bool isDarkMode) {
+    Walls wall,
+    BuildContext context,
+    bool isDarkMode,
+  ) {
     return AspectRatio(
       aspectRatio: 16 / 10,
       child: GestureDetector(
@@ -716,10 +766,7 @@ class _DesktopWallpaperDetailPageState
               fit: StackFit.expand,
               children: [
                 CNImage(imageUrl: wall.thumbnail),
-                VerifyIconWidget(
-                  visibility: !wall.isPremium,
-                  padding: 10,
-                ),
+                VerifyIconWidget(visibility: !wall.isPremium, padding: 10),
               ],
             ),
           ),
@@ -738,8 +785,9 @@ class _DesktopWallpaperDetailPageState
             : Colors.white.withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
-            color: (isDarkMode ? Colors.white : Colors.black)
-                .withValues(alpha: 0.08),
+            color: (isDarkMode ? Colors.white : Colors.black).withValues(
+              alpha: 0.08,
+            ),
             width: 1,
           ),
         ),
@@ -883,9 +931,13 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('$balance / ${widget.cost} Diamonds',
-                              style: const TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w800)),
+                          Text(
+                            '$balance / ${widget.cost} Diamonds',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             canAfford
@@ -915,7 +967,9 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                             setState(() => _isRedeeming = true);
                             final success = await widget.progression
                                 .deductDiamonds(
-                                    widget.cost, "Unlocked Wallpaper");
+                                  widget.cost,
+                                  "Unlocked Wallpaper",
+                                );
                             if (success) {
                               ToastWidget.showToast("Wallpaper Unlocked! 💎");
                               widget.onUnlocked();
@@ -937,11 +991,17 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2))
-                        : Text('REDEEM ${widget.cost} DIAMONDS',
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'REDEEM ${widget.cost} DIAMONDS',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8)),
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
                   ),
                 )
               else
@@ -968,9 +1028,13 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                     ),
-                    child: const Text('GET DIAMONDS',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                    child: const Text(
+                      'GET DIAMONDS',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -983,13 +1047,18 @@ class _UnlockWallpaperSheetState extends State<_UnlockWallpaperSheet> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => OnboardingScreen4(
-                            onComplete: () => Navigator.pop(context)),
+                          onComplete: () => Navigator.pop(context),
+                        ),
                       ),
                     );
                   },
-                  child: const Text('Unlock ALL with Pro',
-                      style: TextStyle(
-                          color: Colors.grey, fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Unlock ALL with Pro',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],

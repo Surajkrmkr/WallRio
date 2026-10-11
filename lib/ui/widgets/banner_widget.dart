@@ -59,8 +59,9 @@ class _BannerWidgetState extends State<BannerWidget>
     final c = _pageController;
     if (c == null || !c.hasClients) return;
     c.nextPage(
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.easeInOutCubic);
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   void _jumpTo(int realIndex) {
@@ -68,9 +69,11 @@ class _BannerWidgetState extends State<BannerWidget>
     if (c == null || !c.hasClients) return;
     final page = (c.page ?? 0).round();
     final target = page - (page % _count) + realIndex;
-    c.animateToPage(target,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOutCubic);
+    c.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _onTapHandler(BuildContext context, Banners banner) {
@@ -79,39 +82,43 @@ class _BannerWidgetState extends State<BannerWidget>
       return;
     }
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      final provider = Provider.of<WallRio>(context, listen: false);
-      final categoryWalls = provider.categories![banner.category];
-      if (categoryWalls != null) {
-        return GridPage(
-          categoryName: banner.category,
-          walls: categoryWalls,
-        );
-      }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          final provider = Provider.of<WallRio>(context, listen: false);
+          final categoryWalls = provider.categories![banner.category];
+          if (categoryWalls != null) {
+            return GridPage(
+              categoryName: banner.category,
+              walls: categoryWalls,
+            );
+          }
 
-      final collection = provider.collections.firstWhere(
-        (c) => c.name.toLowerCase() == banner.category.toLowerCase(),
-        orElse: () => Collections(id: 0, name: "", productId: "", walls: []),
-      );
-      if (collection.name.isNotEmpty) {
-        return GridPage(
-          categoryName: collection.name,
-          walls: collection.walls ?? [],
-          collection: collection,
-        );
-      }
+          final collection = provider.collections.firstWhere(
+            (c) => c.name.toLowerCase() == banner.category.toLowerCase(),
+            orElse: () =>
+                Collections(id: 0, name: "", productId: "", walls: []),
+          );
+          if (collection.name.isNotEmpty) {
+            return GridPage(
+              categoryName: collection.name,
+              walls: collection.walls ?? [],
+              collection: collection,
+            );
+          }
 
-      return GridPage(
-        categoryName: banner.category,
-        walls: const [],
-      );
-    }));
+          return GridPage(categoryName: banner.category, walls: const []);
+        },
+      ),
+    );
   }
 
   /// Same resolution rules as before: wallId, a direct image URL, or a
   /// rotating free wallpaper when no category/link is configured.
   Walls? _resolveWallOfTheDay(WallRio provider, Banners banner, int index) {
-    final isSingleWallBanner = banner.wallId != null ||
+    final isSingleWallBanner =
+        banner.wallId != null ||
         (banner.category.isEmpty && banner.link.isEmpty);
     if (!isSingleWallBanner || provider.originalWallList.isEmpty) return null;
 
@@ -141,8 +148,9 @@ class _BannerWidgetState extends State<BannerWidget>
         ),
       );
     }
-    final freeWalls =
-        provider.originalWallList.where((w) => !w.isPremium).toList();
+    final freeWalls = provider.originalWallList
+        .where((w) => !w.isPremium)
+        .toList();
     return freeWalls.isNotEmpty
         ? freeWalls[index % freeWalls.length]
         : provider.originalWallList.first;
@@ -154,105 +162,114 @@ class _BannerWidgetState extends State<BannerWidget>
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    final double carouselHeight =
-        isTablet ? (isLandscape ? 340.0 : 300.0) : 210.0;
-    final double viewportFraction =
-        isTablet ? (isLandscape ? 0.78 : 0.84) : 0.88;
+    final double carouselHeight = isTablet
+        ? (isLandscape ? 340.0 : 300.0)
+        : 210.0;
+    final double viewportFraction = isTablet
+        ? (isLandscape ? 0.78 : 0.84)
+        : 0.88;
 
-    return Consumer<WallRio>(builder: (context, provider, _) {
-      if (provider.isLoading || provider.bannerList.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-          child: ShimmerWidget(
-            height: carouselHeight,
-            width: double.infinity,
-            radius: 28,
-          ),
-        );
-      }
-
-      final banners = provider.bannerList;
-      _ensureController(banners.length, viewportFraction);
-      final controller = _pageController!;
-
-      return Padding(
-        padding: const EdgeInsets.only(top: 4, bottom: 20),
-        child: Column(
-          children: [
-            SizedBox(
+    return Consumer<WallRio>(
+      builder: (context, provider, _) {
+        if (provider.isLoading || provider.bannerList.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            child: ShimmerWidget(
               height: carouselHeight,
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (n) {
-                  if (n is ScrollStartNotification && n.dragDetails != null) {
-                    _progress.stop();
-                  } else if (n is ScrollEndNotification &&
-                      !_progress.isAnimating) {
-                    _progress.forward(from: 0);
-                  }
-                  return false;
-                },
-                child: PageView.builder(
-                  controller: controller,
-                  physics: const BouncingScrollPhysics(),
-                  onPageChanged: (page) {
-                    provider.setBannerIndex = page % banners.length;
-                    _progress.forward(from: 0);
+              width: double.infinity,
+              radius: 28,
+            ),
+          );
+        }
+
+        final banners = provider.bannerList;
+        _ensureController(banners.length, viewportFraction);
+        final controller = _pageController!;
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 20),
+          child: Column(
+            children: [
+              SizedBox(
+                height: carouselHeight,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    if (n is ScrollStartNotification && n.dragDetails != null) {
+                      _progress.stop();
+                    } else if (n is ScrollEndNotification &&
+                        !_progress.isAnimating) {
+                      _progress.forward(from: 0);
+                    }
+                    return false;
                   },
-                  itemBuilder: (context, page) {
-                    final index = page % banners.length;
-                    final banner = banners[index];
-                    final wall = _resolveWallOfTheDay(provider, banner, index);
-                    return AnimatedBuilder(
-                      animation: controller,
-                      builder: (context, child) {
-                        double delta = 0;
-                        if (controller.hasClients &&
-                            controller.position.haveDimensions) {
-                          delta = (controller.page ?? page.toDouble()) - page;
-                        }
-                        final d = delta.clamp(-1.0, 1.0);
-                        return Transform.scale(
-                          scale: 1 - d.abs() * 0.08,
-                          child: _BannerCard(
-                            parallax: d,
-                            dim: d.abs(),
-                            banner: banner,
-                            wall: wall,
-                            seed: index,
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              if (wall != null) {
-                                Navigator.push(
-                                  context,
-                                  WallpaperRoute(
-                                    builder: (_) => FullImage(wallModel: wall),
-                                  ),
-                                );
-                              } else {
-                                _onTapHandler(context, banner);
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  child: PageView.builder(
+                    controller: controller,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (page) {
+                      provider.setBannerIndex = page % banners.length;
+                      _progress.forward(from: 0);
+                    },
+                    itemBuilder: (context, page) {
+                      final index = page % banners.length;
+                      final banner = banners[index];
+                      final wall = _resolveWallOfTheDay(
+                        provider,
+                        banner,
+                        index,
+                      );
+                      return AnimatedBuilder(
+                        animation: controller,
+                        builder: (context, child) {
+                          double delta = 0;
+                          if (controller.hasClients &&
+                              controller.position.haveDimensions) {
+                            delta = (controller.page ?? page.toDouble()) - page;
+                          }
+                          final d = delta.clamp(-1.0, 1.0);
+                          return Transform.scale(
+                            scale: 1 - d.abs() * 0.08,
+                            child: _BannerCard(
+                              parallax: d,
+                              dim: d.abs(),
+                              banner: banner,
+                              wall: wall,
+                              seed: index,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                if (wall != null) {
+                                  Navigator.push(
+                                    context,
+                                    WallpaperRoute(
+                                      builder: (_) =>
+                                          FullImage(wallModel: wall),
+                                    ),
+                                  );
+                                } else {
+                                  _onTapHandler(context, banner);
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            if (banners.length > 1) ...[
-              const SizedBox(height: 14),
-              _StoryProgressBar(
-                count: banners.length,
-                activeIndex: provider.bannerIndex,
-                progress: _progress,
-                onTap: _jumpTo,
-              ),
+              if (banners.length > 1) ...[
+                const SizedBox(height: 14),
+                _StoryProgressBar(
+                  count: banners.length,
+                  activeIndex: provider.bannerIndex,
+                  progress: _progress,
+                  onTap: _jumpTo,
+                ),
+              ],
             ],
-          ],
-        ),
-      );
-    });
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -314,8 +331,8 @@ class _BannerCardState extends State<_BannerCard>
     final title = isWallOfDay ? wall.name : banner.title.trim();
     final eyebrow = isWallOfDay
         ? (banner.title.trim().isNotEmpty
-            ? banner.title.trim().replaceAll('\n', ' ')
-            : 'Wallpaper of the day')
+              ? banner.title.trim().replaceAll('\n', ' ')
+              : 'Wallpaper of the day')
         : (banner.category.isNotEmpty ? banner.category : 'Featured');
     final subtitle = isWallOfDay
         ? 'by ${wall.author}'
@@ -346,9 +363,7 @@ class _BannerCardState extends State<_BannerCard>
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
           child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(28)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
               child: Stack(
@@ -363,12 +378,16 @@ class _BannerCardState extends State<_BannerCard>
                           ? AnimatedBuilder(
                               animation: _drift,
                               builder: (context, child) {
-                                final t =
-                                    Curves.easeInOut.transform(_drift.value);
+                                final t = Curves.easeInOut.transform(
+                                  _drift.value,
+                                );
                                 return Transform.scale(
                                   scale: 1 + 0.1 * t,
-                                  alignment:
-                                      Alignment.lerp(path[0], path[1], t)!,
+                                  alignment: Alignment.lerp(
+                                    path[0],
+                                    path[1],
+                                    t,
+                                  )!,
                                   child: child,
                                 );
                               },
@@ -438,8 +457,9 @@ class _BannerCardState extends State<_BannerCard>
                   if (widget.dim > 0.01)
                     IgnorePointer(
                       child: ColoredBox(
-                        color: Colors.black
-                            .withValues(alpha: (widget.dim * 0.4).clamp(0, 1)),
+                        color: Colors.black.withValues(
+                          alpha: (widget.dim * 0.4).clamp(0, 1),
+                        ),
                       ),
                     ),
                 ],
@@ -459,78 +479,121 @@ class _EyebrowStyle {
 
   static const _byKeyword = <List<String>, _EyebrowStyle>{
     ['trend', 'hot', 'popular', 'viral']: _EyebrowStyle(
-        Icons.local_fire_department_rounded,
-        [Color(0xFFFFB347), Color(0xFFFF3D3D)]),
+      Icons.local_fire_department_rounded,
+      [Color(0xFFFFB347), Color(0xFFFF3D3D)],
+    ),
     ['wallpaper of the day', 'of the day', 'today', 'daily']: _EyebrowStyle(
-        Icons.wb_sunny_rounded, [Color(0xFFFFE066), Color(0xFFFF8A00)]),
+      Icons.wb_sunny_rounded,
+      [Color(0xFFFFE066), Color(0xFFFF8A00)],
+    ),
     ['new', 'fresh', 'latest', 'just']: _EyebrowStyle(
-        Icons.new_releases_rounded, [Color(0xFF5EEAD4), Color(0xFF059669)]),
+      Icons.new_releases_rounded,
+      [Color(0xFF5EEAD4), Color(0xFF059669)],
+    ),
     ['live', 'motion', 'dynamic', 'animated']: _EyebrowStyle(
-        Icons.play_circle_fill_rounded, [Color(0xFFF472B6), Color(0xFF9333EA)]),
+      Icons.play_circle_fill_rounded,
+      [Color(0xFFF472B6), Color(0xFF9333EA)],
+    ),
     ['collection', 'pack', 'set']: _EyebrowStyle(
-        Icons.collections_bookmark_rounded,
-        [Color(0xFF7DD3FC), Color(0xFF4F46E5)]),
+      Icons.collections_bookmark_rounded,
+      [Color(0xFF7DD3FC), Color(0xFF4F46E5)],
+    ),
     ['pro', 'premium', 'exclusive', 'vip']: _EyebrowStyle(
-        Icons.diamond_rounded, [Color(0xFFFDE68A), Color(0xFFD97706)]),
+      Icons.diamond_rounded,
+      [Color(0xFFFDE68A), Color(0xFFD97706)],
+    ),
     ['pick', 'editor', 'featured', 'top', 'best']: _EyebrowStyle(
-        Icons.star_rounded, [Color(0xFFFFF176), Color(0xFFF97316)]),
-    ['week', 'weekly', 'month']: _EyebrowStyle(
-        Icons.calendar_month_rounded, [Color(0xFF67E8F9), Color(0xFF0284C7)]),
+      Icons.star_rounded,
+      [Color(0xFFFFF176), Color(0xFFF97316)],
+    ),
+    ['week', 'weekly', 'month']: _EyebrowStyle(Icons.calendar_month_rounded, [
+      Color(0xFF67E8F9),
+      Color(0xFF0284C7),
+    ]),
     ['dark', 'amoled', 'night', 'black']: _EyebrowStyle(
-        Icons.dark_mode_rounded, [Color(0xFFA5B4FC), Color(0xFF312E81)]),
-    [
-      'nature',
-      'forest',
-      'green',
-      'earth'
-    ]: _EyebrowStyle(Icons.eco_rounded, [Color(0xFFBBF7D0), Color(0xFF16A34A)]),
+      Icons.dark_mode_rounded,
+      [Color(0xFFA5B4FC), Color(0xFF312E81)],
+    ),
+    ['nature', 'forest', 'green', 'earth']: _EyebrowStyle(Icons.eco_rounded, [
+      Color(0xFFBBF7D0),
+      Color(0xFF16A34A),
+    ]),
     ['space', 'galaxy', 'planet', 'cosmic']: _EyebrowStyle(
-        Icons.rocket_launch_rounded, [Color(0xFFC4B5FD), Color(0xFF5B21B6)]),
-    ['anime', 'manga']: _EyebrowStyle(
-        Icons.auto_awesome_rounded, [Color(0xFFFBCFE8), Color(0xFFEC4899)]),
-    ['abstract', 'art', 'gradient']: _EyebrowStyle(
-        Icons.palette_rounded, [Color(0xFFF5D0FE), Color(0xFFC026D3)]),
-    ['minimal', 'clean', 'simple']: _EyebrowStyle(
-        Icons.crop_square_rounded, [Color(0xFFE5E7EB), Color(0xFF6B7280)]),
+      Icons.rocket_launch_rounded,
+      [Color(0xFFC4B5FD), Color(0xFF5B21B6)],
+    ),
+    ['anime', 'manga']: _EyebrowStyle(Icons.auto_awesome_rounded, [
+      Color(0xFFFBCFE8),
+      Color(0xFFEC4899),
+    ]),
+    ['abstract', 'art', 'gradient']: _EyebrowStyle(Icons.palette_rounded, [
+      Color(0xFFF5D0FE),
+      Color(0xFFC026D3),
+    ]),
+    ['minimal', 'clean', 'simple']: _EyebrowStyle(Icons.crop_square_rounded, [
+      Color(0xFFE5E7EB),
+      Color(0xFF6B7280),
+    ]),
     ['car', 'cars', 'bike', 'speed', 'racer', 'racing']: _EyebrowStyle(
-        Icons.directions_car_filled_rounded,
-        [Color(0xFFCBD5E1), Color(0xFF334155)]),
+      Icons.directions_car_filled_rounded,
+      [Color(0xFFCBD5E1), Color(0xFF334155)],
+    ),
     ['sale', 'offer', 'deal', 'discount']: _EyebrowStyle(
-        Icons.local_offer_rounded, [Color(0xFFFDA4AF), Color(0xFFE11D48)]),
-    ['gift', 'reward', 'free']: _EyebrowStyle(
-        Icons.card_giftcard_rounded, [Color(0xFFFCA5A5), Color(0xFFDC2626)]),
-    ['update', 'app', 'feature']: _EyebrowStyle(
-        Icons.bolt_rounded, [Color(0xFFFDE047), Color(0xFFEAB308)]),
+      Icons.local_offer_rounded,
+      [Color(0xFFFDA4AF), Color(0xFFE11D48)],
+    ),
+    ['gift', 'reward', 'free']: _EyebrowStyle(Icons.card_giftcard_rounded, [
+      Color(0xFFFCA5A5),
+      Color(0xFFDC2626),
+    ]),
+    ['update', 'app', 'feature']: _EyebrowStyle(Icons.bolt_rounded, [
+      Color(0xFFFDE047),
+      Color(0xFFEAB308),
+    ]),
   };
 
   static const _fallbacks = <_EyebrowStyle>[
-    _EyebrowStyle(
-        Icons.auto_awesome_rounded, [Color(0xFF93C5FD), Color(0xFF7C3AED)]),
-    _EyebrowStyle(
-        Icons.whatshot_rounded, [Color(0xFFFDBA74), Color(0xFFEA580C)]),
-    _EyebrowStyle(
-        Icons.interests_rounded, [Color(0xFF6EE7B7), Color(0xFF0D9488)]),
-    _EyebrowStyle(
-        Icons.blur_on_rounded, [Color(0xFFF9A8D4), Color(0xFFDB2777)]),
+    _EyebrowStyle(Icons.auto_awesome_rounded, [
+      Color(0xFF93C5FD),
+      Color(0xFF7C3AED),
+    ]),
+    _EyebrowStyle(Icons.whatshot_rounded, [
+      Color(0xFFFDBA74),
+      Color(0xFFEA580C),
+    ]),
+    _EyebrowStyle(Icons.interests_rounded, [
+      Color(0xFF6EE7B7),
+      Color(0xFF0D9488),
+    ]),
+    _EyebrowStyle(Icons.blur_on_rounded, [
+      Color(0xFFF9A8D4),
+      Color(0xFFDB2777),
+    ]),
   ];
 
-  static _EyebrowStyle resolve(String text,
-      {required bool isWallOfDay, required bool isLink}) {
+  static _EyebrowStyle resolve(
+    String text, {
+    required bool isWallOfDay,
+    required bool isLink,
+  }) {
     final lower = text.toLowerCase();
     final words = lower.split(RegExp(r'[^a-z]+')).toSet();
     for (final entry in _byKeyword.entries) {
       for (final key in entry.key) {
         final hit = key.contains(' ')
             ? lower.contains(key)
-            : words
-                .any((w) => w == key || (key.length >= 4 && w.startsWith(key)));
+            : words.any(
+                (w) => w == key || (key.length >= 4 && w.startsWith(key)),
+              );
         if (hit) return entry.value;
       }
     }
     if (isWallOfDay) return _byKeyword.values.elementAt(1);
     if (isLink) {
-      return const _EyebrowStyle(
-          Icons.campaign_rounded, [Color(0xFF67E8F9), Color(0xFF0369A1)]);
+      return const _EyebrowStyle(Icons.campaign_rounded, [
+        Color(0xFF67E8F9),
+        Color(0xFF0369A1),
+      ]);
     }
     return _fallbacks[lower.hashCode.abs() % _fallbacks.length];
   }

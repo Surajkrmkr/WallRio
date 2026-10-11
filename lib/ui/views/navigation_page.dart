@@ -47,8 +47,10 @@ class _NavigationPageState extends State<NavigationPage>
           wallRio.fetchDesktopWallpapers();
         }
         if (UserProfile.plusMember) {
-          Provider.of<FavouriteProvider>(context, listen: false)
-              .getFavouritesFromFirebase();
+          Provider.of<FavouriteProvider>(
+            context,
+            listen: false,
+          ).getFavouritesFromFirebase();
         }
       });
       super.initState();
@@ -63,14 +65,18 @@ class _NavigationPageState extends State<NavigationPage>
       if (wallRio.originalWallList.isEmpty) {
         wallRio.getListFromAPI(context);
       }
-      final liveProvider =
-          Provider.of<LiveWallpaperProvider>(context, listen: false);
+      final liveProvider = Provider.of<LiveWallpaperProvider>(
+        context,
+        listen: false,
+      );
       if (liveProvider.wallList.isEmpty) {
         liveProvider.getListFromAPI();
       }
       if (UserProfile.plusMember) {
-        Provider.of<FavouriteProvider>(context, listen: false)
-            .getFavouritesFromFirebase();
+        Provider.of<FavouriteProvider>(
+          context,
+          listen: false,
+        ).getFavouritesFromFirebase();
       }
     });
 
@@ -87,8 +93,10 @@ class _NavigationPageState extends State<NavigationPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
     if (state == AppLifecycleState.resumed && Platform.isIOS) {
-      Provider.of<SubscriptionProvider>(context, listen: false)
-          .checkPastPurchases();
+      Provider.of<SubscriptionProvider>(
+        context,
+        listen: false,
+      ).checkPastPurchases();
     }
   }
 
@@ -128,8 +136,10 @@ class _NavigationPageState extends State<NavigationPage>
   }
 
   void _showRateUsDialog(BuildContext context) {
-    final progProvider =
-        Provider.of<ProgressionProvider>(context, listen: false);
+    final progProvider = Provider.of<ProgressionProvider>(
+      context,
+      listen: false,
+    );
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -154,8 +164,10 @@ class _NavigationPageState extends State<NavigationPage>
           final count = prefs.getInt('rate_dismiss_count') ?? 0;
           if (count == 0) {
             await prefs.setInt('rate_dismiss_count', 1);
-            await prefs.setInt('rate_last_dismiss_time',
-                DateTime.now().millisecondsSinceEpoch);
+            await prefs.setInt(
+              'rate_last_dismiss_time',
+              DateTime.now().millisecondsSinceEpoch,
+            );
           } else {
             await prefs.setBool('rate_refused', true);
           }
@@ -203,10 +215,7 @@ class _NavigationPageState extends State<NavigationPage>
               ? TickerMode(
                   enabled: i == activeIndex,
                   // Hidden tabs must not expose heroes that clash with the active tab's.
-                  child: HeroMode(
-                    enabled: i == activeIndex,
-                    child: pages[i],
-                  ),
+                  child: HeroMode(enabled: i == activeIndex, child: pages[i]),
                 )
               : const SizedBox.shrink(),
       ],
@@ -226,11 +235,15 @@ class _NavigationPageState extends State<NavigationPage>
         logger.w('Network request failed while reloading user: ${e.message}');
       } else {
         logger.w(
-            'FirebaseAuthException reloading user: ${e.code} - ${e.message}');
+          'FirebaseAuthException reloading user: ${e.code} - ${e.message}',
+        );
       }
     } catch (error, stackTrace) {
-      logger.e('Error reloading user: $error',
-          error: error, stackTrace: stackTrace);
+      logger.e(
+        'Error reloading user: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -242,72 +255,73 @@ class _NavigationPageState extends State<NavigationPage>
 
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Consumer<Navigation>(builder: (context, provider, _) {
-      return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-        },
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          extendBody: true,
-          body: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification notification) {
-              if (notification is ScrollUpdateNotification) {
-                if (notification.metrics.pixels >=
-                    notification.metrics.maxScrollExtent - 500) {
-                  Provider.of<WallRio>(context, listen: false).loadMore();
+    return Consumer<Navigation>(
+      builder: (context, provider, _) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+          },
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            extendBody: true,
+            body: NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification notification) {
+                if (notification is ScrollUpdateNotification) {
+                  if (notification.metrics.pixels >=
+                      notification.metrics.maxScrollExtent - 500) {
+                    Provider.of<WallRio>(context, listen: false).loadMore();
+                  }
+                  // Hide the bar while scrolling down, bring it back on scroll up.
+                  final delta = notification.scrollDelta ?? 0;
+                  if (notification.metrics.axis == Axis.vertical &&
+                      delta.abs() > 6) {
+                    provider.setVisible =
+                        delta < 0 || notification.metrics.pixels < 120;
+                  }
                 }
-                // Hide the bar while scrolling down, bring it back on scroll up.
-                final delta = notification.scrollDelta ?? 0;
-                if (notification.metrics.axis == Axis.vertical &&
-                    delta.abs() > 6) {
-                  provider.setVisible =
-                      delta < 0 || notification.metrics.pixels < 120;
-                }
-              }
-              return false;
-            },
-            child: Stack(
-              children: [
-                _buildTabs(provider.index),
-                if (_showPromoBanner && !UserProfile.plusMember)
-                  Positioned(
-                    bottom: MediaQuery.of(context).padding.bottom +
-                        16 +
-                        61 +
-                        20 +
-                        60,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: _buildPromoBanner(context),
+                return false;
+              },
+              child: Stack(
+                children: [
+                  _buildTabs(provider.index),
+                  if (_showPromoBanner && !UserProfile.plusMember)
+                    Positioned(
+                      bottom:
+                          MediaQuery.of(context).padding.bottom +
+                          16 +
+                          61 +
+                          20 +
+                          60,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _buildPromoBanner(context)),
                     ),
-                  ),
+                ],
+              ),
+            ),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildStickyBanner(provider),
+                RepaintBoundary(
+                  child: Platform.isIOS
+                      ? _buildCupertinoTabBar(provider, isDarkMode)
+                      : AnimatedSlide(
+                          offset: provider.visible
+                              ? Offset.zero
+                              : const Offset(0, 1.6),
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          child: _buildCustomTabBar(provider, isDarkMode),
+                        ),
+                ),
               ],
             ),
           ),
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildStickyBanner(provider),
-              RepaintBoundary(
-                child: Platform.isIOS
-                    ? _buildCupertinoTabBar(provider, isDarkMode)
-                    : AnimatedSlide(
-                        offset: provider.visible
-                            ? Offset.zero
-                            : const Offset(0, 1.6),
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        child: _buildCustomTabBar(provider, isDarkMode),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _buildStickyBanner(Navigation provider) {
@@ -367,39 +381,47 @@ class _NavigationPageState extends State<NavigationPage>
     const mainTabs = [0, 1, 3, 2, 4];
 
     Widget barContent = Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16,
-          MediaQuery.of(context).padding.bottom + (isTablet ? 18 : 12)),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        MediaQuery.of(context).padding.bottom + (isTablet ? 18 : 12),
+      ),
       child: _glassPill(
         isDarkMode,
         height: barHeight,
         padding: const EdgeInsets.all(5),
-        child: LayoutBuilder(builder: (context, constraints) {
-          final slot = constraints.maxWidth / mainTabs.length;
-          final sel = mainTabs.indexOf(provider.index);
-          return Stack(
-            children: [
-              if (sel >= 0)
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  left: slot * sel,
-                  top: 0,
-                  bottom: 0,
-                  width: slot,
-                  child: DecoratedBox(decoration: _selectedDecoration(context)),
-                ),
-              Row(
-                children: [
-                  for (final i in mainTabs)
-                    SizedBox(
-                      width: slot,
-                      child: _buildNavItem(i, provider, isDarkMode),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final slot = constraints.maxWidth / mainTabs.length;
+            final sel = mainTabs.indexOf(provider.index);
+            return Stack(
+              children: [
+                if (sel >= 0)
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    left: slot * sel,
+                    top: 0,
+                    bottom: 0,
+                    width: slot,
+                    child: DecoratedBox(
+                      decoration: _selectedDecoration(context),
                     ),
-                ],
-              ),
-            ],
-          );
-        }),
+                  ),
+                Row(
+                  children: [
+                    for (final i in mainTabs)
+                      SizedBox(
+                        width: slot,
+                        child: _buildNavItem(i, provider, isDarkMode),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
 
@@ -416,11 +438,13 @@ class _NavigationPageState extends State<NavigationPage>
     return barContent;
   }
 
-  Widget _glassPill(bool isDarkMode,
-      {required double height,
-      double? width,
-      EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 8),
-      required Widget child}) {
+  Widget _glassPill(
+    bool isDarkMode, {
+    required double height,
+    double? width,
+    EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 8),
+    required Widget child,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(44),
       child: BackdropFilter(
@@ -449,11 +473,20 @@ class _NavigationPageState extends State<NavigationPage>
 
   static const _navItems = <_NavItem>[
     _NavItem(
-        'Explore', Icons.auto_awesome_outlined, Icons.auto_awesome_rounded),
-    _NavItem('Live', Icons.motion_photos_on_outlined,
-        Icons.motion_photos_on_rounded),
-    _NavItem('Collections', Icons.photo_library_outlined,
-        Icons.photo_library_rounded),
+      'Explore',
+      Icons.auto_awesome_outlined,
+      Icons.auto_awesome_rounded,
+    ),
+    _NavItem(
+      'Live',
+      Icons.motion_photos_on_outlined,
+      Icons.motion_photos_on_rounded,
+    ),
+    _NavItem(
+      'Collections',
+      Icons.photo_library_outlined,
+      Icons.photo_library_rounded,
+    ),
     _NavItem('Categories', Icons.category_outlined, Icons.category_rounded),
     _NavItem('Desktop', Icons.laptop_mac_outlined, Icons.laptop_mac_rounded),
   ];
@@ -485,8 +518,8 @@ class _NavigationPageState extends State<NavigationPage>
     final accent = context.appColors.accent;
     final Color onAccent =
         ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
-            ? Colors.white
-            : Colors.black;
+        ? Colors.white
+        : Colors.black;
     final Color idle = isDarkMode
         ? Colors.white.withValues(alpha: 0.72)
         : Colors.black.withValues(alpha: 0.62);
@@ -510,7 +543,8 @@ class _NavigationPageState extends State<NavigationPage>
             ListenableBuilder(
               listenable: controller,
               builder: (context, _) {
-                final scrolled = isSelected &&
+                final scrolled =
+                    isSelected &&
                     controller.hasClients &&
                     controller.positions.any((p) => p.pixels > 800);
                 return Icon(
@@ -589,9 +623,8 @@ class _NavigationPageState extends State<NavigationPage>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => OnboardingScreen4(
-                  onComplete: () => Navigator.pop(context),
-                ),
+                builder: (_) =>
+                    OnboardingScreen4(onComplete: () => Navigator.pop(context)),
               ),
             ),
             child: ClipRRect(
@@ -599,8 +632,10 @@ class _NavigationPageState extends State<NavigationPage>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(24),
@@ -624,9 +659,11 @@ class _NavigationPageState extends State<NavigationPage>
                       GestureDetector(
                         onTap: _dismissPromoBanner,
                         behavior: HitTestBehavior.opaque,
-                        child: Icon(Icons.close_rounded,
-                            color: Colors.white.withValues(alpha: 0.5),
-                            size: 16),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          size: 16,
+                        ),
                       ),
                     ],
                   ),

@@ -35,14 +35,20 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     _initVideo();
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
-      final liveProvider =
-          Provider.of<LiveWallpaperProvider>(context, listen: false);
+      final liveProvider = Provider.of<LiveWallpaperProvider>(
+        context,
+        listen: false,
+      );
       final wallRio = Provider.of<WallRio>(context, listen: false);
       setState(() {
         _recommendedLive = RecommendationService.getRecommendedLiveWalls(
-            widget.wall, liveProvider.wallList);
+          widget.wall,
+          liveProvider.wallList,
+        );
         _recommendedStatic = RecommendationService.getRecommendedStaticForLive(
-            widget.wall, wallRio.originalWallList);
+          widget.wall,
+          wallRio.originalWallList,
+        );
       });
       Provider.of<WallDetails>(context, listen: false)
         ..getColorPalette(widget.wall.thumbnail)
@@ -116,8 +122,11 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     if (Platform.isAndroid) {
       action.applyLiveWall(context, widget.wall.videoUrl);
     } else {
-      action.shareFile(context, widget.wall.videoUrl,
-          text: 'Live wallpaper from WallRio');
+      action.shareFile(
+        context,
+        widget.wall.videoUrl,
+        text: 'Live wallpaper from WallRio',
+      );
     }
   }
 
@@ -126,8 +135,10 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     const cost = 30;
 
     if (balance >= cost) {
-      final success =
-          await progression.deductDiamonds(cost, "Unlocked Video Wallpaper");
+      final success = await progression.deductDiamonds(
+        cost,
+        "Unlocked Video Wallpaper",
+      );
       if (!mounted) return;
       if (success) {
         ToastWidget.showToast("Video Wallpaper Unlocked! 💎");
@@ -141,10 +152,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         context: context,
         backgroundColor: Colors.transparent,
         showDragHandle: Platform.isIOS,
-        builder: (context) => _UnlockLiveWallpaperInsufficientSheet(
-          cost: cost,
-          balance: balance,
-        ),
+        builder: (context) =>
+            _UnlockLiveWallpaperInsufficientSheet(cost: cost, balance: balance),
       );
     }
   }
@@ -160,28 +169,28 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
           type: MaterialType.transparency,
           child: SizedBox.expand(
             child: Stack(
-            alignment: Alignment.topLeft,
-            children: [
-              _buildVideoBackground(),
-              _buildBackBtn(),
-              WallpaperDetailsTransition(
-                visible: WallpaperCardFocus.isExpanded(context),
-                builder: (_) => _buildDraggableBottomSheet(),
-              ),
-              if (WallpaperCardFocus.of(context) &&
-                  !WallpaperCardFocus.isExpanded(context))
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 88 + MediaQuery.paddingOf(context).bottom,
-                  child: const InlineBannerAdWidget(
-                    verticalPadding: 0,
-                    screenName: 'LiveWallpaperPreview',
-                    placementName: 'AboveActionsBanner',
-                  ),
+              alignment: Alignment.topLeft,
+              children: [
+                _buildVideoBackground(),
+                _buildBackBtn(),
+                WallpaperDetailsTransition(
+                  visible: WallpaperCardFocus.isExpanded(context),
+                  builder: (_) => _buildDraggableBottomSheet(),
                 ),
-              _buildFixedActionBtnBar(),
-            ],
+                if (WallpaperCardFocus.of(context) &&
+                    !WallpaperCardFocus.isExpanded(context))
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 88 + MediaQuery.paddingOf(context).bottom,
+                    child: const InlineBannerAdWidget(
+                      verticalPadding: 0,
+                      screenName: 'LiveWallpaperPreview',
+                      placementName: 'AboveActionsBanner',
+                    ),
+                  ),
+                _buildFixedActionBtnBar(),
+              ],
             ),
           ),
         ),
@@ -192,9 +201,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   Widget _buildVideoBackground() {
     return Positioned.fill(
       child: SizedBox.expand(
-        child: _isVideoInitialized &&
-                _videoController != null &&
-                !_hasVideoError
+        child:
+            _isVideoInitialized && _videoController != null && !_hasVideoError
             ? FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
@@ -255,17 +263,15 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: isDarkMode
-                      ? [
-                          const Color(0xEE161822),
-                          const Color(0xEE0F111A),
-                        ]
+                      ? [const Color(0xEE161822), const Color(0xEE0F111A)]
                       : [
                           Colors.white.withValues(alpha: 0.92),
                           const Color(0xFFF8F9FA).withValues(alpha: 0.95),
                         ],
                 ),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
                 border: Border.all(
                   color: isDarkMode
                       ? Colors.white.withValues(alpha: 0.12)
@@ -377,8 +383,10 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: context.appColors.accent,
                       borderRadius: BorderRadius.circular(6),
@@ -395,7 +403,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   if (widget.wall.isPremium)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -552,59 +562,64 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   Widget _buildColorPaletteSection() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Consumer<WallDetails>(builder: (context, provider, _) {
-      final colors = provider.colorSwatch;
-      if (colors.isEmpty) return const SizedBox.shrink();
+    return Consumer<WallDetails>(
+      builder: (context, provider, _) {
+        final colors = provider.colorSwatch;
+        if (colors.isEmpty) return const SizedBox.shrink();
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.palette_outlined,
-                  size: 14, color: context.appColors.accent),
-              const SizedBox(width: 6),
-              Text(
-                'Color palette',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isDarkMode ? Colors.white60 : Colors.black54,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.palette_outlined,
+                  size: 14,
+                  color: context.appColors.accent,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: colors.take(8).map((color) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: GestureDetector(
-                    onTap: () => _copyColor(color),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDarkMode
-                              ? Colors.white.withValues(alpha: 0.25)
-                              : Colors.black.withValues(alpha: 0.15),
-                          width: 2,
+                const SizedBox(width: 6),
+                Text(
+                  'Color palette',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: colors.take(8).map((color) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: GestureDetector(
+                      onTap: () => _copyColor(color),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.25)
+                                : Colors.black.withValues(alpha: 0.15),
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildSectionHeader(String title) {
@@ -806,7 +821,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                 backgroundColor: context.appColors.accent,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: EdgeInsets.zero,
               ),
               onPressed: () {
@@ -832,10 +848,12 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                 backgroundColor: isDarkMode
                     ? Colors.white.withValues(alpha: 0.15)
                     : context.appColors.accent.withValues(alpha: 0.15),
-                foregroundColor:
-                    isDarkMode ? Colors.white : context.appColors.accent,
+                foregroundColor: isDarkMode
+                    ? Colors.white
+                    : context.appColors.accent,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: EdgeInsets.zero,
               ),
               onPressed: () => _handleUnlockLiveWallpaper(progression),
@@ -853,8 +871,10 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
       );
     }
 
-    final actionProvider =
-        Provider.of<WallActionProvider>(context, listen: true);
+    final actionProvider = Provider.of<WallActionProvider>(
+      context,
+      listen: true,
+    );
     final isDownloading = actionProvider.isDownloading;
     final progress = actionProvider.progress;
 
@@ -863,8 +883,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         style: FilledButton.styleFrom(
           backgroundColor: context.appColors.accent,
           foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: EdgeInsets.zero,
         ),
         onPressed: _downloadHandler,
@@ -884,7 +905,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   Text(
                     '${(progress * 100).toInt()}%',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 13),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               )
@@ -896,7 +919,9 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
                   Text(
                     Platform.isAndroid ? "Download" : "Save",
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 14),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -910,17 +935,20 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
               ? Colors.white.withValues(alpha: 0.15)
               : context.appColors.accent.withValues(alpha: 0.15),
           foregroundColor: isDarkMode ? Colors.white : context.appColors.accent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: EdgeInsets.zero,
         ),
         onPressed: _applyHandler,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wallpaper_rounded,
-                size: 18,
-                color: isDarkMode ? Colors.white : context.appColors.accent),
+            Icon(
+              Icons.wallpaper_rounded,
+              size: 18,
+              color: isDarkMode ? Colors.white : context.appColors.accent,
+            ),
             const SizedBox(width: 6),
             Text(
               Platform.isAndroid ? "Apply" : "Share",
@@ -936,11 +964,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
     );
 
     return Row(
-      children: [
-        downloadButton,
-        const SizedBox(width: 8),
-        applyButton,
-      ],
+      children: [downloadButton, const SizedBox(width: 8), applyButton],
     );
   }
 }
@@ -1053,7 +1077,9 @@ class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
                   child: const Text(
                     'GET DIAMONDS',
                     style: TextStyle(
-                        fontWeight: FontWeight.w900, letterSpacing: 1),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
               ),
@@ -1064,16 +1090,20 @@ class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
                   onPressed: () {
                     Navigator.pop(context);
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OnboardingScreen4(
-                              onComplete: () => Navigator.pop(context)),
-                        ));
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OnboardingScreen4(
+                          onComplete: () => Navigator.pop(context),
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'Unlock ALL with Pro',
                     style: TextStyle(
-                        color: Colors.grey, fontWeight: FontWeight.w700),
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
