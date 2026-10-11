@@ -21,7 +21,8 @@ class LiveDetailPage extends StatefulWidget {
   State<LiveDetailPage> createState() => _LiveDetailPageState();
 }
 
-class _LiveDetailPageState extends State<LiveDetailPage> {
+class _LiveDetailPageState extends State<LiveDetailPage>
+    with WidgetsBindingObserver {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
   bool _hasVideoError = false;
@@ -32,7 +33,7 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
   @override
   void initState() {
     super.initState();
-    _initVideo();
+    WidgetsBinding.instance.addObserver(this);
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
       final liveProvider = Provider.of<LiveWallpaperProvider>(
@@ -66,31 +67,60 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
       return;
     }
 
+    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    _videoController = controller;
     try {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
-      await _videoController!.initialize();
-      if (mounted) {
-        _videoController!.addListener(_onVideoUpdate);
-        setState(() => _isVideoInitialized = true);
-        _videoController!
-          ..setLooping(true)
-          ..setVolume(0);
-        if (_focused) _videoController!.play();
-      }
+      await controller.initialize();
+      if (!mounted || _videoController != controller) return;
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      if (!mounted || _videoController != controller) return;
+      controller.addListener(_onVideoUpdate);
+      setState(() => _isVideoInitialized = true);
+      if (_focused && _appActive) await controller.play();
     } catch (_) {
-      if (mounted) setState(() => _hasVideoError = true);
+      if (mounted && _videoController == controller) {
+        _releaseVideo();
+        setState(() => _hasVideoError = true);
+      }
     }
   }
 
-  bool _focused = true;
+  bool _focused = false;
+  bool _appActive =
+      WidgetsBinding.instance.lifecycleState == null ||
+      WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _focused = WallpaperCardFocus.of(context);
+    _focused =
+        WallpaperCardFocus.of(context) &&
+        (ModalRoute.isCurrentOf(context) ?? true);
+    _syncVideo();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appActive = state == AppLifecycleState.resumed;
+    _syncVideo();
+    if (mounted) setState(() {});
+  }
+
+  void _syncVideo() {
+    if (!_focused || !_appActive) {
+      _releaseVideo();
+    } else if (_videoController == null && !_hasVideoError) {
+      _initVideo();
+    }
+  }
+
+  void _releaseVideo() {
     final controller = _videoController;
-    if (controller == null || !_isVideoInitialized) return;
-    _focused ? controller.play() : controller.pause();
+    _videoController = null;
+    _isVideoInitialized = false;
+    controller?.removeListener(_onVideoUpdate);
+    controller?.dispose();
   }
 
   void _onVideoUpdate() {
@@ -99,8 +129,8 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
 
   @override
   void dispose() {
-    _videoController?.removeListener(_onVideoUpdate);
-    _videoController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _releaseVideo();
     super.dispose();
   }
 

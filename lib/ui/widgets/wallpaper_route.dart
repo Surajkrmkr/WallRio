@@ -334,10 +334,7 @@ class _CardPagerState extends State<WallpaperCardPager>
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          // Current and adjacent cards build the real page so the
-                          // details sheet is already there while swiping.
-                          (i == _current ||
-                                  (_settled && (i - _current).abs() <= 1))
+                          (i == _current)
                               ? HeroMode(
                                   enabled: i == _current,
                                   child: WallpaperCardFocus(
