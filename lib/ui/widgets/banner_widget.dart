@@ -435,27 +435,6 @@ class _BannerCardState extends State<_BannerCard>
                         ],
                       ),
                     ),
-                  Positioned(
-                    right: 14,
-                    bottom: 14,
-                    child: ClipOval(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.22),
-                            border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3)),
-                          ),
-                          child: const Icon(Icons.arrow_outward_rounded,
-                              color: whiteColor, size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
                   if (widget.dim > 0.01)
                     IgnorePointer(
                       child: ColoredBox(

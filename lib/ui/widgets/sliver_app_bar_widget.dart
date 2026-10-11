@@ -21,38 +21,41 @@ class SliverAppBarWidget extends StatelessWidget {
   // Defaults to [showUserProfileIcon] so every main tab gets the shortcut.
   final bool? showFavouriteBtn;
   final bool showSaleChip;
-  const SliverAppBarWidget(
-      {super.key,
-      required this.showLogo,
-      required this.text,
-      this.secondaryText = '',
-      required this.showSearchBtn,
-      this.showBackBtn = false,
-      this.clearSearchedData = false,
-      this.centeredTitle = false,
-      this.showUserProfileIcon = false,
-      this.showFavouriteBtn,
-      this.showSaleChip = false});
+  const SliverAppBarWidget({
+    super.key,
+    required this.showLogo,
+    required this.text,
+    this.secondaryText = '',
+    required this.showSearchBtn,
+    this.showBackBtn = false,
+    this.clearSearchedData = false,
+    this.centeredTitle = false,
+    this.showUserProfileIcon = false,
+    this.showFavouriteBtn,
+    this.showSaleChip = false,
+  });
 
   bool get _showFavourite => showFavouriteBtn ?? showUserProfileIcon;
 
   void _onLongPressHandler(BuildContext context) {
     CNBottomSheet.show(
-        context: context,
-        enableDrag: true,
-        isScrollControlled: true,
-        isDismissible: true,
-        showDragHandle: Platform.isIOS,
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-        backgroundColor: Colors.transparent,
-        builder: (context) => const UserBottomSheet());
+      context: context,
+      enableDrag: true,
+      isScrollControlled: true,
+      isDismissible: true,
+      showDragHandle: Platform.isIOS,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      backgroundColor: Colors.transparent,
+      builder: (context) => const UserBottomSheet(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final double toolbarHeight =
-        (MediaQuery.of(context).size.height * 0.08).clamp(56, 76);
+    final double toolbarHeight = (MediaQuery.of(context).size.height * 0.08)
+        .clamp(56, 76);
     final bar = AppBar(
       primary: false,
       elevation: 0,
@@ -62,7 +65,8 @@ class SliverAppBarWidget extends StatelessWidget {
       leading: showBackBtn
           ? BackBtnWidget(
               color: Theme.of(context).primaryColorLight,
-              isActionReset: clearSearchedData)
+              isActionReset: clearSearchedData,
+            )
           : const SizedBox.shrink(),
       titleSpacing: showBackBtn ? 0 : 20,
       toolbarHeight: toolbarHeight,
@@ -73,28 +77,24 @@ class SliverAppBarWidget extends StatelessWidget {
           final titleWidget = isBrand
               ? _buildBrandWordmark(context)
               : secondaryText.isEmpty
-                  ? Text(text, style: Theme.of(context).textTheme.displayLarge)
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(text,
-                            style: Theme.of(context).textTheme.displayLarge),
-                        Text(
-                          secondaryText,
-                          style: Theme.of(context)
-                              .textTheme
-                              .displayLarge!
-                              .copyWith(
-                                  color: gradientColorMap[provider.gradType]!
-                                      .first),
-                        ),
-                      ],
-                    );
+              ? Text(text, style: Theme.of(context).textTheme.displayLarge)
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(text, style: Theme.of(context).textTheme.displayLarge),
+                    Text(
+                      secondaryText,
+                      style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                        color: gradientColorMap[provider.gradType]!.first,
+                      ),
+                    ),
+                  ],
+                );
           return FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment:
-                  centeredTitle ? Alignment.center : Alignment.centerLeft,
-              child: titleWidget);
+            fit: BoxFit.scaleDown,
+            alignment: centeredTitle ? Alignment.center : Alignment.centerLeft,
+            child: titleWidget,
+          );
         },
       ),
       actions: [
@@ -104,8 +104,12 @@ class SliverAppBarWidget extends StatelessWidget {
             icon: Icons.search_rounded,
             tooltip: 'Search',
             label: 'Search',
-            onTap: () => _hapticTap(() => Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SearchPage()))),
+            onTap: () => _hapticTap(
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchPage()),
+              ),
+            ),
           ),
         if (_showFavourite) ...[
           const SizedBox(width: 8),
@@ -133,11 +137,11 @@ class SliverAppBarWidget extends StatelessWidget {
   Widget _buildBrandWordmark(BuildContext context) {
     final colors = context.appColors;
     final base = Theme.of(context).textTheme.displayLarge!.copyWith(
-          fontSize: 34,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -1.6,
-          height: 1.05,
-        );
+      fontSize: 34,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.6,
+      height: 1.05,
+    );
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -171,9 +175,7 @@ class SliverAppBarWidget extends StatelessWidget {
             final nav = Navigator.of(context);
             nav.push(
               MaterialPageRoute(
-                builder: (_) => OnboardingScreen4(
-                  onComplete: () => nav.pop(),
-                ),
+                builder: (_) => OnboardingScreen4(onComplete: () => nav.pop()),
               ),
             );
           },
@@ -191,8 +193,11 @@ class SliverAppBarWidget extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: const Icon(Icons.workspace_premium_rounded,
-                  color: Color(0xFF5A3200), size: 22),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Color(0xFF5A3200),
+                size: 22,
+              ),
             ),
           ),
         );
@@ -215,8 +220,12 @@ class SliverAppBarWidget extends StatelessWidget {
               : Icons.favorite_border_rounded,
           tooltip: 'Favourites',
           badge: count > 0 ? (count > 99 ? '99+' : '$count') : null,
-          onTap: () => _hapticTap(() => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const FavouritePage()))),
+          onTap: () => _hapticTap(
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavouritePage()),
+            ),
+          ),
         );
       },
     );
@@ -226,7 +235,7 @@ class SliverAppBarWidget extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, provider, _) => PremiumAvatar(
         imageUrl: provider.photoUrl,
-        radius: 18,
+        radius: 20,
         onTap: () => _hapticTap(() => _onLongPressHandler(context)),
       ),
     );
@@ -256,7 +265,10 @@ class _FloatingTopBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final t = (shrinkOffset / toolbarHeight).clamp(0.0, 1.0);
     return ColoredBox(
       color: background,
@@ -272,7 +284,10 @@ class _FloatingTopBarDelegate extends SliverPersistentHeaderDelegate {
               // Status bar inset is already applied above; stop SafeArea-wrapped
               // children (e.g. BackBtnWidget) from adding it again.
               child: MediaQuery.removePadding(
-                  context: context, removeTop: true, child: bar),
+                context: context,
+                removeTop: true,
+                child: bar,
+              ),
             ),
           ),
         ),
@@ -367,8 +382,12 @@ class _TopBarIconButtonState extends State<TopBarIconButton> {
                         duration: const Duration(milliseconds: 220),
                         transitionBuilder: (child, anim) =>
                             ScaleTransition(scale: anim, child: child),
-                        child: Icon(widget.icon,
-                            key: ValueKey(widget.icon), size: 21, color: fg),
+                        child: Icon(
+                          widget.icon,
+                          key: ValueKey(widget.icon),
+                          size: 21,
+                          color: fg,
+                        ),
                       ),
               ),
               if (widget.badge != null)
@@ -376,16 +395,19 @@ class _TopBarIconButtonState extends State<TopBarIconButton> {
                   top: -3,
                   right: -4,
                   child: Container(
-                    constraints:
-                        const BoxConstraints(minWidth: 18, minHeight: 18),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 5),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: context.appColors.accent,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          width: 2),
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        width: 2,
+                      ),
                     ),
                     child: Text(
                       widget.badge!,

@@ -199,7 +199,10 @@ class _DesktopWallpaperDetailPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLandscapeHeroPreview(context, isDarkMode),
+                        Hero(
+                          tag: 'desktop_${widget.wallModel.url}',
+                          child: _buildLandscapeHeroPreview(context, isDarkMode),
+                        ),
                         const SizedBox(height: 16),
                         _buildInformationPanel(context, isDarkMode),
                         const SizedBox(height: 20),

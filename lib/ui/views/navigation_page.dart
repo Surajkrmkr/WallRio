@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
@@ -34,37 +33,8 @@ class _NavigationPageState extends State<NavigationPage>
   Timer _timer = Timer(Duration.zero, () {});
   bool _showPromoBanner = false;
   static const String _promoDismissKey = 'promo_banner_dismissed_date';
-  bool _isChanging = false;
   final Set<int> _visitedTabs = {0};
   int _shownTab = 0;
-
-  Future<void> _applyRandomWallpaper() async {
-    final wallRio = Provider.of<WallRio>(context, listen: false);
-    final walls = wallRio.actionWallList.isNotEmpty
-        ? wallRio.actionWallList
-        : wallRio.originalWallList;
-    if (walls.isEmpty) return;
-
-    setState(() => _isChanging = true);
-    final randomWall = walls[Random().nextInt(walls.length)];
-
-    try {
-      final file = await DefaultCacheManager().getSingleFile(randomWall.url);
-      await WallpaperManagerPlus().setWallpaper(file, 1);
-      // Personalization hook: record the applied wallpaper URL so Dynamic
-      // Accent (Theme & Appearance settings) has something to extract from.
-      AppThemeManager.recordAppliedWallpaperUrl(randomWall.url);
-      if (mounted) {
-        Provider.of<AppThemeManager>(context, listen: false)
-            .refreshDynamicAccentFor(randomWall.url);
-      }
-      ToastWidget.showToast('Wallpaper rotated!');
-    } catch (e) {
-      ToastWidget.showToast('Failed to apply wallpaper');
-    }
-
-    if (mounted) setState(() => _isChanging = false);
-  }
 
   @override
   void initState() {
@@ -335,74 +305,6 @@ class _NavigationPageState extends State<NavigationPage>
               ),
             ],
           ),
-          // The shuffle FAB sets the home-screen wallpaper directly via
-          // WallpaperManagerPlus, which has no iOS equivalent (no API sets a
-          // wallpaper without user interaction), so it's Android-only.
-          floatingActionButton: Platform.isAndroid
-              ? Padding(
-                  padding: EdgeInsets.only(
-                    bottom: _showPromoBanner ? 70.0 : 16.0,
-                  ),
-                  child: RepaintBoundary(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF1E1E1E)
-                                    .withValues(alpha: 0.85)
-                                : Colors.white.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: isDarkMode
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.black.withValues(alpha: 0.05),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black
-                                    .withValues(alpha: isDarkMode ? 0.3 : 0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(30),
-                              onTap: _isChanging ? null : _applyRandomWallpaper,
-                              child: Center(
-                                child: _isChanging
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: isDarkMode
-                                              ? Colors.white
-                                              : Colors.black,
-                                        ),
-                                      )
-                                    : Icon(Icons.shuffle_rounded,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                        size: 24),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : null,
         ),
       );
     });

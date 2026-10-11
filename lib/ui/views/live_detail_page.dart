@@ -158,14 +158,31 @@ class _LiveDetailPageState extends State<LiveDetailPage> {
         flightShuttleBuilder: heroImageShuttle(widget.wall.thumbnail),
         child: Material(
           type: MaterialType.transparency,
-          child: Stack(
+          child: SizedBox.expand(
+            child: Stack(
             alignment: Alignment.topLeft,
             children: [
               _buildVideoBackground(),
               _buildBackBtn(),
-              _buildDraggableBottomSheet(),
+              WallpaperDetailsTransition(
+                visible: WallpaperCardFocus.isExpanded(context),
+                builder: (_) => _buildDraggableBottomSheet(),
+              ),
+              if (WallpaperCardFocus.of(context) &&
+                  !WallpaperCardFocus.isExpanded(context))
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 88 + MediaQuery.paddingOf(context).bottom,
+                  child: const InlineBannerAdWidget(
+                    verticalPadding: 0,
+                    screenName: 'LiveWallpaperPreview',
+                    placementName: 'AboveActionsBanner',
+                  ),
+                ),
               _buildFixedActionBtnBar(),
             ],
+            ),
           ),
         ),
       ),

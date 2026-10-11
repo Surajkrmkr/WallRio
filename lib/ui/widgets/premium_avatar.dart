@@ -23,6 +23,7 @@ class PremiumAvatar extends StatelessWidget {
         final bool hasFrame = frameKey != 'none' && frameKey != 'frame_none';
 
         return GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: SizedBox(
             width: radius * 2,
@@ -33,16 +34,16 @@ class PremiumAvatar extends StatelessWidget {
               children: [
                 // Base Avatar
                 CircleAvatar(
-                  radius: hasFrame ? radius * 0.70 : radius,
+                  radius: hasFrame ? radius * 0.85 : radius,
                   backgroundColor: Theme.of(context).primaryColor,
-                  backgroundImage:
-                      imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                  backgroundImage: imageUrl.isNotEmpty
+                      ? NetworkImage(imageUrl)
+                      : null,
                   child: imageUrl.isEmpty
                       ? const Icon(Icons.person_rounded)
                       : null,
                 ),
 
-                // Frame Overlay (allowed to overflow the SizedBox visually)
                 if (hasFrame) _buildFrame(frameKey, radius),
               ],
             ),
@@ -81,18 +82,12 @@ class PremiumAvatar extends StatelessWidget {
         return const SizedBox.shrink();
     }
 
-    // Adaptive frame size:
-    // For radius 18, offset is ~6px. For radius 30, offset is ~10px.
-    final double frameOffset = avatarRadius / 3;
-    final double frameSize = (avatarRadius * 2) + frameOffset;
+    final double frameSize = avatarRadius * 2;
 
     return SizedBox(
       width: frameSize,
       height: frameSize,
-      child: Image.asset(
-        assetPath,
-        fit: BoxFit.contain,
-      ),
+      child: Image.asset(assetPath, fit: BoxFit.contain),
     );
   }
 }
@@ -114,9 +109,10 @@ class _AnimatedFrameState extends State<_AnimatedFrame>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 2))
-          ..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
   }
 
   @override
@@ -136,8 +132,9 @@ class _AnimatedFrameState extends State<_AnimatedFrame>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: widget.color
-                  .withValues(alpha: 0.5 + (0.5 * _controller.value)),
+              color: widget.color.withValues(
+                alpha: 0.5 + (0.5 * _controller.value),
+              ),
               width: 2,
             ),
             boxShadow: [

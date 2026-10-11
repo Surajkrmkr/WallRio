@@ -16,8 +16,9 @@ class UserBottomSheet extends StatelessWidget {
   void _settings(BuildContext context) {
     final navigator = Navigator.of(context, rootNavigator: true);
     navigator.pop();
-    navigator
-        .push(MaterialPageRoute(builder: (context) => const SettingsPage()));
+    navigator.push(
+      MaterialPageRoute(builder: (context) => const SettingsPage()),
+    );
   }
 
   void launch(String url) =>
@@ -34,62 +35,65 @@ class UserBottomSheet extends StatelessWidget {
           color: supportsGlassSheet ? Colors.transparent : sheetColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         ),
-        child: Padding(
-          padding:
-              const EdgeInsets.only(left: 20.0, right: 20, top: 20, bottom: 40),
-          child: Wrap(
-            runSpacing: 10,
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 25.0),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Consumer<AuthProvider>(
                   builder: (context, provider, _) {
                     final String name = provider.isLoggedIn
                         ? provider.displayName
                         : "Guest User";
                     final String photoUrl = provider.photoUrl;
-                    return Row(children: [
-                      PremiumAvatar(
-                        imageUrl: photoUrl,
-                        radius: 30,
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Consumer<SubscriptionProvider>(
+                    return Row(
+                      children: [
+                        PremiumAvatar(imageUrl: photoUrl, radius: 30),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Consumer<SubscriptionProvider>(
                             builder: (context, provider, _) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Flexible(
-                                    child: Text(name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .displayMedium),
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.displayMedium,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const PremiumBadgeWidget(),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  const PremiumBadgeWidget(),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "WallRio ${UserProfile.plusMember || provider.subscriptionDaysLeft.isNotEmpty ? "PRO " : ""}Member",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
                                 ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                  "WallRio ${UserProfile.plusMember || provider.subscriptionDaysLeft.isNotEmpty ? "PRO " : ""}Member",
-                                  style: Theme.of(context).textTheme.titleSmall)
-                            ],
-                          );
-                        }),
-                      )
-                    ]);
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 25.0),
-                child: StreakCalendarWidget(),
-              ),
+              const StreakCalendarWidget(),
               _SheetRow(
                 icon: Icons.settings_rounded,
                 label: 'Settings',
@@ -100,12 +104,16 @@ class UserBottomSheet extends StatelessWidget {
                 label: 'More apps',
                 onTap: moreApps,
               ),
-              Consumer<AuthProvider>(builder: (context, provider, _) {
-                return provider.isLoading
-                    ? ShimmerWidget.withWidget(
-                        _buildAuthBtn(context, provider), context)
-                    : _buildAuthBtn(context, provider);
-              }),
+              Consumer<AuthProvider>(
+                builder: (context, provider, _) {
+                  return provider.isLoading
+                      ? ShimmerWidget.withWidget(
+                          _buildAuthBtn(context, provider),
+                          context,
+                        )
+                      : _buildAuthBtn(context, provider);
+                },
+              ),
             ],
           ),
         ),
@@ -145,10 +153,14 @@ class UserBottomSheet extends StatelessWidget {
       label: 'Log out',
       danger: true,
       onTap: () async {
-        final subProvider =
-            Provider.of<SubscriptionProvider>(context, listen: false);
-        final favProvider =
-            Provider.of<FavouriteProvider>(context, listen: false);
+        final subProvider = Provider.of<SubscriptionProvider>(
+          context,
+          listen: false,
+        );
+        final favProvider = Provider.of<FavouriteProvider>(
+          context,
+          listen: false,
+        );
 
         subProvider.clearData();
         favProvider.clearData();
@@ -184,35 +196,43 @@ class _SheetRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = danger ? colors.danger : colors.textPrimary;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(top: 6),
       child: Material(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(18),
+        color: danger
+            ? colors.danger.withValues(alpha: isDark ? 0.09 : 0.06)
+            : (isDark ? Colors.white : Colors.black).withValues(
+                alpha: isDark ? 0.06 : 0.04,
+              ),
+        borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-            child: Row(
-              children: [
-                Icon(icon, size: 22, color: danger ? fg : colors.accent),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: appFontFamily,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: fg,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: danger ? fg : colors.accent),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: appFontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: fg,
+                      ),
                     ),
                   ),
-                ),
-                if (!danger)
-                  Icon(Icons.chevron_right_rounded, color: colors.textTertiary),
-              ],
+                  if (!danger)
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: colors.textTertiary,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
