@@ -63,10 +63,11 @@ class WallpaperRoute<T> extends PageRoute<T> {
   }
 
   @override
-  bool get opaque => false;
+  bool get opaque => _desktop;
 
   @override
-  Color? get barrierColor => Colors.black.withValues(alpha: 0.6);
+  Color? get barrierColor =>
+      _desktop ? null : Colors.black.withValues(alpha: 0.6);
 
   @override
   String? get barrierLabel => null;
@@ -86,6 +87,12 @@ class WallpaperRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
+    if (_desktop) {
+      return ChangeNotifierProvider(
+        create: (_) => WallDetails(),
+        child: Builder(builder: (context) => _pageFor(context, _initialIndex)),
+      );
+    }
     return WallpaperCardPager(
       count: _builder != null ? 1 : _items.length,
       initialIndex: _initialIndex,

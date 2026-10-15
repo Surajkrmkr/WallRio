@@ -203,48 +203,7 @@ class _DesktopWallpaperDetailPageState
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  _buildHeaderAppBar(context, isDarkMode),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Hero(
-                          tag: 'desktop_${widget.wallModel.url}',
-                          child: _buildLandscapeHeroPreview(
-                            context,
-                            isDarkMode,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInformationPanel(context, isDarkMode),
-                        const SizedBox(height: 20),
-                        _buildColorPaletteSection(context, isDarkMode),
-                        const SizedBox(height: 24),
-                        _buildRelatedWallpapersSection(context, isDarkMode),
-                        const SizedBox(height: 20),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: InlineBannerAdWidget(
-                            verticalPadding: 0,
-                            screenName: 'DesktopDetailPage',
-                            placementName: 'SectionDividerBanner',
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildMoreLikeThisSection(context, isDarkMode),
-                        const SizedBox(height: 24),
-                        _buildExploreSimilarSection(context, isDarkMode),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: _buildDetailsContent(context, isDarkMode)),
             _buildStickyActionBar(context, isDarkMode),
           ],
         ),
@@ -252,49 +211,80 @@ class _DesktopWallpaperDetailPageState
     );
   }
 
-  Widget _buildHeaderAppBar(BuildContext context, bool isDarkMode) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            BackBtnWidget(color: isDarkMode ? Colors.white : Colors.black),
-            const SizedBox(width: 8),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appColors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.desktop_windows_rounded,
-                        color: context.appColors.accent,
-                        size: 13,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'DESKTOP',
-                        style: TextStyle(
-                          color: context.appColors.accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+  Widget _buildDetailsContent(BuildContext context, bool isDarkMode) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        _buildHeaderAppBar(context, isDarkMode),
+        Hero(
+          tag: 'desktop_${widget.wallModel.url}',
+          child: _buildLandscapeHeroPreview(context, isDarkMode),
         ),
+        const SizedBox(height: 16),
+        _buildInformationPanel(context, isDarkMode),
+        const SizedBox(height: 20),
+        _buildColorPaletteSection(context, isDarkMode),
+        const SizedBox(height: 24),
+        _buildRelatedWallpapersSection(context, isDarkMode),
+        const SizedBox(height: 20),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: InlineBannerAdWidget(
+            verticalPadding: 0,
+            screenName: 'DesktopDetailPage',
+            placementName: 'SectionDividerBanner',
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildMoreLikeThisSection(context, isDarkMode),
+        const SizedBox(height: 24),
+        _buildExploreSimilarSection(context, isDarkMode),
+      ],
+    );
+  }
+
+  Widget _buildHeaderAppBar(BuildContext context, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          BackBtnWidget(color: isDarkMode ? Colors.white : Colors.black),
+          const SizedBox(width: 8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: context.appColors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.desktop_windows_rounded,
+                      color: context.appColors.accent,
+                      size: 13,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'DESKTOP',
+                      style: TextStyle(
+                        color: context.appColors.accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -307,8 +297,8 @@ class _DesktopWallpaperDetailPageState
           id: widget.wallModel.id,
         );
         return SizedBox(
-          height: 52,
-          width: 52,
+          height: 44,
+          width: 44,
           child: IconButton(
             onPressed: provider.isLoading
                 ? null
@@ -321,7 +311,7 @@ class _DesktopWallpaperDetailPageState
               backgroundColor: (isDarkMode ? Colors.white : Colors.black)
                   .withValues(alpha: 0.08),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
             icon: Icon(
@@ -778,17 +768,17 @@ class _DesktopWallpaperDetailPageState
   // Sticky Bottom Action Bar with Download, Apply, and Share
   Widget _buildStickyActionBar(BuildContext context, bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      height: 56,
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? const Color(0xFF1E1E28).withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.95),
-        border: Border(
-          top: BorderSide(
-            color: (isDarkMode ? Colors.white : Colors.black).withValues(
-              alpha: 0.08,
-            ),
-            width: 1,
+            ? Colors.black.withValues(alpha: 0.65)
+            : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: (isDarkMode ? Colors.white : Colors.black).withValues(
+            alpha: 0.15,
           ),
         ),
         boxShadow: [
@@ -804,45 +794,49 @@ class _DesktopWallpaperDetailPageState
           // Download (Single Primary Action)
           Expanded(
             child: SizedBox(
-              height: 52,
+              height: 44,
               child: ElevatedButton.icon(
                 onPressed: () => _showPlusDialog(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.appColors.accent,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  minimumSize: const Size.fromHeight(52),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size.fromHeight(44),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 icon: const Icon(Icons.download_rounded, size: 22),
-                label: const Text(
-                  "DOWNLOAD",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    letterSpacing: 0.6,
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Download',
+                    maxLines: 1,
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          _buildFavouriteButton(isDarkMode),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: _buildFavouriteButton(isDarkMode),
+          ),
+          const SizedBox(width: 6),
           // Share Action Button
           SizedBox(
-            height: 52,
-            width: 52,
+            height: 44,
+            width: 44,
             child: IconButton(
               onPressed: _shareWallpaper,
               style: IconButton.styleFrom(
                 backgroundColor: (isDarkMode ? Colors.white : Colors.black)
                     .withValues(alpha: 0.08),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               icon: Icon(
