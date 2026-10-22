@@ -50,7 +50,8 @@ dependencies:
   flutter_svg: ^2.2.4
   # flutter_windowmanager: ^0.2.0
   fluttertoast: ^9.0.0
-  google_mobile_ads: ^9.0.0
+  gma_mediation_inmobi: ^2.3.3
+  google_mobile_ads: ^9.1.0
   google_sign_in: ^7.2.0
   in_app_purchase: ^3.2.3
   in_app_purchase_android: ^0.5.0
