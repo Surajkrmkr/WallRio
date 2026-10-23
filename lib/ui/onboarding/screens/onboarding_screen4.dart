@@ -143,7 +143,6 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         },
         child: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
             statusBarIconBrightness:
                 _isDark ? Brightness.light : Brightness.dark,
           ),

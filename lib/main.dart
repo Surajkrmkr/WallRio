@@ -16,6 +16,20 @@ import 'package:wallrio/ui/widgets/export.dart';
 void main() async {
   await initializationHandler();
   runApp(const MyApp());
+  if (Platform.isAndroid) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initializeNotifications();
+      await ConsentManager.instance.gatherConsent();
+    });
+  }
+}
+
+Future<void> _initializeNotifications() async {
+  try {
+    await NotificationService().init();
+  } catch (error) {
+    logger.w('NotificationService init error: $error');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -23,7 +37,6 @@ class MyApp extends StatelessWidget {
 
   void setStatusBarTheme(DarkThemeProvider provider) =>
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
           statusBarIconBrightness:
               provider.darkTheme ? Brightness.light : Brightness.dark,
           statusBarBrightness:
@@ -130,14 +143,12 @@ Future<void> initializationHandler() async {
   } catch (e) {
     logger.w('AppCheck activation skipped/failed: $e');
   }}
-  try {
-    await NotificationService().init();
-  } catch (e) {
-    logger.w('NotificationService init error: $e');
+  if (!Platform.isAndroid) {
+    await _initializeNotifications();
   }
 
   // Google UMP is mobile-only (Android & iOS)
-  if (Platform.isAndroid || Platform.isIOS) {
+  if (Platform.isIOS) {
     ConsentManager.instance.gatherConsent();
   }
 
@@ -148,7 +159,11 @@ Future<void> initializationHandler() async {
     );
   }
 
-  if (Platform.isAndroid || Platform.isIOS) {
+  if (Platform.isAndroid) {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  if (Platform.isIOS) {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);

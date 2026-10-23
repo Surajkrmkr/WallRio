@@ -10,13 +10,11 @@ class CNImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // memCacheHeight is a target in physical pixels. For the full-screen
-    // preview, a fixed 1080 cap left the image visibly upscaled/blurry on
-    // taller, higher-density screens — match it to the actual device instead.
+    final mediaQuery = MediaQuery.of(context);
     final targetHeight = isOriginalImg
-        ? (MediaQuery.of(context).size.height *
-                MediaQuery.of(context).devicePixelRatio)
-            .round()
+        ? (mediaQuery.size.height * mediaQuery.devicePixelRatio)
+            .ceil()
+            .clamp(1, 8192)
         : 800;
     return CachedNetworkImage(
       filterQuality: FilterQuality.high,

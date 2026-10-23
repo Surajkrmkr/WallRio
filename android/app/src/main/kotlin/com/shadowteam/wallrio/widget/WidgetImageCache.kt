@@ -34,8 +34,11 @@ object WidgetImageCache {
      * IO) - callers should treat null as "keep previous cached state".
      */
     fun downloadAndSave(context: Context, urlStr: String, fileName: String, maxW: Int, maxH: Int): String? {
-        if (urlStr.isBlank()) return null
+        if (urlStr.isBlank() || maxW <= 0 || maxH <= 0) return null
         var connection: HttpURLConnection? = null
+        var downloadFile: File? = null
+        var decodedBitmap: Bitmap? = null
+        var scaledBitmap: Bitmap? = null
         return try {
             val url = URL(urlStr)
             connection = (url.openConnection() as HttpURLConnection).apply {
@@ -50,32 +53,40 @@ object WidgetImageCache {
                 return null
             }
 
-            val bytes = connection.inputStream.use { it.readBytes() }
+            val sourceFile = File.createTempFile("widget_image_", ".tmp", context.cacheDir)
+            downloadFile = sourceFile
+            sourceFile.outputStream().use { output ->
+                connection.inputStream.use { input -> input.copyTo(output) }
+            }
 
             // First pass: read bounds only to compute inSampleSize without
             // decoding the full-resolution bitmap into memory.
             val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, boundsOpts)
+            BitmapFactory.decodeFile(sourceFile.absolutePath, boundsOpts)
             boundsOpts.inSampleSize = calculateInSampleSize(boundsOpts.outWidth, boundsOpts.outHeight, maxW, maxH)
             boundsOpts.inJustDecodeBounds = false
 
-            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, boundsOpts) ?: run {
+            val bitmap = BitmapFactory.decodeFile(sourceFile.absolutePath, boundsOpts) ?: run {
                 Log.w(TAG, "Failed to decode bitmap for $urlStr")
                 return null
             }
+            decodedBitmap = bitmap
 
             val scaled = scaleDownIfNeeded(bitmap, maxW, maxH)
+            scaledBitmap = scaled
 
             val outFile = File(cacheDir(context), fileName)
             FileOutputStream(outFile).use { fos ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 85, fos)
             }
-            if (scaled !== bitmap) bitmap.recycle()
             outFile.absolutePath
         } catch (e: Exception) {
             Log.w(TAG, "Failed to cache thumbnail for $urlStr: ${e.message}")
             null
         } finally {
+            if (scaledBitmap !== decodedBitmap) scaledBitmap?.recycle()
+            decodedBitmap?.recycle()
+            downloadFile?.delete()
             connection?.disconnect()
         }
     }
@@ -86,7 +97,7 @@ object WidgetImageCache {
         if (height > reqHeight || width > reqWidth) {
             val halfHeight = height / 2
             val halfWidth = width / 2
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+            while ((halfHeight / inSampleSize) >= reqHeight || (halfWidth / inSampleSize) >= reqWidth) {
                 inSampleSize *= 2
             }
         }

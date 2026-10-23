@@ -343,12 +343,21 @@ class _BannerCardState extends State<_BannerCard>
         : banner.url;
     final path = _driftPaths[widget.seed % _driftPaths.length];
 
-    final image = CachedNetworkImage(
-      imageUrl: imageUrl,
-      fit: BoxFit.cover,
-      filterQuality: FilterQuality.high,
-      placeholder: (_, __) => const ColoredBox(color: bgDark2Color),
-      errorWidget: (_, __, ___) => const ColoredBox(color: bgDark2Color),
+    final image = LayoutBuilder(
+      builder: (context, constraints) => CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        memCacheHeight: ((constraints.hasBoundedHeight
+                    ? constraints.maxHeight
+                    : MediaQuery.sizeOf(context).height) *
+                MediaQuery.devicePixelRatioOf(context) *
+                1.3)
+            .ceil()
+            .clamp(1, 8192),
+        placeholder: (_, __) => const ColoredBox(color: bgDark2Color),
+        errorWidget: (_, __, ___) => const ColoredBox(color: bgDark2Color),
+      ),
     );
 
     return Padding(
