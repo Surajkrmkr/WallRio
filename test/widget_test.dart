@@ -18,7 +18,9 @@ void main() {
     expect(ConsentManager.instance, isNotNull);
   });
 
-  testWidgets('wallpaper image supports navigation stack layout', (tester) async {
+  testWidgets('wallpaper image supports navigation stack layout', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -59,7 +61,9 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('featured wallpaper row supports intrinsic measurement', (tester) async {
+  testWidgets('featured wallpaper row supports intrinsic measurement', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -68,9 +72,7 @@ void main() {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: CNImage(
-                    imageUrl: 'https://example.com/wallpaper.jpg',
-                  ),
+                  child: CNImage(imageUrl: 'https://example.com/wallpaper.jpg'),
                 ),
                 SizedBox(width: 100, height: 150),
               ],
@@ -87,7 +89,12 @@ void main() {
   for (final scenario in [
     (name: 'thumbnail', height: 150.0, original: false, expected: 800),
     (name: 'larger thumbnail', height: 450.0, original: false, expected: 800),
-    (name: 'full-screen preview', height: 150.0, original: true, expected: 1600),
+    (
+      name: 'full-screen preview',
+      height: 150.0,
+      original: true,
+      expected: 1600,
+    ),
   ]) {
     testWidgets('${scenario.name} uses bounded decoding', (tester) async {
       await tester.pumpWidget(

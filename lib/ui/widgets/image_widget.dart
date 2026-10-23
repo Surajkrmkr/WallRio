@@ -3,8 +3,11 @@ import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class CNImage extends StatelessWidget {
-  const CNImage(
-      {super.key, required this.imageUrl, this.isOriginalImg = false});
+  const CNImage({
+    super.key,
+    required this.imageUrl,
+    this.isOriginalImg = false,
+  });
   final String? imageUrl;
   final bool isOriginalImg;
 
@@ -12,9 +15,10 @@ class CNImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final targetHeight = isOriginalImg
-        ? (mediaQuery.size.height * mediaQuery.devicePixelRatio)
-            .ceil()
-            .clamp(1, 8192)
+        ? (mediaQuery.size.height * mediaQuery.devicePixelRatio).ceil().clamp(
+            1,
+            8192,
+          )
         : 800;
     return CachedNetworkImage(
       filterQuality: FilterQuality.high,
@@ -24,10 +28,7 @@ class CNImage extends StatelessWidget {
       memCacheHeight: targetHeight,
       imageUrl: imageUrl!,
       placeholder: (context, url) {
-        return const ShimmerWidget(
-          height: 100,
-          width: double.infinity,
-        );
+        return const ShimmerWidget(height: 100, width: double.infinity);
       },
     );
   }

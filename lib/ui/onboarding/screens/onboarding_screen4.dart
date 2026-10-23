@@ -30,8 +30,8 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
       _purchaseSub = Provider.of<SubscriptionProvider>(context, listen: false)
           .successPurchasedStream
           .listen((success) {
-        if (success && mounted) widget.onComplete();
-      });
+            if (success && mounted) widget.onComplete();
+          });
     });
   }
 
@@ -42,8 +42,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   }
 
   void _purchase() {
-    final subProvider =
-        Provider.of<SubscriptionProvider>(context, listen: false);
+    final subProvider = Provider.of<SubscriptionProvider>(
+      context,
+      listen: false,
+    );
     if (_selectedProductId == null) return;
     ProductDetails? product;
     for (final p in subProvider.products) {
@@ -89,8 +91,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   String _billingPeriodText(String id, List<ProductDetails> products) {
     final match = products.cast<dynamic>().firstWhere(
-        (p) => SubscriptionProvider.selectionId(p) == id,
-        orElse: () => null);
+      (p) => SubscriptionProvider.selectionId(p) == id,
+      orElse: () => null,
+    );
     if (match != null && !Platform.isIOS) {
       return '${match.price} ${SubscriptionProvider.billingPeriodDescription(match)}';
     }
@@ -110,8 +113,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   String _ctaLabel(List<ProductDetails> products) {
     if (_selectedProductId == null) return 'Continue';
     final match = products.cast<dynamic>().firstWhere(
-        (p) => SubscriptionProvider.selectionId(p) == _selectedProductId,
-        orElse: () => null);
+      (p) => SubscriptionProvider.selectionId(p) == _selectedProductId,
+      orElse: () => null,
+    );
     if (match == null) return 'Continue';
 
     if (!Platform.isIOS) {
@@ -134,30 +138,39 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<WallRio>(builder: (context, wallRio, _) {
-      return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          widget.onComplete();
-        },
-        child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle(
-            statusBarIconBrightness:
-                _isDark ? Brightness.light : Brightness.dark,
+    return Consumer<WallRio>(
+      builder: (context, wallRio, _) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            widget.onComplete();
+          },
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
+              statusBarIconBrightness: _isDark
+                  ? Brightness.light
+                  : Brightness.dark,
+            ),
+            child: Material(
+              color: _sheetColor,
+              child: _buildContent(
+                context,
+                wallRio.subscriptionPlans,
+                wallRio.originalWallList,
+              ),
+            ),
           ),
-          child: Material(
-            color: _sheetColor,
-            child: _buildContent(
-                context, wallRio.subscriptionPlans, wallRio.originalWallList),
-          ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
-  Widget _buildContent(BuildContext context, List<SubscriptionPlan> plans,
-      List<Walls> allWalls) {
+  Widget _buildContent(
+    BuildContext context,
+    List<SubscriptionPlan> plans,
+    List<Walls> allWalls,
+  ) {
     final isTablet = ResponsiveHelper.isTablet(context);
 
     return SafeArea(
@@ -303,7 +316,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           child: Text(
             text,
             style: TextStyle(
-                color: _textColor, fontWeight: FontWeight.w600, fontSize: 12),
+              color: _textColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -329,8 +345,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             ? _discountPercent(lifetimeProd.rawPrice, plan.actualPrice)
             : 0;
         return GestureDetector(
-          onTap: () => setState(() =>
-              _selectedProductId = SubscriptionProvider.lifetimeProductId),
+          onTap: () => setState(
+            () => _selectedProductId = SubscriptionProvider.lifetimeProductId,
+          ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -360,17 +377,21 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                           Text(
                             "Lifetime",
                             style: TextStyle(
-                                color: _textColor,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15),
+                              color: _textColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 3),
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: context.appColors.accent
-                                  .withValues(alpha: 0.2),
+                              color: context.appColors.accent.withValues(
+                                alpha: 0.2,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -413,9 +434,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                     Text(
                       lifetimeProd?.price ?? "—",
                       style: TextStyle(
-                          color: _textColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 17),
+                        color: _textColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                      ),
                     ),
                   ],
                 ),
@@ -455,13 +477,18 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   Widget _buildOtherPlans(List<SubscriptionPlan> plans) {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
-        final others = subProvider.products
-            .where((p) =>
-                p.id != SubscriptionProvider.lifetimeProductId &&
-                !p.id.contains('collection'))
-            .toList()
-          ..sort(
-              (a, b) => _productOrderIndex(a).compareTo(_productOrderIndex(b)));
+        final others =
+            subProvider.products
+                .where(
+                  (p) =>
+                      p.id != SubscriptionProvider.lifetimeProductId &&
+                      !p.id.contains('collection'),
+                )
+                .toList()
+              ..sort(
+                (a, b) =>
+                    _productOrderIndex(a).compareTo(_productOrderIndex(b)),
+              );
         if (others.isEmpty) return const SizedBox.shrink();
         return Column(
           children: others.map((product) {
@@ -471,8 +498,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             final discount = plan != null
                 ? _discountPercent(product.rawPrice, plan.actualPrice)
                 : 0;
-            final labelColor =
-                isSelected ? _textColor : _textColor.withValues(alpha: 0.65);
+            final labelColor = isSelected
+                ? _textColor
+                : _textColor.withValues(alpha: 0.65);
 
             String displayTitle;
             String subtitle;
@@ -505,8 +533,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
               displayTitle = "Monthly";
               subtitle = "Billed monthly. Cancel anytime.";
             } else {
-              displayTitle =
-                  product.title.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+              displayTitle = product.title
+                  .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
+                  .trim();
               subtitle = "Flexible plan. Cancel anytime.";
             }
 
@@ -515,8 +544,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? context.appColors.accent.withValues(alpha: 0.12)
@@ -542,9 +573,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                               Text(
                                 displayTitle,
                                 style: TextStyle(
-                                    color: labelColor,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15),
+                                  color: labelColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
                               ),
                               if (badgeWidget != null) ...[
                                 const SizedBox(width: 8),
@@ -602,9 +634,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                           Text(
                             'just ${_perDayPrice(product)}',
                             style: TextStyle(
-                                color: _subColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600),
+                              color: _subColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ],
@@ -633,8 +666,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.appColors.accent,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                      context.appColors.accent.withValues(alpha: 0.5),
+                  disabledBackgroundColor: context.appColors.accent.withValues(
+                    alpha: 0.5,
+                  ),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
@@ -645,12 +679,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5),
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : Text(
                         _ctaLabel(subProvider.products),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
               ),
             ),
@@ -662,9 +700,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   'Auto-renewable subscription. Billed ${_billingPeriodText(_selectedProductId!, subProvider.products)} until canceled in App Store settings.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: _subColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500),
+                    color: _subColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             const SizedBox(height: 8),
@@ -677,7 +716,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                     onPressed: () => subProvider.restorePurchases(),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -696,10 +737,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 ],
                 TextButton(
                   onPressed: () => LaunchUrlWidget.launch(
-                      'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy'),
+                    'https://doc-hosting.flycricket.io/wallrio-privacy-policy/74e93607-af2a-42e8-b23c-ae459cee92b3/privacy',
+                  ),
                   style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -711,10 +755,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 Text("•", style: TextStyle(color: _subColor, fontSize: 11)),
                 TextButton(
                   onPressed: () => LaunchUrlWidget.launch(
-                      'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'),
+                    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+                  ),
                   style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -758,9 +805,14 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
       children: [
         Icon(icon, size: 12, color: _subColor),
         const SizedBox(width: 4),
-        Text(text,
-            style: TextStyle(
-                color: _subColor, fontSize: 11, fontWeight: FontWeight.w600)),
+        Text(
+          text,
+          style: TextStyle(
+            color: _subColor,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -934,8 +986,9 @@ class _SubscriptionTopAnimatedBannerState
         ? allToUse.skip(10).take(10).toList()
         : row1ToUse.reversed.toList();
 
-    final double bannerHeight =
-        isTablet ? (isLandscape ? 360.0 : 310.0) : 230.0;
+    final double bannerHeight = isTablet
+        ? (isLandscape ? 360.0 : 310.0)
+        : 230.0;
     final double cardHeight = isTablet ? 140.0 : 104.0;
     final double cardWidth = isTablet ? 110.0 : 82.0;
 
@@ -961,16 +1014,14 @@ class _SubscriptionTopAnimatedBannerState
                               const cardMargin = 8.0;
                               final totalWidth =
                                   row1ToUse.length * (cardWidth + cardMargin);
-                              final maxScroll = (totalWidth * 2) -
+                              final maxScroll =
+                                  (totalWidth * 2) -
                                   MediaQuery.of(context).size.width +
                                   40;
                               final dx = -(_animController.value * maxScroll)
                                   .clamp(0.0, totalWidth * 1.5);
 
-                              final doubleWalls = [
-                                ...row1ToUse,
-                                ...row1ToUse,
-                              ];
+                              final doubleWalls = [...row1ToUse, ...row1ToUse];
 
                               return Transform.translate(
                                 offset: Offset(dx, 0),
@@ -982,8 +1033,13 @@ class _SubscriptionTopAnimatedBannerState
                                   alignment: Alignment.centerLeft,
                                   child: Row(
                                     children: doubleWalls
-                                        .map((w) => _buildCard(
-                                            w, cardWidth, cardHeight))
+                                        .map(
+                                          (w) => _buildCard(
+                                            w,
+                                            cardWidth,
+                                            cardHeight,
+                                          ),
+                                        )
                                         .toList(),
                                   ),
                                 ),
@@ -1001,17 +1057,15 @@ class _SubscriptionTopAnimatedBannerState
                               const cardMargin = 8.0;
                               final totalWidth =
                                   row2ToUse.length * (cardWidth + cardMargin);
-                              final maxScroll = (totalWidth * 2) -
+                              final maxScroll =
+                                  (totalWidth * 2) -
                                   MediaQuery.of(context).size.width +
                                   40;
                               final dx =
                                   -((1.0 - _animController.value) * maxScroll)
                                       .clamp(0.0, totalWidth * 1.5);
 
-                              final doubleWalls = [
-                                ...row2ToUse,
-                                ...row2ToUse,
-                              ];
+                              final doubleWalls = [...row2ToUse, ...row2ToUse];
 
                               return Transform.translate(
                                 offset: Offset(dx, 0),
@@ -1023,8 +1077,13 @@ class _SubscriptionTopAnimatedBannerState
                                   alignment: Alignment.centerLeft,
                                   child: Row(
                                     children: doubleWalls
-                                        .map((w) => _buildCard(
-                                            w, cardWidth, cardHeight))
+                                        .map(
+                                          (w) => _buildCard(
+                                            w,
+                                            cardWidth,
+                                            cardHeight,
+                                          ),
+                                        )
                                         .toList(),
                                   ),
                                 ),
@@ -1070,7 +1129,9 @@ class _SubscriptionTopAnimatedBannerState
                     ),
                     children: [
                       TextSpan(
-                          text: "Wall", style: TextStyle(color: _textColor)),
+                        text: "Wall",
+                        style: TextStyle(color: _textColor),
+                      ),
                       TextSpan(
                         text: "Rio",
                         style: TextStyle(
@@ -1090,8 +1151,10 @@ class _SubscriptionTopAnimatedBannerState
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _isDark
                         ? Colors.black.withValues(alpha: 0.4)
@@ -1106,8 +1169,11 @@ class _SubscriptionTopAnimatedBannerState
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded,
-                          color: Color(0xFFFFB300), size: 14),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFFFFB300),
+                        size: 14,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         "4.8  •  1500+ ratings  •  100k+ downloads",

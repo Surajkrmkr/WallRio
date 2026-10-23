@@ -36,11 +36,16 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   void setStatusBarTheme(DarkThemeProvider provider) =>
-      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-          statusBarIconBrightness:
-              provider.darkTheme ? Brightness.light : Brightness.dark,
-          statusBarBrightness:
-              provider.darkTheme ? Brightness.light : Brightness.dark));
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarIconBrightness: provider.darkTheme
+              ? Brightness.light
+              : Brightness.dark,
+          statusBarBrightness: provider.darkTheme
+              ? Brightness.light
+              : Brightness.dark,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -67,37 +72,42 @@ class MyApp extends StatelessWidget {
             themeMode = ThemeMode.dark;
           }
           return MaterialApp(
-              title: 'WallRio',
-              navigatorKey: ToastWidget.navigatorKey,
-              theme: appThemeManager.buildThemeData(
-                  context: context, isDarkTheme: false),
-              darkTheme: appThemeManager.buildThemeData(
-                  context: context, isDarkTheme: true),
-              themeMode: themeMode,
-              debugShowCheckedModeBanner: false,
-              navigatorObservers: [
-                FirebaseAnalyticsObserver(
-                    analytics: FirebaseAnalytics.instance),
+            title: 'WallRio',
+            navigatorKey: ToastWidget.navigatorKey,
+            theme: appThemeManager.buildThemeData(
+              context: context,
+              isDarkTheme: false,
+            ),
+            darkTheme: appThemeManager.buildThemeData(
+              context: context,
+              isDarkTheme: true,
+            ),
+            themeMode: themeMode,
+            debugShowCheckedModeBanner: false,
+            navigatorObservers: [
+              FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+            ],
+            // Wraps the Navigator in its own Overlay ancestor so
+            // ToastWidget.navigatorKey.currentContext (the Navigator's own
+            // context, which sits above its internal Overlay) can still
+            // resolve Overlay.of() for CNToast.
+            builder: (context, child) => Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (context) {
+                    // Fires once per cold-start/new-intent; the native
+                    // side clears the pending extras after this read so
+                    // it never double-navigates on rebuild.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      HomeWidgetLaunchService.handleLaunch();
+                    });
+                    return child ?? const SizedBox.shrink();
+                  },
+                ),
               ],
-              // Wraps the Navigator in its own Overlay ancestor so
-              // ToastWidget.navigatorKey.currentContext (the Navigator's own
-              // context, which sits above its internal Overlay) can still
-              // resolve Overlay.of() for CNToast.
-              builder: (context, child) => Overlay(
-                    initialEntries: [
-                      OverlayEntry(
-                          builder: (context) {
-                            // Fires once per cold-start/new-intent; the native
-                            // side clears the pending extras after this read so
-                            // it never double-navigates on rebuild.
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              HomeWidgetLaunchService.handleLaunch();
-                            });
-                            return child ?? const SizedBox.shrink();
-                          }),
-                    ],
-                  ),
-              home: const SplashPage());
+            ),
+            home: const SplashPage(),
+          );
         },
       ),
     );
@@ -134,15 +144,16 @@ Future<void> initializationHandler() async {
         stackTrace: stackTrace,
       );
     }
-  
-  try {
-    // ignore: deprecated_member_use
-    await FirebaseAppCheck.instance.activate(
-      appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
-    );
-  } catch (e) {
-    logger.w('AppCheck activation skipped/failed: $e');
-  }}
+
+    try {
+      // ignore: deprecated_member_use
+      await FirebaseAppCheck.instance.activate(
+        appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+      );
+    } catch (e) {
+      logger.w('AppCheck activation skipped/failed: $e');
+    }
+  }
   if (!Platform.isAndroid) {
     await _initializeNotifications();
   }
@@ -154,9 +165,7 @@ Future<void> initializationHandler() async {
 
   // Workmanager is mobile-only
   if (Platform.isAndroid || Platform.isIOS) {
-    await Workmanager().initialize(
-      callbackDispatcher,
-    );
+    await Workmanager().initialize(callbackDispatcher);
   }
 
   if (Platform.isAndroid) {
@@ -164,9 +173,7 @@ Future<void> initializationHandler() async {
   }
 
   if (Platform.isIOS) {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   if (kReleaseMode) {
@@ -174,7 +181,8 @@ Future<void> initializationHandler() async {
       final exceptionStr = details.exception.toString();
       final stackStr = details.stack?.toString() ?? '';
 
-      final isTransientOrPlatformViewError = details.silent ||
+      final isTransientOrPlatformViewError =
+          details.silent ||
           exceptionStr.contains('ClientException') ||
           exceptionStr.contains('Connection closed') ||
           exceptionStr.contains('SocketException') ||
