@@ -25,8 +25,10 @@ class _LiveDetailPageState extends State<LiveDetailPage>
     with WidgetsBindingObserver {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
+  bool _isVideoLoading = false;
   bool _hasVideoError = false;
   bool _isSessionUnlocked = false;
+  bool _fullPreview = false;
   List<LiveWallpaper> _recommendedLive = [];
   List<Walls> _recommendedStatic = [];
 
@@ -53,26 +55,39 @@ class _LiveDetailPageState extends State<LiveDetailPage>
       });
       Provider.of<WallDetails>(context, listen: false)
         ..getColorPalette(widget.wall.thumbnail)
-        ..getWallDetails(widget.wall.videoUrl);
+        ..getVideoDetails(widget.wall.videoUrl);
     });
   }
 
   Future<void> _initVideo() async {
-    final url = widget.wall.previewVideo.isNotEmpty
-        ? widget.wall.previewVideo
-        : widget.wall.videoUrl;
+    // _syncVideo can fire again while the video is still downloading.
+    if (_isVideoLoading) return;
+    _isVideoLoading = true;
+    try {
+      await _loadVideo();
+    } finally {
+      _isVideoLoading = false;
+    }
+  }
+
+  Future<void> _loadVideo() async {
+    final url = await LivePreviewManager.previewSource(widget.wall);
 
     if (url.isEmpty) {
       if (mounted) setState(() => _hasVideoError = true);
       return;
     }
 
-    final controller = VideoPlayerController.networkUrl(
-      Uri.parse(url),
-      httpHeaders: await StorageAuth.headersFor(url),
-    );
-    _videoController = controller;
+    // The thumbnail stays on screen while the video downloads into the cache.
+    VideoPlayerController? controller;
     try {
+      controller = await LivePreviewManager.cachedController(url);
+      if (!mounted || !_focused || !_appActive) {
+        // Swiped away mid-download; the file is cached for the next visit.
+        controller.dispose();
+        return;
+      }
+      _videoController = controller;
       await controller.initialize();
       if (!mounted || _videoController != controller) return;
       await controller.setLooping(true);
@@ -100,7 +115,23 @@ class _LiveDetailPageState extends State<LiveDetailPage>
     _focused =
         WallpaperCardFocus.of(context) &&
         (ModalRoute.isCurrentOf(context) ?? true);
+    if (_fullPreview && !WallpaperCardFocus.of(context)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _fullPreview) _setFullPreview(false);
+      });
+    }
     _syncVideo();
+  }
+
+  void _setFullPreview(bool value) {
+    setState(() => _fullPreview = value);
+    SystemChrome.setEnabledSystemUIMode(
+      value ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
+    if (value && !FullImage.previewHintShown) {
+      FullImage.previewHintShown = true;
+      ToastWidget.showToast('Tap anywhere to exit preview');
+    }
   }
 
   @override
@@ -133,6 +164,9 @@ class _LiveDetailPageState extends State<LiveDetailPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    if (_fullPreview) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     _releaseVideo();
     super.dispose();
   }
@@ -193,37 +227,55 @@ class _LiveDetailPageState extends State<LiveDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Hero(
-        tag: 'live_${widget.wall.id}',
-        flightShuttleBuilder: heroImageShuttle(widget.wall.thumbnail),
-        child: Material(
-          type: MaterialType.transparency,
-          child: SizedBox.expand(
-            child: Stack(
-              alignment: Alignment.topLeft,
-              children: [
-                _buildVideoBackground(),
-                _buildBackBtn(),
-                WallpaperDetailsTransition(
-                  visible: WallpaperCardFocus.isExpanded(context),
-                  builder: (_) => _buildDraggableBottomSheet(),
-                ),
-                if (WallpaperCardFocus.of(context) &&
-                    !WallpaperCardFocus.isExpanded(context))
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 88 + MediaQuery.paddingOf(context).bottom,
-                    child: const InlineBannerAdWidget(
-                      verticalPadding: 0,
-                      screenName: 'LiveWallpaperPreview',
-                      placementName: 'AboveActionsBanner',
-                    ),
-                  ),
-                _buildFixedActionBtnBar(),
-              ],
+    return PopScope(
+      canPop: !_fullPreview,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _setFullPreview(false);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Hero(
+          tag: 'live_${widget.wall.id}',
+          flightShuttleBuilder: heroImageShuttle(widget.wall.thumbnail),
+          child: Material(
+            type: MaterialType.transparency,
+            child: SizedBox.expand(
+              child: Stack(
+                alignment: Alignment.topLeft,
+                children: _fullPreview
+                    ? [
+                        _buildVideoBackground(),
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _setFullPreview(false),
+                          ),
+                        ),
+                      ]
+                    : [
+                        _buildVideoBackground(),
+                        _buildBackBtn(),
+                        if (WallpaperCardFocus.isExpanded(context))
+                          _buildFullPreviewBtn(),
+                        WallpaperDetailsTransition(
+                          visible: WallpaperCardFocus.isExpanded(context),
+                          builder: (_) => _buildDraggableBottomSheet(),
+                        ),
+                        if (WallpaperCardFocus.of(context) &&
+                            !WallpaperCardFocus.isExpanded(context))
+                          Positioned(
+                            left: 12,
+                            right: 12,
+                            bottom: 88 + MediaQuery.paddingOf(context).bottom,
+                            child: const InlineBannerAdWidget(
+                              verticalPadding: 0,
+                              screenName: 'LiveWallpaperPreview',
+                              placementName: 'AboveActionsBanner',
+                            ),
+                          ),
+                        _buildFixedActionBtnBar(),
+                      ],
+              ),
             ),
           ),
         ),
@@ -273,6 +325,30 @@ class _LiveDetailPageState extends State<LiveDetailPage>
           backgroundColor: blackColor.withValues(alpha: 0.1),
           maxRadius: 30,
           child: const BackBtnWidget(color: whiteColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullPreviewBtn() {
+    return Align(
+      alignment: Alignment.topRight,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: CircleAvatar(
+            backgroundColor: blackColor.withValues(alpha: 0.1),
+            maxRadius: 30,
+            child: IconButton(
+              tooltip: 'Full preview',
+              onPressed: () => _setFullPreview(true),
+              icon: const Icon(
+                Icons.fullscreen_rounded,
+                color: whiteColor,
+                size: 30,
+              ),
+            ),
+          ),
         ),
       ),
     );

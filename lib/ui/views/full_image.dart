@@ -19,6 +19,9 @@ class FullImage extends StatefulWidget {
   final Walls wallModel;
   const FullImage({super.key, required this.wallModel});
 
+  // Shared with LiveDetailPage so the exit hint shows once per app launch.
+  static bool previewHintShown = false;
+
   @override
   State<FullImage> createState() => _FullImageState();
 }
@@ -26,6 +29,7 @@ class FullImage extends StatefulWidget {
 class _FullImageState extends State<FullImage> {
   Map<dynamic, dynamic> _secureScreen() => {};
   bool _isSessionUnlocked = false;
+  bool _fullPreview = false;
   List<Walls> _recommendedWalls = [];
   List<Walls> _sameCategoryWalls = [];
 
@@ -58,7 +62,21 @@ class _FullImageState extends State<FullImage> {
 
   @override
   void dispose() {
+    if (_fullPreview) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     super.dispose();
+  }
+
+  void _setFullPreview(bool value) {
+    setState(() => _fullPreview = value);
+    SystemChrome.setEnabledSystemUIMode(
+      value ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
+    if (value && !FullImage.previewHintShown) {
+      FullImage.previewHintShown = true;
+      ToastWidget.showToast('Tap anywhere to exit preview');
+    }
   }
 
   void _downloadHandler(BuildContext context) {
@@ -127,37 +145,60 @@ class _FullImageState extends State<FullImage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Hero(
-        tag: widget.wallModel.url,
-        flightShuttleBuilder: heroImageShuttle(widget.wallModel.thumbnail),
-        child: Material(
-          type: MaterialType.transparency,
-          child: SizedBox.expand(
-            child: Stack(
-              alignment: Alignment.topLeft,
-              children: [
-                _buildImageUI(),
-                _buildBackBtn(),
-                WallpaperDetailsTransition(
-                  visible: WallpaperCardFocus.isExpanded(context),
-                  builder: (_) => _buildDraggableBottomSheet(),
-                ),
-                if (WallpaperCardFocus.of(context) &&
-                    !WallpaperCardFocus.isExpanded(context))
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 88 + MediaQuery.paddingOf(context).bottom,
-                    child: const InlineBannerAdWidget(
-                      verticalPadding: 0,
-                      screenName: 'WallpaperPreview',
-                      placementName: 'AboveActionsBanner',
-                    ),
-                  ),
-                _buildFixedActionBtnBar(),
-              ],
+    if (_fullPreview && !WallpaperCardFocus.of(context)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _fullPreview) _setFullPreview(false);
+      });
+    }
+    return PopScope(
+      canPop: !_fullPreview,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _setFullPreview(false);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Hero(
+          tag: widget.wallModel.url,
+          flightShuttleBuilder: heroImageShuttle(widget.wallModel.thumbnail),
+          child: Material(
+            type: MaterialType.transparency,
+            child: SizedBox.expand(
+              child: Stack(
+                alignment: Alignment.topLeft,
+                children: _fullPreview
+                    ? [
+                        _buildImageUI(),
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _setFullPreview(false),
+                          ),
+                        ),
+                      ]
+                    : [
+                        _buildImageUI(),
+                        _buildBackBtn(),
+                        if (WallpaperCardFocus.isExpanded(context))
+                          _buildFullPreviewBtn(),
+                        WallpaperDetailsTransition(
+                          visible: WallpaperCardFocus.isExpanded(context),
+                          builder: (_) => _buildDraggableBottomSheet(),
+                        ),
+                        if (WallpaperCardFocus.of(context) &&
+                            !WallpaperCardFocus.isExpanded(context))
+                          Positioned(
+                            left: 12,
+                            right: 12,
+                            bottom: 88 + MediaQuery.paddingOf(context).bottom,
+                            child: const InlineBannerAdWidget(
+                              verticalPadding: 0,
+                              screenName: 'WallpaperPreview',
+                              placementName: 'AboveActionsBanner',
+                            ),
+                          ),
+                        _buildFixedActionBtnBar(),
+                      ],
+              ),
             ),
           ),
         ),
@@ -698,6 +739,30 @@ class _FullImageState extends State<FullImage> {
           backgroundColor: blackColor.withValues(alpha: 0.1),
           maxRadius: 30,
           child: const BackBtnWidget(color: whiteColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullPreviewBtn() {
+    return Align(
+      alignment: Alignment.topRight,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: CircleAvatar(
+            backgroundColor: blackColor.withValues(alpha: 0.1),
+            maxRadius: 30,
+            child: IconButton(
+              tooltip: 'Full preview',
+              onPressed: () => _setFullPreview(true),
+              icon: const Icon(
+                Icons.fullscreen_rounded,
+                color: whiteColor,
+                size: 30,
+              ),
+            ),
+          ),
         ),
       ),
     );

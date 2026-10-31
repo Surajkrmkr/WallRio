@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/views/desktop_fullscreen_viewer.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class MacOSWallpaperPreviewDialog extends StatefulWidget {
@@ -137,8 +138,9 @@ class _MacOSWallpaperPreviewDialogState
           height: dialogHeight,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color:
-                isDarkMode ? const Color(0xFF181822) : const Color(0xFFFAFAFC),
+            color: isDarkMode
+                ? const Color(0xFF181822)
+                : const Color(0xFFFAFAFC),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: isDarkMode
@@ -214,7 +216,10 @@ class _MacOSWallpaperPreviewDialogState
 
   // Left Preview Area with desktop frame & controls
   Widget _buildPreviewCanvas(
-      BuildContext context, Walls wall, bool isDarkMode) {
+    BuildContext context,
+    Walls wall,
+    bool isDarkMode,
+  ) {
     return Container(
       color: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFEAEBED),
       child: Stack(
@@ -234,8 +239,9 @@ class _MacOSWallpaperPreviewDialogState
                       // Full image
                       CachedNetworkImage(
                         cacheManager: WallCacheManager.instance,
-                        imageUrl:
-                            wall.url.isNotEmpty ? wall.url : wall.thumbnail,
+                        imageUrl: wall.url.isNotEmpty
+                            ? wall.url
+                            : wall.thumbnail,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => CachedNetworkImage(
                           cacheManager: WallCacheManager.instance,
@@ -257,8 +263,11 @@ class _MacOSWallpaperPreviewDialogState
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: const Row(
                               children: [
-                                Icon(Icons.apple,
-                                    color: Colors.white, size: 12),
+                                Icon(
+                                  Icons.apple,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
                                 SizedBox(width: 10),
                                 Text(
                                   "Finder  File  Edit  View  Go  Window  Help",
@@ -271,8 +280,11 @@ class _MacOSWallpaperPreviewDialogState
                                 Spacer(),
                                 Icon(Icons.wifi, color: Colors.white, size: 11),
                                 SizedBox(width: 8),
-                                Icon(Icons.battery_full_rounded,
-                                    color: Colors.white, size: 11),
+                                Icon(
+                                  Icons.battery_full_rounded,
+                                  color: Colors.white,
+                                  size: 11,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   "Wed 9:41 AM",
@@ -295,7 +307,9 @@ class _MacOSWallpaperPreviewDialogState
                           child: Center(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 5),
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(14),
@@ -316,15 +330,25 @@ class _MacOSWallpaperPreviewDialogState
                                   _dockIcon(Icons.face_rounded, Colors.blue),
                                   _dockIcon(Icons.public_rounded, Colors.cyan),
                                   _dockIcon(
-                                      Icons.chat_bubble_rounded, Colors.green),
+                                    Icons.chat_bubble_rounded,
+                                    Colors.green,
+                                  ),
                                   _dockIcon(
-                                      Icons.mail_rounded, Colors.blueAccent),
-                                  _dockIcon(Icons.photo_library_rounded,
-                                      Colors.orange),
-                                  _dockIcon(Icons.music_note_rounded,
-                                      Colors.redAccent),
+                                    Icons.mail_rounded,
+                                    Colors.blueAccent,
+                                  ),
                                   _dockIcon(
-                                      Icons.settings_rounded, Colors.grey),
+                                    Icons.photo_library_rounded,
+                                    Colors.orange,
+                                  ),
+                                  _dockIcon(
+                                    Icons.music_note_rounded,
+                                    Colors.redAccent,
+                                  ),
+                                  _dockIcon(
+                                    Icons.settings_rounded,
+                                    Colors.grey,
+                                  ),
                                 ],
                               ),
                             ),
@@ -352,6 +376,19 @@ class _MacOSWallpaperPreviewDialogState
                   isActive: _showDesktopMockup,
                   onTap: () =>
                       setState(() => _showDesktopMockup = !_showDesktopMockup),
+                  isDarkMode: isDarkMode,
+                ),
+                const SizedBox(width: 8),
+                _pillButton(
+                  icon: Icons.fullscreen_rounded,
+                  label: "Full Preview",
+                  isActive: false,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DesktopFullscreenViewer(wallModel: wall),
+                    ),
+                  ),
                   isDarkMode: isDarkMode,
                 ),
                 const SizedBox(width: 8),
@@ -410,9 +447,7 @@ class _MacOSWallpaperPreviewDialogState
         color: color,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Center(
-        child: Icon(icon, color: Colors.white, size: 13),
-      ),
+      child: Center(child: Icon(icon, color: Colors.white, size: 13)),
     );
   }
 
@@ -470,15 +505,16 @@ class _MacOSWallpaperPreviewDialogState
           decoration: BoxDecoration(
             color: isActive
                 ? context.appColors.accent
-                : (isDarkMode ? Colors.black45 : Colors.white)
-                    .withValues(alpha: 0.85),
+                : (isDarkMode ? Colors.black45 : Colors.white).withValues(
+                    alpha: 0.85,
+                  ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isActive
                   ? context.appColors.accent
                   : (isDarkMode
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.1)),
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.1)),
             ),
           ),
           child: Row(
@@ -511,7 +547,10 @@ class _MacOSWallpaperPreviewDialogState
 
   // Right Sidebar with metadata, colors & primary desktop actions
   Widget _buildDetailsSidebar(
-      BuildContext context, Walls wall, bool isDarkMode) {
+    BuildContext context,
+    Walls wall,
+    bool isDarkMode,
+  ) {
     final qualityBadge = _getQualityBadge(wall);
 
     return SingleChildScrollView(
@@ -541,8 +580,10 @@ class _MacOSWallpaperPreviewDialogState
               const SizedBox(width: 8),
               if (wall.isPremium)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFB300),
                     borderRadius: BorderRadius.circular(8),
@@ -636,7 +677,10 @@ class _MacOSWallpaperPreviewDialogState
                   onPressed: action.isDownloading
                       ? null
                       : () => action.saveMacOsWallpaper(
-                          context, wall.url, "${wall.name}_${wall.id}"),
+                          context,
+                          wall.url,
+                          "${wall.name}_${wall.id}",
+                        ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: isDarkMode ? Colors.white : Colors.black87,
                     side: BorderSide(
@@ -673,8 +717,10 @@ class _MacOSWallpaperPreviewDialogState
             children: [
               Consumer<FavouriteProvider>(
                 builder: (context, favProvider, _) {
-                  final isFav =
-                      favProvider.isSelectedAsFav(wall.url, id: wall.id);
+                  final isFav = favProvider.isSelectedAsFav(
+                    wall.url,
+                    id: wall.id,
+                  );
                   return Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
@@ -696,8 +742,8 @@ class _MacOSWallpaperPreviewDialogState
                           color: isFav
                               ? Colors.redAccent.withValues(alpha: 0.4)
                               : (isDarkMode
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.1)),
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.1)),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -725,8 +771,9 @@ class _MacOSWallpaperPreviewDialogState
                     ToastWidget.showToast("Wallpaper URL copied!");
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                        isDarkMode ? Colors.white70 : Colors.black87,
+                    foregroundColor: isDarkMode
+                        ? Colors.white70
+                        : Colors.black87,
                     side: BorderSide(
                       color: isDarkMode
                           ? Colors.white.withValues(alpha: 0.1)
@@ -737,8 +784,10 @@ class _MacOSWallpaperPreviewDialogState
                     ),
                   ),
                   icon: const Icon(Icons.copy_rounded, size: 15),
-                  label:
-                      const Text("Copy Link", style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    "Copy Link",
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -788,8 +837,9 @@ class _MacOSWallpaperPreviewDialogState
                             color: c,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color:
-                                  isDarkMode ? Colors.white24 : Colors.black12,
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : Colors.black12,
                               width: 1,
                             ),
                           ),
@@ -819,8 +869,10 @@ class _MacOSWallpaperPreviewDialogState
               runSpacing: 6,
               children: wall.tags.map((tag) {
                 return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: (isDarkMode ? Colors.white : Colors.black)
                         .withValues(alpha: 0.06),

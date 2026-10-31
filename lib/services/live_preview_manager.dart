@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'package:video_player/video_player.dart';
+import 'package:wallrio/model/live_wallpaper_model.dart';
 import 'package:wallrio/services/packages/export.dart';
 
 class LivePreviewManager {
@@ -16,6 +17,25 @@ class LivePreviewManager {
   bool _isScrollingFast = false;
 
   String get qualityMode => _qualityMode;
+
+  /// Plays [url] from the wallpaper disk cache, downloading it once if needed.
+  /// Streaming re-downloaded the video on every open; a cached file starts
+  /// instantly next time and works offline.
+  static Future<VideoPlayerController> cachedController(String url) async {
+    final file = await WallCacheManager.instance.getSingleFile(url);
+    return VideoPlayerController.file(file);
+  }
+
+  /// The video to show in a preview: the full video when it is already cached
+  /// (e.g. after applying it), otherwise the much smaller preview clip.
+  static Future<String> previewSource(LiveWallpaper wall) async {
+    final full = wall.videoUrl;
+    if (full.isNotEmpty &&
+        await WallCacheManager.instance.getFileFromCache(full) != null) {
+      return full;
+    }
+    return wall.previewVideo.isNotEmpty ? wall.previewVideo : full;
+  }
 
   Future<void> initSettings() async {
     try {
@@ -68,10 +88,7 @@ class LivePreviewManager {
     }
 
     try {
-      final controller = VideoPlayerController.networkUrl(
-      Uri.parse(url),
-      httpHeaders: await StorageAuth.headersFor(url),
-    );
+      final controller = await cachedController(url);
       await controller.initialize();
       controller
         ..setLooping(true)

@@ -82,6 +82,37 @@ class WallDetails extends ChangeNotifier {
     }
   }
 
+  /// Shows a video's file size without downloading it: from the cache when it
+  /// is already there, otherwise from a HEAD request (no body).
+  void getVideoDetails(String url) async {
+    if (_isDisposed) return;
+    setIsImageDetailsLoading = true;
+    setImgSize = "0 MB";
+    setImageResolution(0, 0);
+    try {
+      final cached = await WallCacheManager.instance.getFileFromCache(url);
+      final bytes = cached != null
+          ? await cached.file.length()
+          : await _remoteSize(url);
+      if (!_isDisposed && bytes > 0) setImgSize = formatBytes(bytes);
+    } catch (error) {
+      logger.w('Failed to get video details for $url: $error');
+    } finally {
+      if (!_isDisposed) setIsImageDetailsLoading = false;
+    }
+  }
+
+  Future<int> _remoteSize(String url) async {
+    final response = await Dio().head(
+      url,
+      options: Options(headers: await StorageAuth.headersFor(url)),
+    );
+    return int.tryParse(
+          response.headers.value(Headers.contentLengthHeader) ?? '',
+        ) ??
+        0;
+  }
+
   Future<void> getImgDetails(String url) async {
     if (_isDisposed) return;
     try {
