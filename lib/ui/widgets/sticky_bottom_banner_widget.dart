@@ -1,8 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
-import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/widgets/simple_banner_ad_widget.dart';
 
 /// Sticky compact bottom banner ad positioned above the navigation bar.
 class StickyBottomBannerWidget extends StatefulWidget {
@@ -20,83 +19,32 @@ class StickyBottomBannerWidget extends StatefulWidget {
       _StickyBottomBannerWidgetState();
 }
 
-class _StickyBottomBannerWidgetState extends State<StickyBottomBannerWidget> {
-  BannerAd? _bannerAd;
-  bool _isBannerFailed = false;
-  Timer? _retryTimer;
-  int _retryAttempts = 0;
-  static const int _maxRetries = 2;
+class _StickyBottomBannerWidgetState extends State<StickyBottomBannerWidget>
+    with BannerAdLoader {
+  @override
+  AdSize get bannerAdSize => AdSize.banner;
 
   @override
   void initState() {
     super.initState();
-    ConsentManager.instance.addListener(_onConsentChanged);
-    if (!UserProfile.plusMember) {
-      _acquireBanner();
-    }
-  }
-
-  void _acquireBanner() {
-    if (_bannerAd != null) return;
-
-    final ad = BannerAdManager.instance.acquireBanner(
-      screen: widget.screenName,
-      placement: widget.placementName,
-      // DIAGNOSTIC ONLY: tags whether this call is the initial acquire or a
-      // widget-level retry, and which retry attempt number.
-      source: _retryAttempts == 0 ? 'initState' : 'widgetRetry#$_retryAttempts',
-    );
-
-    if (mounted) {
-      setState(() {
-        _bannerAd = ad;
-        _isBannerFailed = (ad == null);
-      });
-    }
-
-    if (ad == null && mounted && _retryAttempts < _maxRetries) {
-      _retryAttempts++;
-      _retryTimer?.cancel();
-      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted && _bannerAd == null && !UserProfile.plusMember) {
-          _acquireBanner();
-        }
-      });
-    }
+    initBannerAd();
   }
 
   @override
   void dispose() {
-    ConsentManager.instance.removeListener(_onConsentChanged);
-    _retryTimer?.cancel();
-    _retryTimer = null;
-    if (_bannerAd != null) {
-      BannerAdManager.instance.releaseBanner(
-        _bannerAd,
-        screen: widget.screenName,
-        placement: widget.placementName,
-      );
-      _bannerAd = null;
-    }
+    disposeBannerAd();
     super.dispose();
-  }
-
-  void _onConsentChanged() {
-    if (mounted && _bannerAd == null && ConsentManager.instance.canRequestAds) {
-      _retryAttempts = 0;
-      _acquireBanner();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (UserProfile.plusMember || _isBannerFailed || _bannerAd == null) {
+    if (UserProfile.plusMember || !isBannerLoaded || bannerAd == null) {
       return const IgnorePointer(child: SizedBox.shrink());
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final double adWidth = _bannerAd!.size.width.toDouble();
-    final double adHeight = _bannerAd!.size.height.toDouble().clamp(50.0, 60.0);
+    final double adWidth = bannerAd!.size.width.toDouble();
+    final double adHeight = bannerAd!.size.height.toDouble();
 
     return Container(
       margin: const EdgeInsets.only(
@@ -133,8 +81,8 @@ class _StickyBottomBannerWidgetState extends State<StickyBottomBannerWidget> {
               width: adWidth,
               height: adHeight,
               child: AdWidget(
-                key: ValueKey(_bannerAd.hashCode),
-                ad: _bannerAd!,
+                key: ValueKey(bannerAd.hashCode),
+                ad: bannerAd!,
               ),
             ),
           ),

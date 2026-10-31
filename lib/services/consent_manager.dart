@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:wallrio/model/export.dart';
-import 'package:wallrio/services/banner_ad_manager.dart';
 
 /// Centralized Google User Messaging Platform (UMP) Consent Manager.
 ///
@@ -157,16 +155,14 @@ class ConsentManager extends ChangeNotifier {
     try {
       await MobileAds.instance.initialize();
       if (kDebugMode) {
+        // `flutter run --dart-define=ADMOB_TEST_DEVICE_ID=<hashed id>` marks
+        // the dev device as a test device so real ad units serve test ads.
+        const testDeviceId = String.fromEnvironment('ADMOB_TEST_DEVICE_ID');
         await MobileAds.instance.updateRequestConfiguration(
           RequestConfiguration(
-            testDeviceIds: const [],
+            testDeviceIds: testDeviceId.isEmpty ? const [] : [testDeviceId],
           ),
         );
-      }
-
-      // Warm up banner preload queue for non-Plus users
-      if (!UserProfile.plusMember) {
-        BannerAdManager.instance.warmUp();
       }
     } catch (err) {
       debugPrint('[GMA] Next-Gen SDK initialization failed: $err');

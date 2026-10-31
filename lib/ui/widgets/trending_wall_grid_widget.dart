@@ -63,12 +63,10 @@ class TrendingWallGridWidget extends StatelessWidget {
     return fullList.sublist(0, provider.visibleCount);
   }
 
-  // Builds grid rows where every element is a Wall, a LiveWallpaper or an
-  // 'AD_TILE' marker occupying 1 grid slot. Ad cadence only counts static walls.
+  // Builds grid rows where every element is a Wall or a LiveWallpaper.
   List<List<dynamic>> _buildItemList(
       List<Walls> walls, int columnsCount, List<LiveWallpaper> lives) {
     final allGridItems = <dynamic>[];
-    int wallCounter = 0;
     // Session-stable seed keeps live tiles in place while paging/rebuilding.
     final rng = Random(_liveSeed);
     int liveIndex = 0;
@@ -77,21 +75,9 @@ class TrendingWallGridWidget extends StatelessWidget {
 
     for (int i = 0; i < walls.length; i++) {
       allGridItems.add(walls[i]);
-      wallCounter++;
       sinceLive++;
 
-      // Insert 1 native ad tile after every 6 wallpapers
-      bool addedAd = false;
-      if (!UserProfile.plusMember &&
-          wallCounter == 6 &&
-          (i + 1) < walls.length) {
-        allGridItems.add('AD_TILE');
-        wallCounter = 0;
-        addedAd = true;
-      }
-
-      if (!addedAd &&
-          liveIndex < lives.length &&
+      if (liveIndex < lives.length &&
           sinceLive >= nextLiveAt &&
           (i + 1) < walls.length) {
         allGridItems.add(lives[liveIndex++]);
@@ -115,7 +101,7 @@ class TrendingWallGridWidget extends StatelessWidget {
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
       if (!UserProfile.plusMember &&
-          (i + 1) % 4 == 0 &&
+          (i + 1) % 3 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }

@@ -184,18 +184,6 @@ class _FullImageState extends State<FullImage> {
                           visible: WallpaperCardFocus.isExpanded(context),
                           builder: (_) => _buildDraggableBottomSheet(),
                         ),
-                        if (WallpaperCardFocus.of(context) &&
-                            !WallpaperCardFocus.isExpanded(context))
-                          Positioned(
-                            left: 12,
-                            right: 12,
-                            bottom: 88 + MediaQuery.paddingOf(context).bottom,
-                            child: const InlineBannerAdWidget(
-                              verticalPadding: 0,
-                              screenName: 'WallpaperPreview',
-                              placementName: 'AboveActionsBanner',
-                            ),
-                          ),
                         _buildFixedActionBtnBar(),
                       ],
               ),
@@ -616,32 +604,14 @@ class _FullImageState extends State<FullImage> {
   }
 
   Widget _buildRecommendationGridCarousel(List<Walls> walls) {
-    final int adFrequency = 6;
-    final int adCount = walls.isNotEmpty ? walls.length ~/ adFrequency : 0;
-    final int totalCount = walls.length + adCount;
-
     return SizedBox(
       height: 145,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: totalCount,
+        itemCount: walls.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
-          // Calculate if this position is a native ad (after every 6 wallpaper cards)
-          final bool isAdPosition = (i + 1) % (adFrequency + 1) == 0;
-          if (isAdPosition && !UserProfile.plusMember) {
-            return const SizedBox(
-              width: 100,
-              height: 145,
-              child: SponsoredAdCard(),
-            );
-          }
-
-          // Calculate actual wallpaper index
-          final int wallIndex = i - (i ~/ (adFrequency + 1));
-          if (wallIndex >= walls.length) return const SizedBox.shrink();
-
-          final wall = walls[wallIndex];
+          final wall = walls[i];
           return GestureDetector(
             onTap: () => Navigator.pushReplacement(
               context,

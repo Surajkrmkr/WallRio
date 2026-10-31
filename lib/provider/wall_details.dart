@@ -50,9 +50,15 @@ class WallDetails extends ChangeNotifier {
     try {
       await Future.delayed(const Duration(seconds: 2));
       if (_isDisposed) return;
+      // Decode a small copy: palette quantization runs on the UI isolate and
+      // full-resolution 4K wallpapers were the top source of ANRs.
       PaletteGenerator? paletteGenerator =
           await PaletteGenerator.fromImageProvider(
-            CachedNetworkImageProvider(url, cacheManager: WallCacheManager.instance),
+            ResizeImage(
+              CachedNetworkImageProvider(url,
+                  cacheManager: WallCacheManager.instance),
+              width: 120,
+            ),
             maximumColorCount: 10,
           );
       setColorSwatches = paletteGenerator.colors.toList();

@@ -261,18 +261,6 @@ class _LiveDetailPageState extends State<LiveDetailPage>
                           visible: WallpaperCardFocus.isExpanded(context),
                           builder: (_) => _buildDraggableBottomSheet(),
                         ),
-                        if (WallpaperCardFocus.of(context) &&
-                            !WallpaperCardFocus.isExpanded(context))
-                          Positioned(
-                            left: 12,
-                            right: 12,
-                            bottom: 88 + MediaQuery.paddingOf(context).bottom,
-                            child: const InlineBannerAdWidget(
-                              verticalPadding: 0,
-                              screenName: 'LiveWallpaperPreview',
-                              placementName: 'AboveActionsBanner',
-                            ),
-                          ),
                         _buildFixedActionBtnBar(),
                       ],
               ),
@@ -589,33 +577,11 @@ class _LiveDetailPageState extends State<LiveDetailPage>
     ToastWidget.showToast("Color copied");
   }
 
-  List<dynamic> _buildLiveFeedItems(List<LiveWallpaper> walls) {
-    final items = <dynamic>[];
-    int count = 0;
-    for (int i = 0; i < walls.length; i++) {
-      items.add(walls[i]);
-      count++;
-      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
-        items.add('AD_TILE');
-        count = 0;
-      }
-    }
-    return items;
-  }
+  List<dynamic> _buildLiveFeedItems(List<LiveWallpaper> walls) =>
+      <dynamic>[...walls];
 
-  List<dynamic> _buildStaticFeedItems(List<Walls> walls) {
-    final items = <dynamic>[];
-    int count = 0;
-    for (int i = 0; i < walls.length; i++) {
-      items.add(walls[i]);
-      count++;
-      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
-        items.add('AD_TILE');
-        count = 0;
-      }
-    }
-    return items;
-  }
+  List<dynamic> _buildStaticFeedItems(List<Walls> walls) =>
+      <dynamic>[...walls];
 
   Widget _buildMetadataChipsUI() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;

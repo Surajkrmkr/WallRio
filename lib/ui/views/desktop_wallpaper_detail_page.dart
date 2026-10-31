@@ -522,19 +522,7 @@ class _DesktopWallpaperDetailPageState
     ToastWidget.showToast("Color copied");
   }
 
-  List<dynamic> _buildFeedItems(List<Walls> walls) {
-    final items = <dynamic>[];
-    int count = 0;
-    for (int i = 0; i < walls.length; i++) {
-      items.add(walls[i]);
-      count++;
-      if (!UserProfile.plusMember && count == 6 && (i + 1) < walls.length) {
-        items.add('AD_TILE');
-        count = 0;
-      }
-    }
-    return items;
-  }
+  List<dynamic> _buildFeedItems(List<Walls> walls) => <dynamic>[...walls];
 
   Widget _buildColorPaletteSection(BuildContext context, bool isDarkMode) {
     return Consumer<WallDetails>(

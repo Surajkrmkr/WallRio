@@ -141,8 +141,13 @@ class AppThemeManager extends ChangeNotifier {
   Future<void> _extractDynamicAccent(String url) async {
     Color resolved;
     try {
+      // Small decode keeps quantization off the ANR path (see WallDetails).
       final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
-        CachedNetworkImageProvider(url, cacheManager: WallCacheManager.instance),
+        ResizeImage(
+          CachedNetworkImageProvider(url,
+              cacheManager: WallCacheManager.instance),
+          width: 120,
+        ),
         maximumColorCount: 10,
       );
       resolved = generator.dominantColor?.color ??

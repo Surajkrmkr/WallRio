@@ -1,17 +1,20 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallrio/model/export.dart';
-import 'package:wallrio/services/export.dart';
+import 'package:wallrio/ui/widgets/simple_banner_ad_widget.dart';
 
+/// In-feed banner placed between grid rows. Defaults to a 300x250 MREC, the
+/// format 2.0.2 used in its grids (every 3 rows).
 class InlineBannerAdWidget extends StatefulWidget {
   final double verticalPadding;
+  final AdSize size;
   final String screenName;
   final String placementName;
 
   const InlineBannerAdWidget({
     super.key,
     this.verticalPadding = 18.0,
+    this.size = AdSize.mediumRectangle,
     this.screenName = 'Feed',
     this.placementName = 'InlineBanner',
   });
@@ -21,93 +24,41 @@ class InlineBannerAdWidget extends StatefulWidget {
 }
 
 class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget>
-    with AutomaticKeepAliveClientMixin {
-  BannerAd? _bannerAd;
-  bool _isAdFailed = false;
-  Timer? _retryTimer;
-  int _retryAttempts = 0;
-  static const int _maxRetries = 2;
+    with AutomaticKeepAliveClientMixin, BannerAdLoader {
+  @override
+  AdSize get bannerAdSize => widget.size;
 
   @override
-  bool get wantKeepAlive => _bannerAd != null;
+  bool get wantKeepAlive => isBannerLoaded;
 
   @override
   void initState() {
     super.initState();
-    ConsentManager.instance.addListener(_onConsentChanged);
-    if (!UserProfile.plusMember) {
-      _acquireBannerAd();
-    }
-  }
-
-  void _acquireBannerAd() {
-    if (_bannerAd != null) return;
-
-    final ad = BannerAdManager.instance.acquireBanner(
-      screen: widget.screenName,
-      placement: widget.placementName,
-      // DIAGNOSTIC ONLY: tags whether this call is the initial acquire or a
-      // widget-level retry, and which retry attempt number.
-      source: _retryAttempts == 0 ? 'initState' : 'widgetRetry#$_retryAttempts',
-    );
-
-    if (mounted) {
-      setState(() {
-        _bannerAd = ad;
-        _isAdFailed = (ad == null);
-      });
-    }
-
-    if (ad == null && mounted && _retryAttempts < _maxRetries) {
-      _retryAttempts++;
-      _retryTimer?.cancel();
-      _retryTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted && _bannerAd == null && !UserProfile.plusMember) {
-          _acquireBannerAd();
-        }
-      });
-    }
+    initBannerAd();
   }
 
   @override
   void dispose() {
-    ConsentManager.instance.removeListener(_onConsentChanged);
-    _retryTimer?.cancel();
-    _retryTimer = null;
-    if (_bannerAd != null) {
-      BannerAdManager.instance.releaseBanner(
-        _bannerAd,
-        screen: widget.screenName,
-        placement: widget.placementName,
-      );
-      _bannerAd = null;
-    }
+    disposeBannerAd();
     super.dispose();
-  }
-
-  void _onConsentChanged() {
-    if (mounted && _bannerAd == null && ConsentManager.instance.canRequestAds) {
-      _retryAttempts = 0;
-      _acquireBannerAd();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (UserProfile.plusMember || _isAdFailed || _bannerAd == null) {
+    if (UserProfile.plusMember || !isBannerLoaded || bannerAd == null) {
       return const IgnorePointer(child: SizedBox.shrink());
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final adWidth = _bannerAd!.size.width.toDouble();
-    final adHeight = _bannerAd!.size.height.toDouble().clamp(48.0, 60.0);
+    final adWidth = bannerAd!.size.width.toDouble();
+    final adHeight = bannerAd!.size.height.toDouble();
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: widget.verticalPadding),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isDarkMode
                 ? const Color(0xDD1E1E28)
@@ -131,8 +82,8 @@ class _InlineBannerAdWidgetState extends State<InlineBannerAdWidget>
             width: adWidth,
             height: adHeight,
             child: AdWidget(
-              key: ValueKey(_bannerAd.hashCode),
-              ad: _bannerAd!,
+              key: ValueKey(bannerAd.hashCode),
+              ad: bannerAd!,
             ),
           ),
         ),

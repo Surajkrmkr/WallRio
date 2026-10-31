@@ -89,20 +89,7 @@ class LiveWallsGridSliver extends StatelessWidget {
 
   List<List<dynamic>> _buildItemList(
       List<LiveWallpaper> walls, int columnsCount) {
-    final allGridItems = <dynamic>[];
-    int wallCounter = 0;
-
-    for (int i = 0; i < walls.length; i++) {
-      allGridItems.add(walls[i]);
-      wallCounter++;
-
-      if (!UserProfile.plusMember &&
-          wallCounter == 6 &&
-          (i + 1) < walls.length) {
-        allGridItems.add('AD_TILE');
-        wallCounter = 0;
-      }
-    }
+    final allGridItems = <dynamic>[...walls];
 
     final rows = <List<dynamic>>[];
     for (int i = 0; i < allGridItems.length; i += columnsCount) {
@@ -118,7 +105,7 @@ class LiveWallsGridSliver extends StatelessWidget {
     for (int i = 0; i < rows.length; i++) {
       feed.add(rows[i]);
       if (!UserProfile.plusMember &&
-          (i + 1) % 4 == 0 &&
+          (i + 1) % 3 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }

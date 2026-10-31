@@ -25,10 +25,10 @@ class AdsProvider extends ChangeNotifier {
   bool _isInterstitialLoading = false;
 
   AdsProvider() {
-    // Preload interstitial on startup for Free users if consent is ready
-    if (ConsentManager.instance.canRequestAds) {
-      loadInterstitialAd();
-    }
+    // Consent is gathered after the first frame, so it is usually not ready
+    // yet here; preload as soon as UMP allows ad requests.
+    ConsentManager.instance.addListener(loadInterstitialAd);
+    loadInterstitialAd();
   }
 
   set setIsRewardedAdLoading(bool val) {
@@ -152,6 +152,7 @@ class AdsProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    ConsentManager.instance.removeListener(loadInterstitialAd);
     _interstitialAd?.dispose();
     rewardedAd?.dispose();
     super.dispose();

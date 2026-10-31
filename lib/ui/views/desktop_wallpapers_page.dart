@@ -84,24 +84,10 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
     return provider.desktopWallList;
   }
 
-  /// Groups wallpapers and native ads (every 8 wallpapers) into 2-column rows,
-  /// and inserts inline banner ads after every 4 completed rows.
+  /// Groups wallpapers into 2-column rows and inserts an MREC banner after
+  /// every 3 completed rows (the 2.0.2 cadence).
   List<dynamic> _buildFeedItems(List<Walls> walls, int columnsCount) {
-    final allGridItems = <dynamic>[];
-    int wallCounter = 0;
-
-    for (int i = 0; i < walls.length; i++) {
-      allGridItems.add(walls[i]);
-      wallCounter++;
-
-      // Insert 1 native ad tile after every 8 desktop wallpapers
-      if (!UserProfile.plusMember &&
-          wallCounter == 8 &&
-          (i + 1) < walls.length) {
-        allGridItems.add('AD_TILE');
-        wallCounter = 0;
-      }
-    }
+    final allGridItems = <dynamic>[...walls];
 
     final rows = <List<dynamic>>[];
     for (int i = 0; i < allGridItems.length; i += columnsCount) {
@@ -114,7 +100,7 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
       feed.add(rows[i]);
       // Insert 1 banner ad after every 3 completed rows
       if (!UserProfile.plusMember &&
-          (i + 1) % 4 == 0 &&
+          (i + 1) % 3 == 0 &&
           (i + 1) < rows.length) {
         feed.add('INLINE_BANNER_AD');
       }

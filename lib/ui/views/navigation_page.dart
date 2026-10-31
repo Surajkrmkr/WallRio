@@ -264,7 +264,10 @@ class _NavigationPageState extends State<NavigationPage>
           },
           child: Scaffold(
             extendBodyBehindAppBar: true,
-            extendBody: true,
+            // The sticky banner lives in bottomNavigationBar; letting the body
+            // scroll underneath it would overlap in-feed MRECs (AdMob policy)
+            // and hide part of every ad that passes behind it.
+            extendBody: UserProfile.plusMember,
             body: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification notification) {
                 if (notification is ScrollUpdateNotification) {
@@ -286,13 +289,10 @@ class _NavigationPageState extends State<NavigationPage>
                 children: [
                   _buildTabs(provider.index),
                   if (_showPromoBanner && !UserProfile.plusMember)
+                    // Free users: the body already ends above the sticky
+                    // banner and tab bar (extendBody is off), so only a gap.
                     Positioned(
-                      bottom:
-                          MediaQuery.of(context).padding.bottom +
-                          16 +
-                          61 +
-                          20 +
-                          60,
+                      bottom: 20,
                       left: 0,
                       right: 0,
                       child: Center(child: _buildPromoBanner(context)),

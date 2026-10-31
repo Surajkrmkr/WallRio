@@ -48,6 +48,61 @@ class BannerAdUnits {
   }
 }
 
+/// Gives a [State] its own [BannerAd], loaded once when the widget mounts and
+/// disposed with it — the per-widget model 2.0.2 used. There is no shared
+/// preload queue: banners are only requested for slots that are actually
+/// built, which keeps the show rate (and therefore eCPM) up.
+///
+/// If UMP consent isn't resolved yet when the widget mounts, the load waits
+/// for [ConsentManager] to report that ads can be requested.
+mixin BannerAdLoader<T extends StatefulWidget> on State<T> {
+  BannerAd? bannerAd;
+  bool isBannerLoaded = false;
+
+  AdSize get bannerAdSize;
+  String get bannerAdUnitId => BannerAdUnits.homepageGridBanner;
+
+  void initBannerAd() {
+    if (UserProfile.plusMember) return;
+    ConsentManager.instance.addListener(_loadBannerAd);
+    _loadBannerAd();
+  }
+
+  void disposeBannerAd() {
+    ConsentManager.instance.removeListener(_loadBannerAd);
+    bannerAd?.dispose();
+    bannerAd = null;
+  }
+
+  void _loadBannerAd() {
+    if (!mounted ||
+        bannerAd != null ||
+        UserProfile.plusMember ||
+        !ConsentManager.instance.canRequestAds) {
+      return;
+    }
+
+    bannerAd = BannerAd(
+      adUnitId: BannerAdUnits.resolveAdUnitId(bannerAdUnitId),
+      size: bannerAdSize,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          if (mounted) setState(() => isBannerLoaded = true);
+        },
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            debugPrint('[BannerAd] Failed to load: ${error.message}');
+          }
+          ad.dispose();
+          bannerAd = null;
+          if (mounted) setState(() => isBannerLoaded = false);
+        },
+      ),
+    )..load();
+  }
+}
+
 /// Simple, direct banner ad widget.
 ///
 /// Direct Google Mobile Ads implementation:
@@ -77,60 +132,25 @@ class SimpleBannerAdWidget extends StatefulWidget {
 }
 
 class _SimpleBannerAdWidgetState extends State<SimpleBannerAdWidget>
-    with AutomaticKeepAliveClientMixin {
-  BannerAd? _bannerAd;
-  bool _isAdLoaded = false;
+    with AutomaticKeepAliveClientMixin, BannerAdLoader {
+  @override
+  AdSize get bannerAdSize => widget.adSize;
 
   @override
-  bool get wantKeepAlive => _isAdLoaded;
+  String get bannerAdUnitId => widget.adUnitId;
+
+  @override
+  bool get wantKeepAlive => isBannerLoaded;
 
   @override
   void initState() {
     super.initState();
-    _initAndLoadBanner();
-  }
-
-  void _initAndLoadBanner() {
-    if (UserProfile.plusMember || !ConsentManager.instance.canRequestAds) {
-      return;
-    }
-
-    final resolvedUnitId = BannerAdUnits.resolveAdUnitId(widget.adUnitId);
-
-    _bannerAd = BannerAd(
-      adUnitId: resolvedUnitId,
-      size: widget.adSize,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          if (mounted) {
-            setState(() {
-              _isAdLoaded = true;
-            });
-          }
-        },
-        onAdFailedToLoad: (ad, error) {
-          if (kDebugMode) {
-            debugPrint('[SimpleBannerAd] Failed to load: ${error.message}');
-          }
-          ad.dispose();
-          _bannerAd = null;
-          if (mounted) {
-            setState(() {
-              _isAdLoaded = false;
-            });
-          }
-        },
-      ),
-    );
-
-    _bannerAd!.load();
+    initBannerAd();
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _bannerAd = null;
+    disposeBannerAd();
     super.dispose();
   }
 
@@ -138,13 +158,13 @@ class _SimpleBannerAdWidgetState extends State<SimpleBannerAdWidget>
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (UserProfile.plusMember || !_isAdLoaded || _bannerAd == null) {
+    if (UserProfile.plusMember || !isBannerLoaded || bannerAd == null) {
       return const SizedBox.shrink();
     }
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final double width = _bannerAd!.size.width.toDouble();
-    final double height = _bannerAd!.size.height.toDouble().clamp(48.0, 60.0);
+    final double width = bannerAd!.size.width.toDouble();
+    final double height = bannerAd!.size.height.toDouble();
 
     return Container(
       margin: widget.margin,
@@ -178,8 +198,8 @@ class _SimpleBannerAdWidgetState extends State<SimpleBannerAdWidget>
               width: width,
               height: height,
               child: AdWidget(
-                key: ValueKey(_bannerAd.hashCode),
-                ad: _bannerAd!,
+                key: ValueKey(bannerAd.hashCode),
+                ad: bannerAd!,
               ),
             ),
           ),
