@@ -9,7 +9,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/provider/app_theme_manager.dart';
 import 'package:wallpaper_manager_plus/wallpaper_manager_plus.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:wallrio/services/storage_auth.dart';
 
 class AutoWallpaperProvider extends ChangeNotifier {
   static const String keyEnabled = 'auto_wall_enabled';
@@ -191,7 +191,7 @@ class AutoWallpaperProvider extends ChangeNotifier {
       if (filteredWalls.isEmpty) return;
 
       final randomWall = filteredWalls[Random().nextInt(filteredWalls.length)];
-      final file = await DefaultCacheManager().getSingleFile(randomWall.url);
+      final file = await WallCacheManager.instance.getSingleFile(randomWall.url);
       await WallpaperManagerPlus().setWallpaper(file, location);
       // Personalization hook: record the applied wallpaper URL so Dynamic
       // Accent (Theme & Appearance settings) has something to extract from.
@@ -284,7 +284,7 @@ void callbackDispatcher() {
       if (filteredWalls.isNotEmpty) {
         final randomWall = filteredWalls[Random().nextInt(filteredWalls.length)];
         debugPrint("Selected wallpaper: ${randomWall.url}");
-        final file = await DefaultCacheManager().getSingleFile(randomWall.url);
+        final file = await WallCacheManager.instance.getSingleFile(randomWall.url);
         await WallpaperManagerPlus().setWallpaper(file, location);
         // Personalization hook: record the applied wallpaper URL so Dynamic
         // Accent (Theme & Appearance settings) has something to extract from.

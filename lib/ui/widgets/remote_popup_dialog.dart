@@ -59,6 +59,7 @@ class RemotePopupDialog extends StatelessWidget {
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
                       child: CachedNetworkImage(
+                        cacheManager: WallCacheManager.instance,
                         imageUrl: config.url,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => const ShimmerWidget(

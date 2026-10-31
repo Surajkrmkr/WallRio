@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Wallpaper content is read-only and only for signed-in requests (the app signs every
+// install in anonymously via StorageAuth). It is uploaded with gcloud, not from the app.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{folder}/{allPaths=**} {
+      allow read: if request.auth != null
+          && folder in ['wallrio_wall_data', 'wallrio_live', 'wallriojson'];
+      allow write: if false;
+    }
+  }
+}

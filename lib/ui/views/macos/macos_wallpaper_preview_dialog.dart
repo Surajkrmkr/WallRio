@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wallrio/services/storage_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
@@ -232,10 +233,12 @@ class _MacOSWallpaperPreviewDialogState
                     children: [
                       // Full image
                       CachedNetworkImage(
+                        cacheManager: WallCacheManager.instance,
                         imageUrl:
                             wall.url.isNotEmpty ? wall.url : wall.thumbnail,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => CachedNetworkImage(
+                          cacheManager: WallCacheManager.instance,
                           imageUrl: wall.thumbnail,
                           fit: BoxFit.cover,
                         ),

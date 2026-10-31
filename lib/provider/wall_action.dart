@@ -47,6 +47,7 @@ class WallActionProvider extends ChangeNotifier {
           downloadService: DownloadService.httpConnection,
           downloadDestination: DownloadDestinations.publicDownloads,
           url: url,
+          headers: await StorageAuth.headersFor(url),
           onProgress: (String? fileName, double pros) {
             if (fileName != null) {
               final pro = pros / 100;
@@ -112,7 +113,7 @@ class WallActionProvider extends ChangeNotifier {
         return;
       }
 
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       if (isVideo) {
         await Gal.putVideo(file.path, album: 'WallRio');
       } else {
@@ -159,7 +160,7 @@ class WallActionProvider extends ChangeNotifier {
     Provider.of<ProgressionProvider>(context, listen: false)
         .trackAction(ActionType.apply);
     try {
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       // ignore: deprecated_member_use
       await Share.shareXFiles([XFile(file.path)], text: text);
     } catch (error) {
@@ -179,7 +180,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Applying live wallpaper…");
 
     try {
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       await WallpaperManagerPlus().setLiveWallpaper(file);
       ToastWidget.showToast("Live wallpaper applied");
     } catch (error) {
@@ -208,7 +209,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Applying wallpaper");
 
     try {
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       await WallpaperManagerPlus().setWallpaper(file, wallLocation);
       ToastWidget.showToast("Wallpaper applied successfully");
     } catch (error) {
@@ -234,7 +235,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Setting desktop wallpaper…");
 
     try {
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       final absPath = file.absolute.path;
       final script =
           'tell application "System Events" to tell every desktop to set picture to "$absPath"';
@@ -275,7 +276,7 @@ class WallActionProvider extends ChangeNotifier {
     ToastWidget.showToast("Downloading wallpaper…");
 
     try {
-      final file = await DefaultCacheManager().getSingleFile(url);
+      final file = await WallCacheManager.instance.getSingleFile(url);
       final homeDir = Platform.environment['HOME'] ?? '';
       final downloadsDir = Directory('$homeDir/Downloads');
       if (!downloadsDir.existsSync()) {

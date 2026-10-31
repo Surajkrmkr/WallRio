@@ -196,6 +196,7 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
             ? ShimmerWidget(
                 height: double.infinity, width: double.infinity, radius: 12)
             : CachedNetworkImage(
+                cacheManager: WallCacheManager.instance,
                 imageUrl: wall.thumbnail,
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(color: bgDark2Color),

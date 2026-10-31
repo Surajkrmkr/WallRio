@@ -21,6 +21,7 @@ class CNImage extends StatelessWidget {
           )
         : 800;
     return CachedNetworkImage(
+      cacheManager: WallCacheManager.instance,
       filterQuality: FilterQuality.high,
       errorWidget: (context, url, error) =>
           const Icon(Icons.error_outline_rounded, color: Colors.red),

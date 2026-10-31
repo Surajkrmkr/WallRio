@@ -108,6 +108,7 @@ class _DesktopFullscreenViewerState extends State<DesktopFullscreenViewer>
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: CachedNetworkImage(
+                      cacheManager: WallCacheManager.instance,
                       imageUrl: widget.wallModel.thumbnail,
                       fit: BoxFit.contain,
                       placeholder: (context, url) => Center(

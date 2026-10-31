@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wallrio/services/storage_auth.dart';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -711,6 +712,7 @@ class _FullImageState extends State<FullImage> {
           // while the full-resolution image streams in on top.
           CNImage(imageUrl: widget.wallModel.thumbnail),
           CachedNetworkImage(
+            cacheManager: WallCacheManager.instance,
             imageUrl: widget.wallModel.url,
             fit: BoxFit.cover,
             filterQuality: FilterQuality.high,

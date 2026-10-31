@@ -136,6 +136,7 @@ class _OnboardingScreen1State extends State<OnboardingScreen1> {
 
   Widget _buildCarouselItem(Walls wall, bool isCenter) {
     final img = CachedNetworkImage(
+      cacheManager: WallCacheManager.instance,
       imageUrl: wall.url,
       fit: BoxFit.cover,
       width: double.infinity,

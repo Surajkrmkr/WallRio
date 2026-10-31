@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
     for (final wall in staticWalls) {
       if (wall.thumbnail.isNotEmpty) {
         precacheImage(
-          CachedNetworkImageProvider(wall.thumbnail),
+          CachedNetworkImageProvider(wall.thumbnail, cacheManager: WallCacheManager.instance),
           context,
           onError: (e, s) => logger
               .w('Error precaching static thumbnail ${wall.thumbnail}: $e'),
@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> {
     for (final live in liveWalls) {
       if (live.thumbnail.isNotEmpty) {
         precacheImage(
-          CachedNetworkImageProvider(live.thumbnail),
+          CachedNetworkImageProvider(live.thumbnail, cacheManager: WallCacheManager.instance),
           context,
           onError: (e, s) =>
               logger.w('Error precaching live thumbnail ${live.thumbnail}: $e'),

@@ -939,6 +939,7 @@ class _SubscriptionTopAnimatedBannerState
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: CachedNetworkImage(
+              cacheManager: WallCacheManager.instance,
               imageUrl: wall.thumbnail.isNotEmpty ? wall.thumbnail : wall.url,
               fit: BoxFit.cover,
               width: width,

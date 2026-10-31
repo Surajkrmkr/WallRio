@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wallrio/services/storage_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
@@ -1453,6 +1454,7 @@ class _LiquidCategoryCardState extends State<_LiquidCategoryCard> {
               children: [
                 if (widget.thumbnailUrl.isNotEmpty)
                   CachedNetworkImage(
+                    cacheManager: WallCacheManager.instance,
                     imageUrl: widget.thumbnailUrl,
                     fit: BoxFit.cover,
                   ),

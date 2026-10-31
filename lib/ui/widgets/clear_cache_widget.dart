@@ -9,6 +9,7 @@ class ClearCacheWidget extends StatelessWidget {
 
   void _clear(BuildContext context) {
     DefaultCacheManager().emptyCache();
+    WallCacheManager.instance.emptyCache();
     Navigator.pop(context);
     ToastWidget.showToast("Cache Cleared");
   }

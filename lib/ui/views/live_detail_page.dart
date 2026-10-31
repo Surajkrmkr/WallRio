@@ -67,7 +67,10 @@ class _LiveDetailPageState extends State<LiveDetailPage>
       return;
     }
 
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      httpHeaders: await StorageAuth.headersFor(url),
+    );
     _videoController = controller;
     try {
       await controller.initialize();

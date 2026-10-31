@@ -361,6 +361,7 @@ class _DesktopWallpaperDetailPageState
                 minScale: 1.0,
                 maxScale: 3.0,
                 child: CachedNetworkImage(
+                  cacheManager: WallCacheManager.instance,
                   imageUrl: widget.wallModel.thumbnail,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => const ShimmerWidget(

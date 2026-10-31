@@ -134,6 +134,7 @@ Future<void> initializationHandler() async {
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
+  StorageAuth.warmUp();
   if (Platform.isIOS) {
     try {
       await RevenueCatService.initialize();

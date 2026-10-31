@@ -142,7 +142,7 @@ class AppThemeManager extends ChangeNotifier {
     Color resolved;
     try {
       final PaletteGenerator generator = await PaletteGenerator.fromImageProvider(
-        CachedNetworkImageProvider(url),
+        CachedNetworkImageProvider(url, cacheManager: WallCacheManager.instance),
         maximumColorCount: 10,
       );
       resolved = generator.dominantColor?.color ??

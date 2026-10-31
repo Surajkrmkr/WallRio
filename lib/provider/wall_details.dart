@@ -52,7 +52,7 @@ class WallDetails extends ChangeNotifier {
       if (_isDisposed) return;
       PaletteGenerator? paletteGenerator =
           await PaletteGenerator.fromImageProvider(
-            CachedNetworkImageProvider(url),
+            CachedNetworkImageProvider(url, cacheManager: WallCacheManager.instance),
             maximumColorCount: 10,
           );
       setColorSwatches = paletteGenerator.colors.toList();
@@ -85,7 +85,7 @@ class WallDetails extends ChangeNotifier {
   Future<void> getImgDetails(String url) async {
     if (_isDisposed) return;
     try {
-      final cache = DefaultCacheManager();
+      final cache = WallCacheManager.instance;
       final file = await cache.getSingleFile(url);
       if (_isDisposed) return;
       final fileBytes = await file.readAsBytes();

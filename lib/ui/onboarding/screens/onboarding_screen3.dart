@@ -198,6 +198,7 @@ class _OnboardingScreen3State extends State<OnboardingScreen3> {
           children: [
             thumbnail.isNotEmpty
                 ? CachedNetworkImage(
+                    cacheManager: WallCacheManager.instance,
                     imageUrl: thumbnail,
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Container(color: bgDark2Color),

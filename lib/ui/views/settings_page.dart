@@ -1279,6 +1279,7 @@ class __AnimatedSubscriptionBannerState
                                         width: cardWidth,
                                         height: 190,
                                         child: CachedNetworkImage(
+                                          cacheManager: WallCacheManager.instance,
                                           imageUrl: wall.thumbnail.isNotEmpty
                                               ? wall.thumbnail
                                               : wall.url,

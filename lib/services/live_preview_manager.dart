@@ -68,7 +68,10 @@ class LivePreviewManager {
     }
 
     try {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      final controller = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      httpHeaders: await StorageAuth.headersFor(url),
+    );
       await controller.initialize();
       controller
         ..setLooping(true)

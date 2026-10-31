@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wallrio/services/storage_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wallrio/model/export.dart';
@@ -345,6 +346,7 @@ class _BannerCardState extends State<_BannerCard>
 
     final image = LayoutBuilder(
       builder: (context, constraints) => CachedNetworkImage(
+        cacheManager: WallCacheManager.instance,
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.high,

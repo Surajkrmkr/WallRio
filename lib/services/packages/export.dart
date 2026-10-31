@@ -24,3 +24,4 @@ export 'package:flutter_svg/flutter_svg.dart';
 export 'package:simple_gradient_text/simple_gradient_text.dart';
 export 'package:url_launcher/url_launcher.dart';
 export 'package:wallrio/log.dart';
+export 'package:wallrio/services/storage_auth.dart';
