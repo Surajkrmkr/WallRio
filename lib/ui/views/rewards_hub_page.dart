@@ -460,7 +460,7 @@ class RewardsHubPage extends StatelessWidget {
           isDarkMode: isDarkMode,
           onTap: () {
             Provider.of<AdsProvider>(context, listen: false)
-                .loadRewardedAd(context, onRewarded: () {
+                .loadRewardedAd(context, popOnDismiss: false, onRewarded: () {
               // Global tracking handles this, no action needed here.
             });
           },

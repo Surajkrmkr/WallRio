@@ -6,6 +6,7 @@ import 'package:wallrio/provider/progression_provider.dart';
 import 'package:wallrio/services/consent_manager.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/ui/widgets/toast_widget.dart';
 
 class AdsProvider extends ChangeNotifier {
   // AdMob ad units are registered per-platform, so Android and iOS use
@@ -78,8 +79,17 @@ class AdsProvider extends ChangeNotifier {
     );
   }
 
-  void loadRewardedAd(BuildContext context, {required Function() onRewarded}) {
+  /// Loads a rewarded ad and shows it as soon as it is ready.
+  ///
+  /// [popOnDismiss] closes the route that asked for the ad (the unlock dialog)
+  /// once the ad is dismissed. Pages that host the button themselves, like
+  /// the Rewards Hub, pass false so they stay open.
+  void loadRewardedAd(BuildContext context,
+      {required Function() onRewarded, bool popOnDismiss = true}) {
+    // A load can take a while; ignore repeat taps instead of stacking loads.
+    if (isRewardedAdLoading) return;
     if (!ConsentManager.instance.canRequestAds) {
+      ToastWidget.showToast("Ads aren't ready yet. Please try again.");
       return;
     }
     setIsRewardedAdLoading = true;
@@ -97,20 +107,31 @@ class AdsProvider extends ChangeNotifier {
                 logger.i("[RewardedTelemetry] RewardedAd clicked.");
               },
               onAdDismissedFullScreenContent: (ad) {
-                Navigator.pop(context);
+                ad.dispose();
+                rewardedAd = null;
+                setIsRewardedAdLoading = false;
+                if (popOnDismiss && context.mounted) Navigator.pop(context);
                 onRewarded();
+              },
+              onAdFailedToShowFullScreenContent: (ad, error) {
+                logger.e("RewardedAd failed to show: $error");
+                ad.dispose();
+                rewardedAd = null;
+                setIsRewardedAdLoading = false;
+                ToastWidget.showToast("Couldn't show the ad. Please try again.");
               },
             );
             ad.show(onUserEarnedReward: (ad, reward) {
               logger.i(reward.amount);
               // Track rewarded ad progression
               Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.rewardedAd);
-              setIsRewardedAdLoading = false;
             });
           },
           onAdFailedToLoad: (LoadAdError error) {
             logger.e('RewardedAd failed to load: $error');
             setIsRewardedAdLoading = false;
+            ToastWidget.showToast(
+                "No ad available right now. Please try again later.");
           },
         ));
   }
