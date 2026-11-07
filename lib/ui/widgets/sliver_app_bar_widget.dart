@@ -68,16 +68,35 @@ class SliverAppBarWidget extends StatelessWidget {
               isActionReset: clearSearchedData,
             )
           : const SizedBox.shrink(),
-      titleSpacing: showBackBtn ? 4 : 20,
+      // The Diwali light string insets the wordmark by 14px; pull it back so
+      // the logo still lines up with the other titles.
+      titleSpacing: showBackBtn
+          ? 4
+          : (Diwali.active && text == 'Wall' && secondaryText == 'Rio' ? 6 : 20),
       toolbarHeight: toolbarHeight,
       centerTitle: centeredTitle,
       title: Consumer<DarkThemeProvider>(
         builder: (context, provider, _) {
           final isBrand = text == 'Wall' && secondaryText == 'Rio';
+          final festive = Diwali.active;
           final titleWidget = isBrand
-              ? _buildBrandWordmark(context)
+              ? (festive
+                    ? DiwaliLights(child: _buildBrandWordmark(context))
+                    : _buildBrandWordmark(context))
               : secondaryText.isEmpty
-              ? Text(text, style: Theme.of(context).textTheme.displayLarge)
+              ? (festive && !showBackBtn
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            text,
+                            style: Theme.of(context).textTheme.displayLarge,
+                          ),
+                          const SizedBox(width: 8),
+                          const DiwaliDiya(size: 26),
+                        ],
+                      )
+                    : Text(text, style: Theme.of(context).textTheme.displayLarge))
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

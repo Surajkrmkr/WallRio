@@ -54,6 +54,7 @@ class MainActivity : FlutterActivity() {
 
     private val iconAliases = listOf(
         "com.shadowteam.wallrio.icon_default",
+        "com.shadowteam.wallrio.icon_diwali",
         "com.shadowteam.wallrio.icon_cosmic_galaxy",
         "com.shadowteam.wallrio.icon_aurora",
         "com.shadowteam.wallrio.icon_diamond",

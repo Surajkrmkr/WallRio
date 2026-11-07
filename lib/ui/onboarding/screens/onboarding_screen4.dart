@@ -69,8 +69,8 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return ((actualPrice - rawPrice) / actualPrice * 100).round().abs();
   }
 
-  String _formatActualPrice(ProductDetails product, int actualPrice) {
-    final symbol = product.price.replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
+  String _formatActualPrice(String priceText, int actualPrice) {
+    final symbol = priceText.replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
     return '$symbol$actualPrice';
   }
 
@@ -89,13 +89,17 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return '$symbol${perDay.toStringAsFixed(perDay < 10 ? 1 : 0)}/day';
   }
 
-  String _billingPeriodText(String id, List<ProductDetails> products) {
-    final match = products.cast<dynamic>().firstWhere(
-      (p) => SubscriptionProvider.selectionId(p) == id,
-      orElse: () => null,
-    );
+  ProductDetails? _productFor(String id, SubscriptionProvider sub) {
+    for (final p in sub.products) {
+      if (SubscriptionProvider.selectionId(p) == id) return p;
+    }
+    return null;
+  }
+
+  String _billingPeriodText(String id, SubscriptionProvider sub) {
+    final match = _productFor(id, sub);
     if (match != null && !Platform.isIOS) {
-      return '${match.price} ${SubscriptionProvider.billingPeriodDescription(match)}';
+      return '${sub.priceOf(match)} ${SubscriptionProvider.billingPeriodDescription(match)}';
     }
     final priceStr = match?.price ?? '';
     if (id == SubscriptionProvider.yearlyProductId) {
@@ -110,19 +114,41 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return '$priceStr per period';
   }
 
-  String _ctaLabel(List<ProductDetails> products) {
+  /// Plain-language terms shown under the button. Mentions the trial or
+  /// discount first when the selected plan has one.
+  String _termsText(String id, SubscriptionProvider sub) {
+    final store = Platform.isIOS ? 'App Store settings' : 'Google Play';
+    final match = _productFor(id, sub);
+    final choice = match == null ? null : sub.choiceFor(match);
+    final renewal = _billingPeriodText(id, sub);
+    if (choice?.kind == OfferKind.freeTrial) {
+      return '${choice!.trialText![0].toUpperCase()}${choice.trialText!.substring(1)}, '
+          'then $renewal until canceled. Cancel anytime in $store.';
+    }
+    if (choice?.kind == OfferKind.discount) {
+      return '${choice!.intro!.formattedPrice} for the ${choice.introPeriodText!}, '
+          'then $renewal until canceled. Cancel anytime in $store.';
+    }
+    return 'Auto-renewable subscription. Billed $renewal until canceled in $store.';
+  }
+
+  String _ctaLabel(SubscriptionProvider sub) {
     if (_selectedProductId == null) return 'Continue';
-    final match = products.cast<dynamic>().firstWhere(
-      (p) => SubscriptionProvider.selectionId(p) == _selectedProductId,
-      orElse: () => null,
-    );
+    final match = _productFor(_selectedProductId!, sub);
     if (match == null) return 'Continue';
 
     if (!Platform.isIOS) {
       if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
         return 'Get Lifetime Access';
       }
-      return 'Continue • ${match.price}';
+      final choice = sub.choiceFor(match);
+      if (choice?.kind == OfferKind.freeTrial) {
+        return 'Start ${choice!.trialText}';
+      }
+      if (choice?.kind == OfferKind.discount) {
+        return 'Continue • ${choice!.intro!.formattedPrice}';
+      }
+      return 'Continue • ${sub.priceOf(match)}';
     }
 
     if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
@@ -423,7 +449,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                     ],
                     if (plan != null && lifetimeProd != null)
                       Text(
-                        _formatActualPrice(lifetimeProd, plan.actualPrice),
+                        _formatActualPrice(lifetimeProd.price, plan.actualPrice),
                         style: TextStyle(
                           color: _subColor,
                           fontSize: 11,
@@ -474,6 +500,23 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     return 4;
   }
 
+  Widget _offerBadge(String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFF37C3A3).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFF37C3A3),
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+
   Widget _buildOtherPlans(List<SubscriptionPlan> plans) {
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, _) {
@@ -495,8 +538,11 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             final selectionId = SubscriptionProvider.selectionId(product);
             final isSelected = _selectedProductId == selectionId;
             final plan = _planFor(product.id, plans);
+            final choice = subProvider.choiceFor(product);
+            // Renewal price: never the trial's "free" price.
+            final priceText = subProvider.priceOf(product);
             final discount = plan != null
-                ? _discountPercent(product.rawPrice, plan.actualPrice)
+                ? _discountPercent(subProvider.rawPriceOf(product), plan.actualPrice)
                 : 0;
             final labelColor = isSelected
                 ? _textColor
@@ -537,6 +583,17 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
                   .trim();
               subtitle = "Flexible plan. Cancel anytime.";
+            }
+
+            // Offer overrides: a trial or discount explains itself on the card.
+            if (choice != null && choice.kind == OfferKind.freeTrial) {
+              subtitle =
+                  '${choice.trialText}, then $priceText ${SubscriptionProvider.billingPeriodDescription(product)}';
+              badgeWidget = _offerBadge('FREE TRIAL');
+            } else if (choice != null && choice.kind == OfferKind.discount) {
+              subtitle =
+                  '${choice.intro!.formattedPrice} for the ${choice.introPeriodText!}, then $priceText';
+              badgeWidget = _offerBadge('${choice.percentOff}% OFF');
             }
 
             return GestureDetector(
@@ -603,7 +660,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                               Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: Text(
-                                  _formatActualPrice(product, plan.actualPrice),
+                                  _formatActualPrice(priceText, plan.actualPrice),
                                   style: TextStyle(
                                     color: _subColor,
                                     fontSize: 11,
@@ -613,7 +670,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                                 ),
                               ),
                             Text(
-                              product.price,
+                              choice != null &&
+                                      choice.kind == OfferKind.discount
+                                  ? choice.intro!.formattedPrice
+                                  : priceText,
                               style: TextStyle(
                                 color: labelColor,
                                 fontWeight: Platform.isIOS
@@ -684,7 +744,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                         ),
                       )
                     : Text(
-                        _ctaLabel(subProvider.products),
+                        _ctaLabel(subProvider),
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -697,7 +757,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Auto-renewable subscription. Billed ${_billingPeriodText(_selectedProductId!, subProvider.products)} until canceled in App Store settings.',
+                  _termsText(_selectedProductId!, subProvider),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _subColor,
@@ -1177,7 +1237,11 @@ class _SubscriptionTopAnimatedBannerState
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        "4.8  •  1500+ ratings  •  100k+ downloads",
+                        // The rating and download figures come from Google Play,
+                        // so iOS shows a catalogue claim that matches its listing.
+                        Platform.isIOS
+                            ? "5,000+ wallpapers  •  Live  •  4K"
+                            : "4.8  •  1500+ ratings  •  100k+ downloads",
                         style: TextStyle(
                           color: _subColor,
                           fontSize: 11,

@@ -56,6 +56,17 @@
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <activity-alias
+            android:name=".icon_diwali"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/launcher_icon_diwali"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
             android:name=".icon_cosmic_galaxy"
             android:enabled="false"
             android:exported="true"

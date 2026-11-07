@@ -38,3 +38,4 @@ export 'simple_banner_ad_widget.dart';
 export 'remote_popup_dialog.dart';
 export 'theme_appearance_controls.dart';
 export 'diamond_text.dart';
+export 'diwali_widgets.dart';

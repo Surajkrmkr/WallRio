@@ -4,6 +4,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/services/plan_offers.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
 import 'package:wallrio/services/premium/android_subscription_access.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -15,6 +16,7 @@ class AndroidPremiumService implements PremiumService {
   static const String keyEntitlementSource = 'user_entitlement_source';
   static const String keyPlayBasePlanId = 'user_play_base_plan_id';
   static const String keyPlayBillingPeriod = 'user_play_billing_period';
+  static const String keyPlayTrialDays = 'user_play_trial_days';
 
   @override
   bool isLoading = false;
@@ -123,12 +125,29 @@ class AndroidPremiumService implements PremiumService {
             prod.subscriptionIndex != null) {
           final offer = prod.productDetails
               .subscriptionOfferDetails![prod.subscriptionIndex!];
+          final phases = offer.pricingPhases;
+          // The renewal period is the LAST phase. With a free-trial or
+          // discount offer the first phase is the intro (e.g. 3 days), which
+          // must not be mistaken for the plan's period. A plain base plan has
+          // one phase, so first == last and nothing changes for it.
+          final recurringPeriod = phases.last.billingPeriod;
+          final hasTrial = phases.length > 1 && phases.first.priceAmountMicros == 0;
+          final trialDays = hasTrial
+              ? PlanOffers.approxDays(phases.first.billingPeriod) *
+                  (phases.first.billingCycleCount < 1
+                      ? 1
+                      : phases.first.billingCycleCount)
+              : 0;
           _selectedBasePlanId = offer.basePlanId;
-          _selectedBillingPeriod = offer.pricingPhases.first.billingPeriod;
+          _selectedBillingPeriod = recurringPeriod;
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(keyPlayBasePlanId, offer.basePlanId);
-          await prefs.setString(
-              keyPlayBillingPeriod, offer.pricingPhases.first.billingPeriod);
+          await prefs.setString(keyPlayBillingPeriod, recurringPeriod);
+          if (trialDays > 0) {
+            await prefs.setInt(keyPlayTrialDays, trialDays);
+          } else {
+            await prefs.remove(keyPlayTrialDays);
+          }
           purchaseParam = GooglePlayPurchaseParam(
             productDetails: prod,
             offerToken: prod.offerToken,
@@ -366,8 +385,15 @@ class AndroidPremiumService implements PremiumService {
       return;
     }
 
-    _playExpiryEstimate = estimatedExpiry;
-    _subscriptionDaysLeft = _remainingDays(estimatedExpiry);
+    // A free trial runs before the first paid period, so the next renewal
+    // lands that many days later than purchase date + period.
+    final trialDays = prefs.getInt(keyPlayTrialDays) ?? 0;
+    final adjustedExpiry = trialDays > 0
+        ? estimatedExpiry.add(Duration(days: trialDays))
+        : estimatedExpiry;
+
+    _playExpiryEstimate = adjustedExpiry;
+    _subscriptionDaysLeft = _remainingDays(adjustedExpiry);
   }
 
   DateTime? _purchaseDate(PurchaseDetails purchase) {
@@ -467,6 +493,7 @@ class AndroidPremiumService implements PremiumService {
       await prefs.remove(keyEntitlementSource);
       await prefs.remove(keyPlayBasePlanId);
       await prefs.remove(keyPlayBillingPeriod);
+      await prefs.remove(keyPlayTrialDays);
       await prefs.remove('user_unlocked_collections');
 
       purchasedCollections.clear();

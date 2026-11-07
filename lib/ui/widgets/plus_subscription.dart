@@ -169,7 +169,8 @@ class PlusSubscription extends StatelessWidget {
       title: Row(
         children: [
           Expanded(child: Text(planTitle)),
-          Text(product.price),
+          Text(Provider.of<SubscriptionProvider>(context, listen: false)
+              .priceOf(product)),
         ],
       ),
       isThreeLine: true,

@@ -93,9 +93,12 @@ class PersonalizationProvider extends ChangeNotifier {
   Future<void> _syncIconWithSystem() async {
     if (_personalization == null || !Platform.isAndroid) return;
     try {
-      await _iconChannel.invokeMethod('setIcon', {
-        'iconKey': _personalization!.activeAppIcon,
-      });
+      // During Diwali, users on the default icon get the festive one. It is
+      // never written to their saved preference, so it reverts on its own
+      // once the festival window ends. A icon they picked themselves wins.
+      var key = _personalization!.activeAppIcon;
+      if (Diwali.active && key == 'icon_default') key = Diwali.iconKey;
+      await _iconChannel.invokeMethod('setIcon', {'iconKey': key});
     } catch (e) {
       logger.e("Error syncing icon with system: $e");
     }

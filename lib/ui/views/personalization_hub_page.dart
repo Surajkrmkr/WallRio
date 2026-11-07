@@ -48,6 +48,12 @@ const List<Map<String, dynamic>> kAppIconCatalog = [
     'imageAsset': 'assets/app_icon/icon_default.webp'
   },
   {
+    'key': 'icon_diwali',
+    'name': 'Diwali Lights',
+    'unlock': 0,
+    'imageAsset': 'assets/app_icon/icon_diwali.webp'
+  },
+  {
     'key': 'icon_cosmic_galaxy',
     'name': 'Cosmic Galaxy',
     'unlock': 0,
@@ -335,7 +341,10 @@ class PersonalizationHubPage extends StatelessWidget {
   // ──────────────────────────────────────────────────────────
   Widget _buildAppIconsTab(BuildContext context,
       PersonalizationProvider provider, bool isDarkMode, bool hasSub) {
-    final icons = kAppIconCatalog;
+    // The Diwali icon only shows up in the picker during the festival.
+    final icons = Diwali.active
+        ? kAppIconCatalog
+        : kAppIconCatalog.where((i) => i['key'] != Diwali.iconKey).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),

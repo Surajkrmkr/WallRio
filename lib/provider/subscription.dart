@@ -6,6 +6,9 @@ import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/services/premium/debug_offer_preview.dart';
+import 'package:wallrio/services/premium/play_offer_adapter.dart';
+import 'package:wallrio/ui/widgets/toast_widget.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   static const String keyPlusMember = 'user_is_plus_member';
@@ -59,7 +62,64 @@ class SubscriptionProvider extends ChangeNotifier {
       ? _service.isSupported
       : (_service as IOSPremiumService).isSupported;
 
-  List<ProductDetails> get products => _service.products;
+  /// What the paywall shows. For Android subscriptions Play returns one
+  /// product per offer (the plain plan plus any trial or discount the user
+  /// qualifies for); this collapses them to one product per base plan, picking
+  /// the best offer. Lifetime, collection and iOS products pass through as is.
+  List<ProductDetails> get _rawProducts => DebugOfferPreview.enabled
+      ? DebugOfferPreview.apply<ProductDetails>(_service.products)
+      : _service.products;
+
+  List<ProductDetails> get products {
+    final raw = _rawProducts;
+    if (!Platform.isAndroid) return raw;
+
+    final offers = <OfferView>[];
+    for (var i = 0; i < raw.length; i++) {
+      final view = _offerView(raw[i], i);
+      if (view != null) offers.add(view);
+    }
+    if (offers.isEmpty) return raw;
+
+    final chosen = {
+      for (final c in PlanOffers.select(offers)) c.purchase.index: c,
+    };
+    final skip = {for (final o in offers) o.index}..removeAll(chosen.keys);
+    return [
+      for (var i = 0; i < raw.length; i++)
+        if (!skip.contains(i)) raw[i],
+    ];
+  }
+
+  OfferView? _offerView(ProductDetails product, int index) =>
+      PlayOfferAdapter.toOfferView(product, index);
+
+  /// The trial/discount choice behind [product], or null for products that
+  /// are not Android subscriptions.
+  PlanChoice? choiceFor(ProductDetails product) {
+    if (!Platform.isAndroid) return null;
+    final raw = _rawProducts;
+    final index = raw.indexOf(product);
+    final here = index < 0 ? null : _offerView(product, index);
+    if (here == null) return null;
+
+    final group = <OfferView>[];
+    for (var i = 0; i < raw.length; i++) {
+      final v = _offerView(raw[i], i);
+      if (v != null && v.basePlanId == here.basePlanId) group.add(v);
+    }
+    final choices = PlanOffers.select(group);
+    return choices.isEmpty ? null : choices.first;
+  }
+
+  /// The price the user pays on renewal. For a plan with a free trial,
+  /// `product.price` is the trial's price ("free"), which must never be shown
+  /// as the plan price.
+  String priceOf(ProductDetails product) =>
+      choiceFor(product)?.recurring.formattedPrice ?? product.price;
+
+  double rawPriceOf(ProductDetails product) =>
+      choiceFor(product)?.recurring.price ?? product.rawPrice;
   Set<String> get purchasedCollections => _service.purchasedCollections;
   String get subscriptionDaysLeft => _service.subscriptionDaysLeft;
 
@@ -83,7 +143,7 @@ class SubscriptionProvider extends ChangeNotifier {
     final index = product.subscriptionIndex!;
     if (offers == null || index >= offers.length) return null;
     final phases = offers[index].pricingPhases;
-    return phases.isEmpty ? null : phases.first.billingPeriod;
+    return phases.isEmpty ? null : phases.last.billingPeriod;
   }
 
   static String selectionId(ProductDetails product) {
@@ -163,6 +223,10 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> buyProduct(ProductDetails prod) async {
+    if (DebugOfferPreview.isPreviewProduct(prod)) {
+      ToastWidget.showToast('Preview only: purchasing is disabled');
+      return;
+    }
     await _service.buyProduct(prod);
     notifyListeners();
   }

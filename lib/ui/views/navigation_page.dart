@@ -601,7 +601,7 @@ class _NavigationPageState extends State<NavigationPage>
         int discount = 0;
         if (plan != null && product != null && plan.actualPrice > 0) {
           discount =
-              ((plan.actualPrice - product.rawPrice) / plan.actualPrice * 100)
+              ((plan.actualPrice - subProvider.rawPriceOf(product)) / plan.actualPrice * 100)
                   .round()
                   .abs();
         }
