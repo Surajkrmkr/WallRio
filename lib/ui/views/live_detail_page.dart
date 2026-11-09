@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui';
-import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -9,7 +8,6 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
-import 'package:wallrio/ui/views/rewards_hub_page.dart';
 import 'package:wallrio/ui/views/full_image.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
 
@@ -197,32 +195,25 @@ class _LiveDetailPageState extends State<LiveDetailPage>
     }
   }
 
-  void _handleUnlockLiveWallpaper(ProgressionProvider progression) async {
-    final balance = progression.progression?.diamondsBalance ?? 0;
-    const cost = 30;
+  /// Unlocked for this session or remembered from an earlier unlock.
+  bool get _isUnlocked =>
+      _isSessionUnlocked ||
+      Provider.of<ProgressionProvider>(context, listen: false)
+          .isUnlocked(UnlockKind.live, widget.wall.id);
 
-    if (balance >= cost) {
-      final success = await progression.deductDiamonds(
-        cost,
-        "Unlocked Video Wallpaper",
-      );
-      if (!mounted) return;
-      if (success) {
+  void _handleUnlockLiveWallpaper(ProgressionProvider progression) {
+    showUnlockGate(
+      context,
+      kind: UnlockKind.live,
+      itemId: widget.wall.id,
+      title: widget.wall.name,
+      imageUrl: widget.wall.thumbnail,
+      onUnlocked: () {
+        if (!mounted) return;
         ToastWidget.showToast("Video Wallpaper Unlocked! 💎");
         setState(() => _isSessionUnlocked = true);
-      } else {
-        ToastWidget.showToast("Redemption failed.");
-      }
-    } else {
-      if (!mounted) return;
-      CNBottomSheet.show(
-        context: context,
-        backgroundColor: Colors.transparent,
-        showDragHandle: Platform.isIOS,
-        builder: (context) =>
-            _UnlockLiveWallpaperInsufficientSheet(cost: cost, balance: balance),
-      );
-    }
+      },
+    );
   }
 
   @override
@@ -559,7 +550,7 @@ class _LiveDetailPageState extends State<LiveDetailPage>
 
   void _shareApp() {
     final appLink = Platform.isIOS
-        ? 'https://apps.apple.com/app/id6474136287'
+        ? 'https://apps.apple.com/app/wallrio/id6789848688'
         : 'https://play.google.com/store/apps/details?id=com.shadowteam.wallrio';
     final platformName = Platform.isIOS ? 'iOS' : 'Android';
     SharePlus.instance.share(
@@ -881,13 +872,21 @@ class _LiveDetailPageState extends State<LiveDetailPage>
     );
   }
 
+  /// "Unlock 20 💎" when affordable, otherwise how many ads are still needed.
+  String _unlockLabel(ProgressionProvider progression) {
+    final needed = progression.adsNeededFor(UnlockKind.live);
+    if (needed == null) return 'Unlock with Pro';
+    if (needed == 0) return 'Unlock ${Economy.costLive} 💎';
+    return needed == 1 ? 'Unlock · 1 ad' : 'Unlock · $needed ads';
+  }
+
   Widget _buildActionBtnUI() {
     final progression = Provider.of<ProgressionProvider>(context);
     final isPremium = widget.wall.isPremium;
     final isFreeUser = !UserProfile.plusMember;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    if (isFreeUser && isPremium && !_isSessionUnlocked) {
+    if (isFreeUser && isPremium && !_isUnlocked) {
       return Row(
         children: [
           Expanded(
@@ -933,7 +932,7 @@ class _LiveDetailPageState extends State<LiveDetailPage>
               ),
               onPressed: () => _handleUnlockLiveWallpaper(progression),
               child: Text(
-                'Unlock 30 💎',
+                _unlockLabel(progression),
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
@@ -1040,153 +1039,6 @@ class _LiveDetailPageState extends State<LiveDetailPage>
 
     return Row(
       children: [downloadButton, const SizedBox(width: 8), applyButton],
-    );
-  }
-}
-
-class _UnlockLiveWallpaperInsufficientSheet extends StatelessWidget {
-  final int cost;
-  final int balance;
-
-  const _UnlockLiveWallpaperInsufficientSheet({
-    required this.cost,
-    required this.balance,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final sheetColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-
-    return glassSheetBackground(
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: supportsGlassSheet ? Colors.transparent : sheetColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Unlock Premium Video Wallpaper',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.05),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Text('💎', style: TextStyle(fontSize: 32)),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$balance / $cost Diamonds',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Watch ads to earn more diamonds',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RewardsHubPage(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.1),
-                    foregroundColor: isDarkMode ? Colors.white : Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'GET DIAMONDS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OnboardingScreen4(
-                          onComplete: () => Navigator.pop(context),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Unlock ALL with Pro',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      tint: sheetColor,
     );
   }
 }

@@ -8,7 +8,15 @@ import 'package:wallrio/ui/widgets/export.dart';
 
 class ImageBottomSheet extends StatelessWidget {
   final Walls wallModel;
-  const ImageBottomSheet({super.key, required this.wallModel});
+
+  /// Which catalogue this wallpaper belongs to, so the unlock gate charges the
+  /// right price and remembers the unlock under the right key.
+  final UnlockKind unlockKind;
+  const ImageBottomSheet({
+    super.key,
+    required this.wallModel,
+    this.unlockKind = UnlockKind.pro,
+  });
 
   void _onTapHandler(BuildContext context, dynamic model) {
     Navigator.of(context)
@@ -17,15 +25,22 @@ class ImageBottomSheet extends StatelessWidget {
   }
 
   void _showPlusDialog(BuildContext context) {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) =>
-            AdsWidget.getPlusDialog(context, onWatchAdClick: () {
-              Provider.of<AdsProvider>(context, listen: false).loadRewardedAd(
-                  context,
-                  onRewarded: () => _applyImgHandler(context));
-            }));
+    final progression =
+        Provider.of<ProgressionProvider>(context, listen: false);
+    if (progression.isUnlocked(unlockKind, wallModel.id)) {
+      _applyImgHandler(context);
+      return;
+    }
+    showUnlockGate(
+      context,
+      kind: unlockKind,
+      itemId: wallModel.id,
+      title: wallModel.name,
+      imageUrl: wallModel.thumbnail,
+      onUnlocked: () {
+        if (context.mounted) _applyImgHandler(context);
+      },
+    );
   }
 
   void _applyImgHandler(BuildContext context) {

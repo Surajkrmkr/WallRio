@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,10 @@ class Diwali {
   /// Flip to true to preview the decorations outside the festival window.
   static const bool forceOn = false;
 
+  /// Android only: the festive launcher icon and the offer are Android-side,
+  /// so the iOS app stays untouched.
   static bool get active {
+    if (!Platform.isAndroid) return false;
     if (forceOn) return true;
     final now = DateTime.now();
     return !now.isBefore(start) && now.isBefore(end);

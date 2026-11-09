@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:wallrio/model/export.dart';
+import 'package:wallrio/services/economy.dart';
 import 'package:wallrio/services/streak_reminder.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -170,7 +171,9 @@ class ProgressionProvider extends ChangeNotifier {
       if (streak >= milestone &&
           !_progression!.completedMilestones.contains(milestoneKey)) {
         _progression!.completedMilestones.add(milestoneKey);
-        _grantDiamonds(milestone * 10, "$milestone Day Streak Bonus!",
+        _grantDiamonds(
+            Economy.streakBonus[milestone] ?? milestone * 5,
+            "$milestone Day Streak Bonus!",
             isCredit: true);
       }
     }
@@ -217,11 +220,7 @@ class ProgressionProvider extends ChangeNotifier {
         break;
       case ActionType.rewardedAd:
         _progression!.dailyAdViews += 1;
-        if (_progression!.dailyAdViews <= 5) {
-          reward = 10;
-        } else if (_progression!.dailyAdViews <= 10) {
-          reward = 5;
-        }
+        reward = Economy.adReward(_progression!.dailyAdViews);
         reason = "Ad Reward";
         break;
       case ActionType.rateApp:
@@ -282,6 +281,69 @@ class ProgressionProvider extends ChangeNotifier {
 
     if (isCredit) ToastWidget.showToast("+$amount 💎 $reason");
     notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------
+  // Unified unlock gate (Pro / desktop / live wallpapers)
+  // ---------------------------------------------------------------------
+
+  int get diamondsBalance => _progression?.diamondsBalance ?? 0;
+  int get dailyAdViews => _progression?.dailyAdViews ?? 0;
+
+  /// True when another rewarded ad would still pay Diamonds today. Pro
+  /// members never earn or spend Diamonds, so it is false for them.
+  bool get adRewardAvailable =>
+      _progression != null &&
+      !UserProfile.plusMember &&
+      Economy.adsAvailable(dailyAdViews);
+
+  /// Ads still needed to afford [kind], or null when today's ads run out
+  /// first. 0 means it is already affordable.
+  int? adsNeededFor(UnlockKind kind) => Economy.adsNeeded(
+        cost: Economy.costFor(kind),
+        balance: diamondsBalance,
+        adsWatchedToday: dailyAdViews,
+      );
+
+  bool isUnlocked(UnlockKind kind, int id) =>
+      _progression?.redeemedCollections.contains(Economy.unlockKey(kind, id)) ??
+      false;
+
+  /// Pays the earned reward for one finished rewarded ad and returns the
+  /// Diamonds granted (0 once the daily cap is reached). The balance changes
+  /// synchronously so callers can read it straight away; saving follows.
+  int grantAdReward() {
+    if (_progression == null || UserProfile.plusMember) return 0;
+    _progression!.dailyAdViews += 1;
+    final reward = Economy.adReward(_progression!.dailyAdViews);
+    if (reward > 0) _grantDiamonds(reward, "Ad Reward", isCredit: true);
+    _persistLocal();
+    notifyListeners();
+    return reward;
+  }
+
+  /// Spends the Diamonds for [kind] and remembers the unlock for good, so
+  /// reopening the wallpaper never charges again. Returns true when the item
+  /// ends up unlocked (including when it already was).
+  Future<bool> unlockWithDiamonds(UnlockKind kind, int id) async {
+    if (_progression == null) return false;
+    if (isUnlocked(kind, id)) return true;
+    final cost = Economy.costFor(kind);
+    if (_progression!.diamondsBalance < cost) return false;
+
+    _progression!.redeemedCollections.add(Economy.unlockKey(kind, id));
+    _grantDiamonds(
+      cost,
+      switch (kind) {
+        UnlockKind.pro => "Unlocked Wallpaper",
+        UnlockKind.desktop => "Unlocked Desktop Wallpaper",
+        UnlockKind.live => "Unlocked Video Wallpaper",
+      },
+      isCredit: false,
+    );
+    await _persistLocal();
+    notifyListeners();
+    return true;
   }
 
   Future<bool> redeemCollection(String collectionId, int cost) async {

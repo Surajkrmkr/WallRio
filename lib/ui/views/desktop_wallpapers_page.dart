@@ -65,7 +65,10 @@ class _DesktopWallpapersPageState extends State<DesktopWallpapersPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (context) => ImageBottomSheet(wallModel: model),
+      builder: (context) => ImageBottomSheet(
+        wallModel: model,
+        unlockKind: UnlockKind.desktop,
+      ),
     );
   }
 

@@ -97,8 +97,17 @@ class PlanChoice {
 class PlanOffers {
   PlanOffers._();
 
+  /// Offers whose id starts with this are the limited-time drop-off offer.
+  /// They are only considered while [dropoffActive] is true, so the app (not
+  /// Play) decides when the window is open.
+  static const String dropoffPrefix = 'dropoff';
+
+  static bool isDropoff(OfferView o) =>
+      o.offerId != null && o.offerId!.startsWith(dropoffPrefix);
+
   /// One [PlanChoice] per base plan, in order of first appearance.
-  static List<PlanChoice> select(List<OfferView> offers) {
+  static List<PlanChoice> select(List<OfferView> offers,
+      {bool dropoffActive = false}) {
     final order = <String>[];
     final byPlan = <String, List<OfferView>>{};
     for (final o in offers) {
@@ -108,10 +117,13 @@ class PlanOffers {
         return [];
       }).add(o);
     }
-    return [for (final id in order) _choose(id, byPlan[id]!)];
+    return [
+      for (final id in order) _choose(id, byPlan[id]!, dropoffActive),
+    ];
   }
 
-  static PlanChoice _choose(String basePlanId, List<OfferView> group) {
+  static PlanChoice _choose(
+      String basePlanId, List<OfferView> group, bool dropoffActive) {
     // The plain base plan defines the renewal price. If it is somehow absent,
     // fall back to the offer with the fewest phases.
     final base = group.firstWhere(
@@ -125,6 +137,7 @@ class PlanOffers {
     OfferView? bestDiscount;
     for (final o in group) {
       if (o.isBasePlan || identical(o, base)) continue;
+      if (isDropoff(o) && !dropoffActive) continue;
       // Only offers that renew at the normal price qualify; anything that
       // changes the long-term price is left for the user to see in Play.
       if ((o.recurring.price - base.recurring.price).abs() > 0.005) continue;

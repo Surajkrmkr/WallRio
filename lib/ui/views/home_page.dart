@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/ui/onboarding/export.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class HomePage extends StatefulWidget {
@@ -118,6 +119,18 @@ class _HomePageState extends State<HomePage> {
                     secondaryText: "Rio",
                     showUserProfileIcon: true,
                     showSaleChip: true),
+                SliverToBoxAdapter(
+                  child: DropoffHomeBanner(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OnboardingScreen4(
+                          onComplete: () => Navigator.pop(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 SliverToBoxAdapter(child: BannerWidget()),
                 SliverToBoxAdapter(child: _buildFilterRow()),
                 if (_filterIndex == 0) ...[
