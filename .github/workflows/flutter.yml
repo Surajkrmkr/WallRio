@@ -64,6 +64,8 @@ jobs:
         run: flutter pub run build_runner build --delete-conflicting-outputs
       - name: Flutter Build Release for Android
         env:
+          REVENUECAT_ANDROID_API_KEY: ${{ secrets.REVENUECAT_ANDROID_API_KEY }}
+          REVENUECAT_IOS_API_KEY: ${{ secrets.REVENUECAT_IOS_API_KEY }}
           SIGNING_KEY_STORE_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
@@ -72,8 +74,12 @@ jobs:
           printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=%s\nstorePassword=%s\n' \
             "$SIGNING_KEY_ALIAS" "$SIGNING_KEY_PASSWORD" "$GITHUB_WORKSPACE/$SIGNING_KEY_STORE_PATH" "$SIGNING_STORE_PASSWORD" \
             > android/key.properties
-          flutter build apk --release --split-per-abi
-          flutter build appbundle --release
+          flutter build apk --release --split-per-abi \
+            --dart-define="REVENUECAT_ANDROID_API_KEY=$REVENUECAT_ANDROID_API_KEY" \
+            --dart-define="REVENUECAT_IOS_API_KEY=$REVENUECAT_IOS_API_KEY"
+          flutter build appbundle --release \
+            --dart-define="REVENUECAT_ANDROID_API_KEY=$REVENUECAT_ANDROID_API_KEY" \
+            --dart-define="REVENUECAT_IOS_API_KEY=$REVENUECAT_IOS_API_KEY"
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
