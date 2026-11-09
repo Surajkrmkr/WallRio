@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallrio/provider/progression_provider.dart';
+import 'package:wallrio/services/economy.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/services/app_theme_tokens.dart';
 import 'package:wallrio/services/responsive.dart';
@@ -420,11 +421,14 @@ class RewardsHubPage extends StatelessWidget {
 
     return Row(
       children: [
-        exampleItem(Icons.wallpaper_rounded, 'Static Wallpaper', '20 💎'),
+        exampleItem(Icons.wallpaper_rounded, 'Static Wallpaper',
+            '${Economy.costPro} 💎'),
         const SizedBox(width: 8),
-        exampleItem(Icons.motion_photos_on_rounded, 'Live Wallpaper', '30 💎'),
+        exampleItem(Icons.motion_photos_on_rounded, 'Live Wallpaper',
+            '${Economy.costLive} 💎'),
         const SizedBox(width: 8),
-        exampleItem(Icons.laptop_mac_rounded, 'Desktop Wallpaper', '20 💎'),
+        exampleItem(Icons.laptop_mac_rounded, 'Desktop Wallpaper',
+            '${Economy.costDesktop} 💎'),
       ],
     );
   }
@@ -455,8 +459,11 @@ class RewardsHubPage extends StatelessWidget {
           context: context,
           icon: Icons.play_circle_fill_rounded,
           title: 'Watch Ad',
-          subtitle: 'Earn 10 💎',
-          progressText: '${progression.dailyAdViews}/10',
+          subtitle: Economy.adsAvailable(progression.dailyAdViews)
+              ? 'Earn ${Economy.adReward(progression.dailyAdViews + 1)} 💎'
+              : 'Done for today',
+          progressText:
+              '${progression.dailyAdViews}/${Economy.maxAdsPerDay}',
           isDarkMode: isDarkMode,
           onTap: () {
             Provider.of<AdsProvider>(context, listen: false)

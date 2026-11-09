@@ -1,9 +1,10 @@
-import 'dart:async' show Future, Stream, StreamSubscription;
+import 'dart:async' show Future, Stream, StreamSubscription, Timer;
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:wallrio/model/user_profile_model.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/services/premium/debug_offer_preview.dart';
@@ -46,11 +47,17 @@ class SubscriptionProvider extends ChangeNotifier {
           androidSubscriptionProductId,
         };
 
+  /// True while the limited-time drop-off offer window is open.
+  bool _dropoffActive = false;
+  bool get dropoffActive => _dropoffActive;
+  Timer? _dropoffTimer;
+
   final PublishSubject<bool> _successPurchased = PublishSubject<bool>();
   Stream<bool> get successPurchasedStream => _successPurchased.stream;
 
   SubscriptionProvider() {
     _service = Platform.isIOS ? IOSPremiumService() : AndroidPremiumService();
+    _restoreDropoff();
     _purchaseSub = _service.successPurchasedStream.listen((event) {
       _successPurchased.sink.add(event);
       notifyListeners();
@@ -82,13 +89,67 @@ class SubscriptionProvider extends ChangeNotifier {
     if (offers.isEmpty) return raw;
 
     final chosen = {
-      for (final c in PlanOffers.select(offers)) c.purchase.index: c,
+      for (final c in PlanOffers.select(offers, dropoffActive: _dropoffActive)) c.purchase.index: c,
     };
     final skip = {for (final o in offers) o.index}..removeAll(chosen.keys);
     return [
       for (var i = 0; i < raw.length; i++)
         if (!skip.contains(i)) raw[i],
     ];
+  }
+
+  Future<void> _restoreDropoff() async {
+    await DropoffOffer.load();
+    _syncDropoff();
+  }
+
+  /// Re-reads the window and schedules the moment it closes.
+  void _syncDropoff() {
+    final active = DropoffOffer.isActive();
+    _dropoffTimer?.cancel();
+    if (active) {
+      _dropoffTimer = Timer(
+        DropoffOffer.remaining() + const Duration(seconds: 1),
+        _syncDropoff,
+      );
+    }
+    if (active != _dropoffActive) {
+      _dropoffActive = active;
+      notifyListeners();
+    }
+  }
+
+  /// The discounted yearly plan the drop-off offer would sell right now, or
+  /// null when Play has no drop-off offer for this user (not configured, or
+  /// the user is not eligible). Safe to call before the window opens.
+  PlanChoice? get dropoffChoice {
+    if (!Platform.isAndroid) return null;
+    final raw = _rawProducts;
+    final offers = <OfferView>[];
+    for (var i = 0; i < raw.length; i++) {
+      final v = _offerView(raw[i], i);
+      if (v != null) offers.add(v);
+    }
+    for (final c in PlanOffers.select(offers, dropoffActive: true)) {
+      if (c.kind == OfferKind.discount && PlanOffers.isDropoff(c.purchase)) {
+        return c;
+      }
+    }
+    return null;
+  }
+
+  /// Whether to show the one-time offer now: a free user, an offer exists and
+  /// the window has never been opened.
+  bool get shouldShowDropoff =>
+      Platform.isAndroid &&
+      !UserProfile.plusMember &&
+      !DropoffOffer.wasShown &&
+      dropoffChoice != null;
+
+  /// Opens the 2 hour window (once) and switches the paywall to the offer.
+  Future<void> startDropoff() async {
+    await DropoffOffer.start();
+    _syncDropoff();
   }
 
   OfferView? _offerView(ProductDetails product, int index) =>
@@ -108,7 +169,7 @@ class SubscriptionProvider extends ChangeNotifier {
       final v = _offerView(raw[i], i);
       if (v != null && v.basePlanId == here.basePlanId) group.add(v);
     }
-    final choices = PlanOffers.select(group);
+    final choices = PlanOffers.select(group, dropoffActive: _dropoffActive);
     return choices.isEmpty ? null : choices.first;
   }
 
@@ -285,6 +346,7 @@ class SubscriptionProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _dropoffTimer?.cancel();
     _purchaseSub?.cancel();
     _service.dispose();
     _successPurchased.close();

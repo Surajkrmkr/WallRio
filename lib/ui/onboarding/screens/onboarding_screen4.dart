@@ -41,6 +41,24 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     super.dispose();
   }
 
+  bool _dismissing = false;
+
+  /// Closing the paywall: a free user gets the one-time offer first (if there
+  /// is one). Tapping the offer keeps the paywall open for the purchase.
+  Future<void> _dismiss() async {
+    if (_dismissing) return;
+    _dismissing = true;
+    try {
+      final claimed = await maybeShowDropoffOffer(context);
+      if (claimed || !mounted) return;
+    } catch (_) {
+      // Never block closing the paywall.
+    } finally {
+      _dismissing = false;
+    }
+    widget.onComplete();
+  }
+
   void _purchase() {
     final subProvider = Provider.of<SubscriptionProvider>(
       context,
@@ -162,15 +180,35 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   Color get _subColor => _isDark ? Colors.grey.shade400 : Colors.grey.shade600;
   Color get _sheetColor => _isDark ? bgDark2Color : const Color(0xFFF2F2F7);
 
+  static const String _yearlyId =
+      '${SubscriptionProvider.androidSubscriptionProductId}:yearly';
+  static const Color _offerColor = Color(0xFFFF6B35);
+  bool _offerAutoSelected = false;
+
+  /// While the limited-time offer is live, the paywall opens on the discounted
+  /// Yearly plan instead of Lifetime. Done once, so the user can still pick
+  /// another plan afterwards.
+  void _maybeSelectOffer(SubscriptionProvider sub) {
+    if (_offerAutoSelected || !sub.dropoffActive || sub.dropoffChoice == null) {
+      return;
+    }
+    _offerAutoSelected = true;
+    if (_selectedProductId == _yearlyId) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _selectedProductId = _yearlyId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _maybeSelectOffer(Provider.of<SubscriptionProvider>(context));
     return Consumer<WallRio>(
       builder: (context, wallRio, _) {
         return PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            widget.onComplete();
+            _dismiss();
           },
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: SystemUiOverlayStyle(
@@ -241,7 +279,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 6, 24, 12),
-                    child: _buildCTA(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // The offer only applies to the yearly plan.
+                        if (_selectedProductId ==
+                            '${SubscriptionProvider.androidSubscriptionProductId}:yearly')
+                          const DropoffCountdownBanner(),
+                        _buildCTA(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -256,7 +303,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
               shadowColor: Colors.black.withValues(alpha: 0.5),
               shape: const StadiumBorder(),
               child: InkWell(
-                onTap: widget.onComplete,
+                onTap: _dismiss,
                 customBorder: const StadiumBorder(),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -285,11 +332,17 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     );
   }
 
+  /// True while the limited-time offer is live, so other promos stay quiet.
+  bool get _offerLive {
+    final sub = Provider.of<SubscriptionProvider>(context, listen: false);
+    return sub.dropoffActive && sub.dropoffChoice != null;
+  }
+
   Widget _buildDiscountChip(int percent) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B35),
+        color: _offerLive ? Colors.grey.shade600 : const Color(0xFFFF6B35),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
@@ -595,6 +648,27 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   '${choice.intro!.formattedPrice} for the ${choice.introPeriodText!}, then $priceText';
               badgeWidget = _offerBadge('${choice.percentOff}% OFF');
             }
+            final isLimitedOffer = choice != null &&
+                choice.kind == OfferKind.discount &&
+                PlanOffers.isDropoff(choice.purchase);
+            if (isLimitedOffer) {
+              badgeWidget = Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _offerColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${choice.percentOff}% OFF · 2 HRS',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              );
+            }
 
             return GestureDetector(
               onTap: () => setState(() => _selectedProductId = selectionId),
@@ -606,20 +680,27 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? context.appColors.accent.withValues(alpha: 0.12)
-                      : _textColor.withValues(alpha: 0.04),
+                  color: isLimitedOffer
+                      ? _offerColor.withValues(alpha: isSelected ? 0.16 : 0.08)
+                      : isSelected
+                          ? context.appColors.accent.withValues(alpha: 0.12)
+                          : _textColor.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected
-                        ? context.appColors.accent.withValues(alpha: 0.6)
-                        : Colors.transparent,
-                    width: 1.5,
+                    color: isLimitedOffer
+                        ? _offerColor.withValues(alpha: isSelected ? 1 : 0.6)
+                        : isSelected
+                            ? context.appColors.accent.withValues(alpha: 0.6)
+                            : Colors.transparent,
+                    width: isLimitedOffer ? 2 : 1.5,
                   ),
                 ),
                 child: Row(
                   children: [
-                    _RadioDot(isSelected: isSelected),
+                    _RadioDot(
+                      isSelected: isSelected,
+                      color: isLimitedOffer ? _offerColor : null,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -880,21 +961,23 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
 class _RadioDot extends StatelessWidget {
   final bool isSelected;
-  const _RadioDot({required this.isSelected});
+  final Color? color;
+  const _RadioDot({required this.isSelected, this.color});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final active = color ?? context.appColors.accent;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: 20,
       height: 20,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isSelected ? context.appColors.accent : Colors.transparent,
+        color: isSelected ? active : Colors.transparent,
         border: Border.all(
           color: isSelected
-              ? context.appColors.accent
+              ? active
               : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.35),
           width: 2,
         ),

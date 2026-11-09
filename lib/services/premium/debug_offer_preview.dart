@@ -5,7 +5,7 @@ import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 /// Debug-only: shows how a Play trial or discount offer looks on the paywall
 /// without creating anything in Play Console.
 ///
-///   flutter run --dart-define=FAKE_PLAY_OFFER=trial      (or: discount)
+///   flutter run --dart-define=FAKE_PLAY_OFFER=trial      (or: discount, dropoff)
 ///
 /// It swaps the real subscription entries for a fixed set with a fake offer
 /// and blocks purchasing them. It does nothing in release builds or when the
@@ -15,7 +15,7 @@ class DebugOfferPreview {
 
   static const String mode = String.fromEnvironment('FAKE_PLAY_OFFER');
   static bool get enabled =>
-      kDebugMode && (mode == 'trial' || mode == 'discount');
+      kDebugMode && (mode == 'trial' || mode == 'discount' || mode == 'dropoff');
 
   static const String tokenPrefix = 'preview-';
 
@@ -54,6 +54,11 @@ class DebugOfferPreview {
       if (mode == 'trial')
         _offer('yearly', 'yearly-3d-trial', [
           _phase('Free', 0, 'P3D', cycles: 1),
+          _phase('₹499.00', 499000000, 'P1Y'),
+        ]),
+      if (mode == 'dropoff')
+        _offer('yearly', 'dropoff-40', [
+          _phase('₹299.00', 299000000, 'P1Y', cycles: 1),
           _phase('₹499.00', 499000000, 'P1Y'),
         ]),
       if (mode == 'discount')

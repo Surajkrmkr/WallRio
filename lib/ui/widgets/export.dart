@@ -39,3 +39,5 @@ export 'remote_popup_dialog.dart';
 export 'theme_appearance_controls.dart';
 export 'diamond_text.dart';
 export 'diwali_widgets.dart';
+export 'unlock_gate_sheet.dart';
+export 'dropoff_offer_sheet.dart';

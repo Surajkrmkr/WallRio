@@ -582,6 +582,10 @@ class _NavigationPageState extends State<NavigationPage>
         if (subProvider.subscriptionDaysLeft.isNotEmpty) {
           return const SizedBox.shrink();
         }
+        // The limited-time offer has the home strip; don't compete with it.
+        if (subProvider.dropoffActive && subProvider.dropoffChoice != null) {
+          return const SizedBox.shrink();
+        }
 
         SubscriptionPlan? plan;
         for (final p in wallRio.subscriptionPlans) {

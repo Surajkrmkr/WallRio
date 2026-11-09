@@ -135,6 +135,18 @@ Future<void> initializationHandler() async {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
   StorageAuth.warmUp();
+  if (Platform.isAndroid) {
+    // Observe-only; does nothing unless a RevenueCat Android key is supplied.
+    try {
+      await RevenueCatService.initializeAndroidShadow();
+    } catch (error, stackTrace) {
+      logger.e(
+        'RevenueCat Android shadow mode failed; purchases are unaffected.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
   if (Platform.isIOS) {
     try {
       await RevenueCatService.initialize();

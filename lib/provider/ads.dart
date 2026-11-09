@@ -88,6 +88,17 @@ class AdsProvider extends ChangeNotifier {
       {required Function() onRewarded, bool popOnDismiss = true}) {
     // A load can take a while; ignore repeat taps instead of stacking loads.
     if (isRewardedAdLoading) return;
+    // Resolve the provider now: the page that started the ad may be gone by
+    // the time the reward arrives.
+    final progression =
+        Provider.of<ProgressionProvider>(context, listen: false);
+    // Don't show an ad that would pay nothing.
+    if (!progression.adRewardAvailable) {
+      ToastWidget.showToast(UserProfile.plusMember
+          ? "Pro members don't need Diamonds."
+          : "You've used today's reward ads. Come back tomorrow!");
+      return;
+    }
     if (!ConsentManager.instance.canRequestAds) {
       ToastWidget.showToast("Ads aren't ready yet. Please try again.");
       return;
@@ -99,6 +110,9 @@ class AdsProvider extends ChangeNotifier {
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (ad) {
             rewardedAd = ad;
+            // Only a finished ad counts. Closing it early pays nothing and
+            // must not run the unlock callback either.
+            var earned = false;
             ad.fullScreenContentCallback = FullScreenContentCallback(
               onAdImpression: (ad) {
                 logger.i("[RewardedTelemetry] RewardedAd impression registered.");
@@ -111,7 +125,7 @@ class AdsProvider extends ChangeNotifier {
                 rewardedAd = null;
                 setIsRewardedAdLoading = false;
                 if (popOnDismiss && context.mounted) Navigator.pop(context);
-                onRewarded();
+                if (earned) onRewarded();
               },
               onAdFailedToShowFullScreenContent: (ad, error) {
                 logger.e("RewardedAd failed to show: $error");
@@ -122,9 +136,9 @@ class AdsProvider extends ChangeNotifier {
               },
             );
             ad.show(onUserEarnedReward: (ad, reward) {
-              logger.i(reward.amount);
-              // Track rewarded ad progression
-              Provider.of<ProgressionProvider>(context, listen: false).trackAction(ActionType.rewardedAd);
+              earned = true;
+              // One ad pays Economy.adReward Diamonds, once.
+              progression.grantAdReward();
             });
           },
           onAdFailedToLoad: (LoadAdError error) {

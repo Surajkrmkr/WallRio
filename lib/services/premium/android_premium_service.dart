@@ -5,6 +5,7 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/services/firebase/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/services/plan_offers.dart';
+import 'package:wallrio/services/revenuecat_service.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
 import 'package:wallrio/services/premium/android_subscription_access.dart';
 import 'package:wallrio/ui/widgets/export.dart';
@@ -310,6 +311,8 @@ class AndroidPremiumService implements PremiumService {
       logger.e(error);
     } finally {
       isLoading = false;
+      // Logging only: compares RevenueCat's view with the app's own decision.
+      RevenueCatService.logShadowComparison(legacyIsPro: UserProfile.plusMember);
     }
   }
 
@@ -352,6 +355,9 @@ class AndroidPremiumService implements PremiumService {
     await prefs.setBool(keyPlusMember, true);
     await prefs.setBool('user_has_collection_access', hasCollectionAccess);
     await prefs.setString(keyEntitlementSource, 'play');
+    // Observe-only: let RevenueCat see this purchase (no-op unless shadow
+    // mode is running).
+    RevenueCatService.syncAndroidPurchases();
     await prefs.remove('user_subscription_start');
     await prefs.remove(keyExpiryDate);
 
