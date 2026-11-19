@@ -194,7 +194,7 @@ class SliverAppBarWidget extends StatelessWidget {
             final nav = Navigator.of(context);
             nav.push(
               MaterialPageRoute(
-                builder: (_) => OnboardingScreen4(onComplete: () => nav.pop()),
+                builder: (_) => OnboardingScreen4(source: 'app_bar', onComplete: () => nav.pop()),
               ),
             );
           },

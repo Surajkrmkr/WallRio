@@ -391,6 +391,7 @@ class PersonalizationHubPage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                             builder: (_) => OnboardingScreen4(
+                                source: 'personalization',
                                 onComplete: () => Navigator.pop(context))));
                     return;
                   }
@@ -463,6 +464,7 @@ class PersonalizationHubPage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                             builder: (_) => OnboardingScreen4(
+                                source: 'personalization',
                                 onComplete: () => Navigator.pop(context))));
                     return;
                   }
@@ -986,6 +988,7 @@ class PersonalizationHubPage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => OnboardingScreen4(
+                source: 'personalization',
                 onComplete: () => Navigator.pop(context),
               ),
             ),

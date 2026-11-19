@@ -121,7 +121,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           OnboardingScreen1(onSignedIn: _goToNextPage),
           OnboardingScreen2(onNext: _goToNextPage),
           OnboardingScreen3(onNext: _goToNextPage),
-          OnboardingScreen4(onComplete: _completeOnboarding),
+          OnboardingScreen4(source: 'onboarding', onComplete: _completeOnboarding),
         ],
       ),
     );

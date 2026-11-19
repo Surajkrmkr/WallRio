@@ -904,6 +904,7 @@ class _LiveDetailPageState extends State<LiveDetailPage>
                   context,
                   MaterialPageRoute(
                     builder: (context) => OnboardingScreen4(
+                      source: 'live_detail',
                       onComplete: () => Navigator.pop(context),
                     ),
                   ),

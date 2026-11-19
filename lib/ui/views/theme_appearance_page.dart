@@ -44,6 +44,7 @@ class ThemeAppearanceSheet extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => OnboardingScreen4(
+          source: 'theme_appearance',
           onComplete: () => Navigator.pop(context),
         ),
       ),

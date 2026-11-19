@@ -628,7 +628,7 @@ class _NavigationPageState extends State<NavigationPage>
               context,
               MaterialPageRoute(
                 builder: (_) =>
-                    OnboardingScreen4(onComplete: () => Navigator.pop(context)),
+                    OnboardingScreen4(source: 'nav_promo', onComplete: () => Navigator.pop(context)),
               ),
             ),
             child: ClipRRect(

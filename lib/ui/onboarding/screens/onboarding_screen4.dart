@@ -11,7 +11,14 @@ import 'package:wallrio/ui/widgets/export.dart';
 
 class OnboardingScreen4 extends StatefulWidget {
   final VoidCallback onComplete;
-  const OnboardingScreen4({super.key, required this.onComplete});
+
+  /// Where the paywall was opened from, for funnel analytics only.
+  final String source;
+  const OnboardingScreen4({
+    super.key,
+    required this.onComplete,
+    this.source = 'unknown',
+  });
 
   @override
   State<OnboardingScreen4> createState() => _OnboardingScreen4State();
@@ -27,11 +34,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     _selectedProductId = SubscriptionProvider.lifetimeProductId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _purchaseSub = Provider.of<SubscriptionProvider>(context, listen: false)
-          .successPurchasedStream
-          .listen((success) {
-            if (success && mounted) widget.onComplete();
-          });
+      final sub = Provider.of<SubscriptionProvider>(context, listen: false);
+      _purchaseSub = sub.successPurchasedStream.listen((success) {
+        if (success && mounted) widget.onComplete();
+      });
+      PurchaseAnalytics.log('paywall_view', {
+        'entry_point': widget.source,
+        'default_plan': _selectedProductId,
+        'dropoff_active': sub.dropoffActive,
+        'products_loaded': sub.products.length,
+      });
     });
   }
 
@@ -48,6 +60,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   Future<void> _dismiss() async {
     if (_dismissing) return;
     _dismissing = true;
+    PurchaseAnalytics.log('paywall_dismiss', {
+      'entry_point': widget.source,
+      'plan': _selectedProductId,
+    });
     try {
       final claimed = await maybeShowDropoffOffer(context);
       if (claimed || !mounted) return;
@@ -72,7 +88,34 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         break;
       }
     }
-    if (product != null) subProvider.buyProduct(product);
+    PurchaseAnalytics.log('paywall_cta_tap', {
+      'entry_point': widget.source,
+      'plan': _selectedProductId,
+      'product_found': product != null,
+    });
+    if (product != null) {
+      subProvider.buyProduct(product);
+    } else {
+      // The button did nothing for the user: record it so it can be fixed.
+      PurchaseAnalytics.result(
+        _selectedProductId ?? 'none',
+        'launch_failed',
+        code: 'product_not_found',
+        extra: {'entry_point': widget.source},
+      );
+    }
+  }
+
+  /// The user tapped a plan card.
+  void _selectPlan(String id) {
+    if (id != _selectedProductId) {
+      PurchaseAnalytics.log('paywall_plan_select', {
+        'entry_point': widget.source,
+        'plan': id,
+        'previous_plan': _selectedProductId,
+      });
+    }
+    setState(() => _selectedProductId = id);
   }
 
   SubscriptionPlan? _planFor(String id, List<SubscriptionPlan> plans) {
@@ -424,9 +467,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             ? _discountPercent(lifetimeProd.rawPrice, plan.actualPrice)
             : 0;
         return GestureDetector(
-          onTap: () => setState(
-            () => _selectedProductId = SubscriptionProvider.lifetimeProductId,
-          ),
+          onTap: () => _selectPlan(SubscriptionProvider.lifetimeProductId),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -671,7 +712,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             }
 
             return GestureDetector(
-              onTap: () => setState(() => _selectedProductId = selectionId),
+              onTap: () => _selectPlan(selectionId),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: 6),

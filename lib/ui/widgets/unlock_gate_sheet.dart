@@ -144,7 +144,7 @@ class _UnlockGateSheetState extends State<_UnlockGateSheet> {
       host,
       MaterialPageRoute(
         builder: (context) =>
-            OnboardingScreen4(onComplete: () => Navigator.pop(context)),
+            OnboardingScreen4(source: 'unlock_gate', onComplete: () => Navigator.pop(context)),
       ),
     );
   }

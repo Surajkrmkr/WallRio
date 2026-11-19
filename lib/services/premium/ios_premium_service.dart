@@ -8,6 +8,7 @@ import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
 import 'package:wallrio/services/revenuecat_service.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:wallrio/services/purchase_analytics.dart';
 
 class IOSPremiumService implements PremiumService {
   static const String keyPlusMember = 'user_is_plus_member';
@@ -145,24 +146,35 @@ class IOSPremiumService implements PremiumService {
         '[IOSPremiumService] RevenueCat product ${product.id} is not available.',
       );
       ToastWidget.showToast('This product is currently unavailable.');
+      PurchaseAnalytics.result(product.id, 'launch_failed',
+          code: 'product_unavailable');
       return;
     }
 
     isLoading = true;
+    PurchaseAnalytics.launched(
+      productId: product.id,
+      price: product.rawPrice,
+      currency: product.currencyCode,
+    );
     try {
       final result = await revenuecat.Purchases.purchase(
         revenuecat.PurchaseParams.storeProduct(storeProduct),
       );
       if (product.id.startsWith('com.wallrio.collection.')) {
         await _unlockCollection(product.id);
+        PurchaseAnalytics.succeeded(product.id, extra: {'product_kind': 'collection'});
       } else {
         await _applyCustomerInfo(result.customerInfo);
         if (result.customerInfo.entitlements.active.containsKey(
           premiumEntitlementId,
         )) {
+          PurchaseAnalytics.result(product.id, 'purchased');
+          PurchaseAnalytics.succeeded(product.id);
           ToastWidget.showToast('Purchased successfully!');
           _successPurchased.add(true);
         } else {
+          PurchaseAnalytics.result(product.id, 'no_entitlement');
           logger.e(
             '[IOSPremiumService] Purchase completed without active "$premiumEntitlementId" entitlement. '
             'Check RevenueCat product-to-entitlement configuration.',
@@ -176,8 +188,11 @@ class IOSPremiumService implements PremiumService {
       final errorCode = revenuecat.PurchasesErrorHelper.getErrorCode(error);
       if (errorCode == revenuecat.PurchasesErrorCode.purchaseCancelledError) {
         logger.i('[IOSPremiumService] Purchase cancelled by user.');
+        PurchaseAnalytics.result(product.id, 'canceled');
         return;
       }
+      PurchaseAnalytics.result(product.id, 'error',
+          code: errorCode.name, detail: error.message);
       logger.e(
         '[IOSPremiumService] RevenueCat purchase failed for ${product.id}.',
         error: error,
@@ -190,6 +205,8 @@ class IOSPremiumService implements PremiumService {
         error: error,
         stackTrace: stackTrace,
       );
+      PurchaseAnalytics.result(product.id, 'error',
+          code: error.runtimeType.toString(), detail: error.toString());
       ToastWidget.showToast('Unable to complete purchase');
     } finally {
       isLoading = false;

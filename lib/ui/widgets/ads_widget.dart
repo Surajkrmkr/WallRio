@@ -213,7 +213,7 @@ class AdsWidget extends StatefulWidget {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            OnboardingScreen4(onComplete: () => Navigator.pop(context)),
+            OnboardingScreen4(source: 'remove_ads', onComplete: () => Navigator.pop(context)),
       ),
     );
   }

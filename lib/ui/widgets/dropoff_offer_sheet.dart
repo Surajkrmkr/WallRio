@@ -24,6 +24,10 @@ Future<bool> maybeShowDropoffOffer(BuildContext context) async {
   await sub.startDropoff();
   final choice = sub.dropoffChoice;
   if (choice == null || !context.mounted) return false;
+  PurchaseAnalytics.log('dropoff_offer_shown', {
+    'percent_off': choice.percentOff,
+    'offer_id': choice.purchase.offerId,
+  });
 
   final claimed = await CNBottomSheet.show<bool>(
     context: context,
@@ -31,6 +35,10 @@ Future<bool> maybeShowDropoffOffer(BuildContext context) async {
     showDragHandle: Platform.isIOS,
     builder: (_) => _DropoffSheet(choice: choice),
   );
+  if (claimed != true) {
+    // "No thanks", swipe-down, back, or the 2 hour window ending.
+    PurchaseAnalytics.log('dropoff_offer_declined');
+  }
   return claimed == true;
 }
 
@@ -139,7 +147,13 @@ class _DropoffHomeBannerState extends State<DropoffHomeBanner> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () {
+          PurchaseAnalytics.log('dropoff_banner_tap', {
+            'percent_off': choice.percentOff,
+            'seconds_left': left.inSeconds,
+          });
+          widget.onTap();
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
@@ -242,6 +256,10 @@ class _DropoffSheetState extends State<_DropoffSheet> {
 
   void _claim() {
     HapticFeedback.mediumImpact();
+    PurchaseAnalytics.log('dropoff_offer_claim', {
+      'percent_off': widget.choice.percentOff,
+      'offer_id': widget.choice.purchase.offerId,
+    });
     final sub = Provider.of<SubscriptionProvider>(context, listen: false);
     final choice = widget.choice;
     // The purchase token must come from the offer, so find that exact product.

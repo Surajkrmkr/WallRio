@@ -9,6 +9,7 @@ import 'package:wallrio/services/revenuecat_service.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
 import 'package:wallrio/services/premium/android_subscription_access.dart';
 import 'package:wallrio/ui/widgets/export.dart';
+import 'package:wallrio/services/purchase_analytics.dart';
 
 class AndroidPremiumService implements PremiumService {
   final String subscriptionFirebasePath = "purchases";
@@ -56,11 +57,19 @@ class AndroidPremiumService implements PremiumService {
         for (final purchase in data) {
           switch (purchase.status) {
             case PurchaseStatus.canceled:
+              PurchaseAnalytics.result(purchase.productID, 'canceled');
               ToastWidget.showToast('Purchase Cancelled');
               isLoading = false;
               break;
             case PurchaseStatus.error:
               final error = purchase.error;
+              PurchaseAnalytics.result(
+                purchase.productID,
+                'error',
+                code: error?.code,
+                detail: error?.message,
+                extra: {'error_origin': error?.source},
+              );
               if (error != null && error.message.contains('itemAlreadyOwned')) {
                 ToastWidget.showToast(
                     'Fixing a stuck purchase, please try again in a moment');
@@ -71,14 +80,17 @@ class AndroidPremiumService implements PremiumService {
               isLoading = false;
               break;
             case PurchaseStatus.pending:
+              PurchaseAnalytics.result(purchase.productID, 'pending');
               ToastWidget.showToast(
                   'Your purchase is currently pending. Please check back in sometime');
               break;
             case PurchaseStatus.purchased:
+              PurchaseAnalytics.result(purchase.productID, 'purchased');
               ToastWidget.showToast('Purchased successfully');
               _verifyPurchase(purchase);
               break;
             case PurchaseStatus.restored:
+              PurchaseAnalytics.result(purchase.productID, 'restored');
               if (_isStoreEntitlement(purchase.productID)) {
                 _storeEntitlementSeen = true;
               }
@@ -118,10 +130,18 @@ class AndroidPremiumService implements PremiumService {
     try {
       if (_isCollectionProduct(prod.id)) {
         final PurchaseParam purchaseParam = PurchaseParam(productDetails: prod);
+        PurchaseAnalytics.launched(
+          productId: prod.id,
+          price: prod.rawPrice,
+          currency: prod.currencyCode,
+          extra: {'product_kind': 'collection'},
+        );
         await inAppPurchase.buyConsumable(
             purchaseParam: purchaseParam, autoConsume: true);
       } else {
         final PurchaseParam purchaseParam;
+        var kind = 'lifetime';
+        final launchExtra = <String, Object?>{};
         if (prod is GooglePlayProductDetails &&
             prod.subscriptionIndex != null) {
           final offer = prod.productDetails
@@ -153,16 +173,33 @@ class AndroidPremiumService implements PremiumService {
             productDetails: prod,
             offerToken: prod.offerToken,
           );
+          kind = 'subscription';
+          launchExtra['base_plan'] = offer.basePlanId;
+          launchExtra['offer_id'] = offer.offerId;
+          launchExtra['trial_days'] = trialDays;
         } else {
           purchaseParam = PurchaseParam(productDetails: prod);
         }
+        PurchaseAnalytics.launched(
+          productId: prod.id,
+          price: prod.rawPrice,
+          currency: prod.currencyCode,
+          extra: {'product_kind': kind, ...launchExtra},
+        );
         // Play subscriptions and the lifetime product must not be consumed.
         // Google Play then owns renewal and makes the entitlement available
         // again through restorePurchases().
-        await inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+        final started =
+            await inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+        if (!started) {
+          PurchaseAnalytics.result(prod.id, 'launch_failed',
+              code: 'launch_returned_false', extra: {'product_kind': kind});
+        }
       }
     } on Exception catch (e) {
       logger.e(e);
+      PurchaseAnalytics.result(prod.id, 'launch_failed',
+          code: e.runtimeType.toString(), detail: e.toString());
     }
   }
 
@@ -211,11 +248,18 @@ class AndroidPremiumService implements PremiumService {
       if (_isCollectionProduct(purchase.productID)) {
         final collectionId = purchase.productID.split('.').last;
         purchasedCollections.add(collectionId);
+        PurchaseAnalytics.succeeded(purchase.productID,
+            extra: {'product_kind': 'collection'});
         _successPurchased.sink.add(true);
         return;
       }
 
       await _grantStoreEntitlement(purchase);
+      PurchaseAnalytics.succeeded(purchase.productID, extra: {
+        'product_kind': purchase.productID.contains('lifetime')
+            ? 'lifetime'
+            : 'subscription',
+      });
       _successPurchased.sink.add(true);
     } catch (error) {
       logger.e(error);
@@ -227,10 +271,12 @@ class AndroidPremiumService implements PremiumService {
   @override
   Future<void> checkPastPurchases({String? email}) async {
     isLoading = true;
+    var hadPlaySource = false;
     try {
       final prefs = await SharedPreferences.getInstance();
       final hasPlayEntitlement =
           prefs.getString(keyEntitlementSource) == 'play';
+      hadPlaySource = hasPlayEntitlement;
       if (hasPlayEntitlement) {
         // Clear only entitlements previously established by Play. Legacy
         // Firebase entitlements are deliberately left untouched.
@@ -311,6 +357,15 @@ class AndroidPremiumService implements PremiumService {
       logger.e(error);
     } finally {
       isLoading = false;
+      // Logging only. One event per launch: did a user who had a Play
+      // entitlement end up without access? (The restore clears Pro first and
+      // grants it again only if Play returns the purchase.)
+      PurchaseAnalytics.log('entitlement_check', {
+        'had_play_source': hadPlaySource,
+        'store_entitlement_seen': _storeEntitlementSeen,
+        'is_pro': UserProfile.plusMember,
+        'lost_access': hadPlaySource && !UserProfile.plusMember,
+      });
       // Logging only: compares RevenueCat's view with the app's own decision.
       RevenueCatService.logShadowComparison(legacyIsPro: UserProfile.plusMember);
     }

@@ -1222,6 +1222,7 @@ class __AnimatedSubscriptionBannerState
             context,
             MaterialPageRoute(
               builder: (_) => OnboardingScreen4(
+                source: 'settings',
                 onComplete: () =>
                     Navigator.popUntil(context, (route) => route.isFirst),
               ),

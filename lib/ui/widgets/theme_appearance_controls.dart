@@ -24,6 +24,7 @@ void _openPaywall(BuildContext context) {
     context,
     MaterialPageRoute(
       builder: (_) => OnboardingScreen4(
+        source: 'theme_controls',
         onComplete: () => Navigator.pop(context),
       ),
     ),

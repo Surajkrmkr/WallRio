@@ -108,6 +108,7 @@ class _HomeWidgetsSheetState extends State<HomeWidgetsSheet>
       context,
       MaterialPageRoute(
         builder: (_) => OnboardingScreen4(
+          source: 'home_widgets',
           onComplete: () => Navigator.pop(context),
         ),
       ),

@@ -669,6 +669,7 @@ class _AutoWallpaperSettingsPageState extends State<AutoWallpaperSettingsPage>
                       context,
                       MaterialPageRoute(
                         builder: (context) => OnboardingScreen4(
+                          source: 'auto_wallpaper',
                           onComplete: () => Navigator.pop(context),
                         ),
                       ),
