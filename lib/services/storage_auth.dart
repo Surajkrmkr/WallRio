@@ -4,6 +4,11 @@ import 'package:wallrio/services/packages/export.dart';
 
 /// Firebase Storage only serves wallpapers to signed-in requests.
 ///
+/// Wallpapers now come from the public R2 bucket (wallrio.teamshadow.tech), which
+/// needs no auth, so this only kicks in for a URL still pointing at Firebase
+/// Storage. Sign-in is lazy: nothing happens until such a URL is requested.
+/// Delete this once no JSON references firebasestorage.googleapis.com.
+///
 /// Google/Apple users send their own ID token. Guests get one from a separate
 /// Firebase app instance signed in anonymously, so the main app's sign-in state
 /// is untouched. Anonymous sign-ups are capped per IP per hour, which is why

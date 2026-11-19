@@ -134,7 +134,6 @@ Future<void> initializationHandler() async {
   } catch (e) {
     if (!e.toString().contains('duplicate-app')) rethrow;
   }
-  StorageAuth.warmUp();
   if (Platform.isAndroid) {
     // Observe-only; does nothing unless a RevenueCat Android key is supplied.
     try {

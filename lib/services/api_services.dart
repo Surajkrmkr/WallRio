@@ -8,11 +8,11 @@ class ApiServices {
   static final rioJson = "rio.Json";
   static final collectionJson = "collection.json";
 
-  // JSON lives in Firebase Storage under wallriojson/ (moved off GitLab raw, which rate-limits with 429).
-  static const jsonBaseUrl =
-      'https://firebasestorage.googleapis.com/v0/b/wallrio-e551b.firebasestorage.app/o/wallriojson%2F';
+  // JSON lives in the public Cloudflare R2 bucket "wallrio" under wallriojson/
+  // (moved off Firebase Storage to avoid egress charges).
+  static const jsonBaseUrl = 'https://wallrio.teamshadow.tech/wallriojson/';
 
-  static String jsonUrl(String file) => '$jsonBaseUrl$file?alt=media';
+  static String jsonUrl(String file) => '$jsonBaseUrl$file';
 
   /// Loads a JSON file through the wallpaper cache. Within max-age (5 min) the
   /// cached copy is used; after that it is revalidated by ETag, so an unchanged
