@@ -583,7 +583,7 @@ class _NavigationPageState extends State<NavigationPage>
           return const SizedBox.shrink();
         }
         // The limited-time offer has the home strip; don't compete with it.
-        if (subProvider.dropoffActive && subProvider.dropoffChoice != null) {
+        if (subProvider.dropoffActive && subProvider.dropoffAvailable) {
           return const SizedBox.shrink();
         }
 

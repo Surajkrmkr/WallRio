@@ -7,6 +7,9 @@ import 'package:wallrio/model/export.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
+import 'package:wallrio/services/premium/limited_offers.dart';
+import 'package:wallrio/services/premium/pass_access.dart';
+import 'package:wallrio/services/purchase_analytics.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class OnboardingScreen4 extends StatefulWidget {
@@ -31,7 +34,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   @override
   void initState() {
     super.initState();
-    _selectedProductId = SubscriptionProvider.lifetimeProductId;
+    // Lifetime (₹999) almost never converts as a default, so Android starts on
+    // the 1-year plan. If the user skips, the exit offer is the same plan at
+    // about 40% off, which only reads as a discount when this is what they saw
+    // first. Other platforms keep Lifetime selected.
+    _selectedProductId = (Platform.isAndroid && PassAccess.passesOnly)
+        ? PassAccess.yearlyId
+        : SubscriptionProvider.lifetimeProductId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final sub = Provider.of<SubscriptionProvider>(context, listen: false);
@@ -88,6 +97,16 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
         break;
       }
     }
+    if (product != null && PassAccess.isOfferId(product.id)) {
+      // Bought from the offer card on the paywall rather than the sheet.
+      PurchaseAnalytics.offerClaimed(
+        kind: (subProvider.activeOfferKind ?? LimitedOfferKind.exit)
+            .analyticsName,
+        surface: 'paywall',
+        productId: product.id,
+        percentOff: subProvider.dropoffPassOffer?.percentOff,
+      );
+    }
     PurchaseAnalytics.log('paywall_cta_tap', {
       'entry_point': widget.source,
       'plan': _selectedProductId,
@@ -143,7 +162,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
 
   String? _perDayPrice(ProductDetails product) {
     if (Platform.isIOS) return null;
-    final days = _daysForProduct(product.id);
+    // The offer card shows the struck-through price instead of a per-day line.
+    if (PassAccess.isOfferId(product.id)) return null;
+    // Passes know their real length (the mid pass is 120 days, not 84).
+    final days = PassAccess.days(product.id) ?? _daysForProduct(product.id);
     if (days == null || days <= 0) return null;
     final symbol = product.price.replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
     final perDay = product.rawPrice / days;
@@ -178,6 +200,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   /// Plain-language terms shown under the button. Mentions the trial or
   /// discount first when the selected plan has one.
   String _termsText(String id, SubscriptionProvider sub) {
+    if (PassAccess.isPass(id)) return PassAccess.terms(id);
     final store = Platform.isIOS ? 'App Store settings' : 'Google Play';
     final match = _productFor(id, sub);
     final choice = match == null ? null : sub.choiceFor(match);
@@ -201,6 +224,9 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
     if (!Platform.isIOS) {
       if (_selectedProductId == SubscriptionProvider.lifetimeProductId) {
         return 'Get Lifetime Access';
+      }
+      if (PassAccess.isPass(_selectedProductId!)) {
+        return 'Get ${PassAccess.title(_selectedProductId!)} • ${match.price}';
       }
       final choice = sub.choiceFor(match);
       if (choice?.kind == OfferKind.freeTrial) {
@@ -232,13 +258,25 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   /// Yearly plan instead of Lifetime. Done once, so the user can still pick
   /// another plan afterwards.
   void _maybeSelectOffer(SubscriptionProvider sub) {
-    if (_offerAutoSelected || !sub.dropoffActive || sub.dropoffChoice == null) {
+    if (_offerAutoSelected || !sub.dropoffActive || !sub.dropoffAvailable) {
       return;
     }
     _offerAutoSelected = true;
-    if (_selectedProductId == _yearlyId) return;
+    final pass = sub.dropoffPassOffer;
+    if (pass != null && sub.activeOfferKind != null) {
+      PurchaseAnalytics.offerShown(
+        kind: sub.activeOfferKind!.analyticsName,
+        surface: 'paywall',
+        productId: pass.offer.id,
+        percentOff: pass.percentOff,
+      );
+    }
+    final target = PassAccess.passesOnly
+        ? (pass?.offer.id ?? PassAccess.yearlyDropoffId)
+        : _yearlyId;
+    if (_selectedProductId == target) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _selectedProductId = _yearlyId);
+      if (mounted) setState(() => _selectedProductId = target);
     });
   }
 
@@ -378,7 +416,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
   /// True while the limited-time offer is live, so other promos stay quiet.
   bool get _offerLive {
     final sub = Provider.of<SubscriptionProvider>(context, listen: false);
-    return sub.dropoffActive && sub.dropoffChoice != null;
+    return sub.dropoffActive && sub.dropoffAvailable;
   }
 
   Widget _buildDiscountChip(int percent) {
@@ -588,6 +626,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
       _basePlanId(product).contains('month');
 
   int _productOrderIndex(ProductDetails product) {
+    // Passes: longest first, matching how the plans read top to bottom.
+    if (PassAccess.isPass(product.id)) {
+      return 10 - ((PassAccess.days(product.id) ?? 0) ~/ 28).clamp(0, 9);
+    }
     if (_isYearlyPlan(product)) return 1;
     if (_isQuarterlyPlan(product)) return 2;
     if (_isMonthlyPlan(product)) return 3;
@@ -619,7 +661,10 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                 .where(
                   (p) =>
                       p.id != SubscriptionProvider.lifetimeProductId &&
-                      !p.id.contains('collection'),
+                      !p.id.contains('collection') &&
+                      !(Platform.isAndroid &&
+                          PassAccess.passesOnly &&
+                          p.id == SubscriptionProvider.androidSubscriptionProductId),
                 )
                 .toList()
               ..sort(
@@ -631,7 +676,11 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           children: others.map((product) {
             final selectionId = SubscriptionProvider.selectionId(product);
             final isSelected = _selectedProductId == selectionId;
-            final plan = _planFor(product.id, plans);
+            // A pass has no list price to cross out: it is sold at the Play
+            // price only, so no struck-through "original" price or discount.
+            final plan = PassAccess.isPass(product.id)
+                ? null
+                : _planFor(product.id, plans);
             final choice = subProvider.choiceFor(product);
             // Renewal price: never the trial's "free" price.
             final priceText = subProvider.priceOf(product);
@@ -646,7 +695,13 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
             String subtitle;
             Widget? badgeWidget;
 
-            if (_isYearlyPlan(product)) {
+            if (PassAccess.isPass(product.id)) {
+              displayTitle = PassAccess.title(product.id);
+              subtitle = PassAccess.subtitle(product.id);
+              badgeWidget = _offerBadge(
+                product.id == PassAccess.yearlyId ? 'BEST VALUE' : 'NO RENEWAL',
+              );
+            } else if (_isYearlyPlan(product)) {
               displayTitle = "Yearly";
               subtitle = "Billed annually. Full access.";
               badgeWidget = Container(
@@ -689,9 +744,11 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   '${choice.intro!.formattedPrice} for the ${choice.introPeriodText!}, then $priceText';
               badgeWidget = _offerBadge('${choice.percentOff}% OFF');
             }
-            final isLimitedOffer = choice != null &&
-                choice.kind == OfferKind.discount &&
-                PlanOffers.isDropoff(choice.purchase);
+            final isOfferPass = PassAccess.isOfferId(product.id);
+            final isLimitedOffer = isOfferPass ||
+                (choice != null &&
+                    choice.kind == OfferKind.discount &&
+                    PlanOffers.isDropoff(choice.purchase));
             if (isLimitedOffer) {
               badgeWidget = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -700,7 +757,7 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '${choice.percentOff}% OFF · 2 HRS',
+                  '${isOfferPass ? subProvider.dropoffPassOffer?.percentOff : choice?.percentOff}% OFF',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
@@ -774,6 +831,17 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        if (isOfferPass &&
+                            subProvider.dropoffPassOffer != null)
+                          Text(
+                            subProvider.dropoffPassOffer!.regular.price,
+                            style: TextStyle(
+                              color: _subColor,
+                              fontSize: 11,
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: _subColor,
+                            ),
+                          ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -971,10 +1039,14 @@ class _OnboardingScreen4State extends State<OnboardingScreen4> {
           _buildTrustItem(
             _selectedProductId == SubscriptionProvider.lifetimeProductId
                 ? Icons.done_all_rounded
-                : Icons.event_repeat_rounded,
+                : (PassAccess.isPass(_selectedProductId ?? '')
+                    ? Icons.block_rounded
+                    : Icons.event_repeat_rounded),
             _selectedProductId == SubscriptionProvider.lifetimeProductId
                 ? "Pay once, forever"
-                : "Cancel anytime",
+                : (PassAccess.isPass(_selectedProductId ?? '')
+                    ? "No auto-renewal"
+                    : "Cancel anytime"),
           ),
         ],
       ),

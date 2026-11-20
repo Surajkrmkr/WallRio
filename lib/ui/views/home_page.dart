@@ -8,6 +8,8 @@ import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/export.dart';
 import 'package:wallrio/services/packages/export.dart';
 import 'package:wallrio/ui/onboarding/export.dart';
+import 'package:wallrio/ui/widgets/dropoff_offer_sheet.dart';
+import 'package:wallrio/ui/widgets/pass_ending_banner.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,7 +23,9 @@ class _HomePageState extends State<HomePage> {
   int _filterIndex = 0;
   bool _isPrefetched = false;
   Timer? _popupTimer;
+  Timer? _offerTimer;
   static bool _hasScheduledPopupThisSession = false;
+  static bool _checkedLimitedOfferThisSession = false;
 
   static const _filters = ['All', 'Free', 'Pro', 'Live'];
 
@@ -32,6 +36,34 @@ class _HomePageState extends State<HomePage> {
       if (mounted) {
         _prefetchMedia();
         _schedulePromotionalPopup();
+        _scheduleLimitedOffer();
+      }
+    });
+  }
+
+  /// A few seconds after the home screen opens, a returning customer (their
+  /// pass ended) or a user who never bought (days after the exit offer) may
+  /// get one limited offer. Checked once per app session.
+  void _scheduleLimitedOffer({int attempt = 0}) {
+    if (_checkedLimitedOfferThisSession) return;
+    _offerTimer?.cancel();
+    _offerTimer = Timer(Duration(seconds: attempt == 0 ? 9 : 15), () async {
+      if (!mounted) return;
+      // Never on top of another screen or dialog. Looking the route up can
+      // throw while this screen is not active, so treat that as "not now".
+      var onTop = false;
+      try {
+        onTop = ModalRoute.of(context)?.isCurrent == true;
+      } catch (_) {}
+      if (!onTop) {
+        if (attempt < 4) _scheduleLimitedOffer(attempt: attempt + 1);
+        return;
+      }
+      _checkedLimitedOfferThisSession = true;
+      try {
+        await maybeShowLimitedOffer(context);
+      } catch (_) {
+        // An offer must never break the home screen.
       }
     });
   }
@@ -54,6 +86,8 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _popupTimer?.cancel();
     _popupTimer = null;
+    _offerTimer?.cancel();
+    _offerTimer = null;
     super.dispose();
   }
 
@@ -132,6 +166,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+                const SliverToBoxAdapter(child: PassEndingBanner()),
                 SliverToBoxAdapter(child: BannerWidget()),
                 SliverToBoxAdapter(child: _buildFilterRow()),
                 if (_filterIndex == 0) ...[

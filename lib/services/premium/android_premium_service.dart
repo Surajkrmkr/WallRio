@@ -8,6 +8,9 @@ import 'package:wallrio/services/plan_offers.dart';
 import 'package:wallrio/services/revenuecat_service.dart';
 import 'package:wallrio/services/premium/premium_service.dart';
 import 'package:wallrio/services/premium/android_subscription_access.dart';
+import 'package:wallrio/services/premium/entitlement_decision.dart';
+import 'package:wallrio/services/premium/pass_access.dart';
+import 'package:wallrio/services/premium/pass_lifecycle.dart';
 import 'package:wallrio/ui/widgets/export.dart';
 import 'package:wallrio/services/purchase_analytics.dart';
 
@@ -91,7 +94,10 @@ class AndroidPremiumService implements PremiumService {
               break;
             case PurchaseStatus.restored:
               PurchaseAnalytics.result(purchase.productID, 'restored');
-              if (_isStoreEntitlement(purchase.productID)) {
+              // An expired pass is not an entitlement: it is consumed below so
+              // the user can buy another one.
+              if (_isStoreEntitlement(purchase.productID) &&
+                  _passStillActive(purchase)) {
                 _storeEntitlementSeen = true;
               }
               _consumeRestoredPurchase(purchase);
@@ -220,8 +226,34 @@ class AndroidPremiumService implements PremiumService {
     }
   }
 
+  /// Whether a pass is still within its length. Anything that is not a pass
+  /// counts as active.
+  bool _passStillActive(PurchaseDetails purchase) =>
+      PassAccess.isActive(purchase.productID, _purchaseDate(purchase));
+
+  /// A pass stays "owned" in Play until the app consumes it, and Play will not
+  /// sell the same product again while it is owned. Once the pass has run out,
+  /// consume it so the user can buy a new one.
+  Future<void> _consumeExpiredPass(PurchaseDetails purchase) async {
+    final addition = inAppPurchase
+        .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+    await addition.consumePurchase(purchase);
+    if (purchase.pendingCompletePurchase) {
+      await inAppPurchase.completePurchase(purchase);
+    }
+    // The pass has ended: remember that, so the welcome-back offer can follow.
+    final end = PassAccess.expiry(purchase.productID, _purchaseDate(purchase));
+    if (end != null) await PassLifecycle.record(purchase.productID, end);
+    logger.i('Consumed expired pass ${purchase.productID}.');
+  }
+
   Future<void> _consumeRestoredPurchase(PurchaseDetails purchase) async {
     try {
+      if (PassAccess.isPass(purchase.productID) &&
+          !_passStillActive(purchase)) {
+        await _consumeExpiredPass(purchase);
+        return;
+      }
       if (!_isCollectionProduct(purchase.productID)) {
         if (purchase.pendingCompletePurchase) {
           await inAppPurchase.completePurchase(purchase);
@@ -276,7 +308,29 @@ class AndroidPremiumService implements PremiumService {
       final prefs = await SharedPreferences.getInstance();
       final hasPlayEntitlement =
           prefs.getString(keyEntitlementSource) == 'play';
+      // Never take Pro away from someone the store may still be billing just
+      // because the store could not be reached. Without a connection we keep
+      // the access they already have and try again next launch.
       hadPlaySource = hasPlayEntitlement;
+      final wasPlusMember = prefs.getBool(keyPlusMember) ?? false;
+      final savedExpiry =
+          DateTime.tryParse(prefs.getString(keyExpiryDate) ?? '')?.toLocal();
+      final keepIfUnreachable = EntitlementDecision.keepWhenStoreUnreachable(
+        wasPlusMember: wasPlusMember,
+        grantedByPlay: hasPlayEntitlement,
+        savedExpiry: savedExpiry,
+      );
+      if (hasPlayEntitlement && !await inAppPurchase.isAvailable()) {
+        if (keepIfUnreachable) {
+          logger.w('Play unavailable: keeping existing Pro access.');
+          return;
+        }
+        logger.w('Play unavailable and saved access has expired.');
+      }
+      final hadCollectionAccess =
+          prefs.getBool('user_has_collection_access') ?? false;
+      final previousExpiryEstimate = _playExpiryEstimate;
+      final previousDaysLeft = _subscriptionDaysLeft;
       if (hasPlayEntitlement) {
         // Clear only entitlements previously established by Play. Legacy
         // Firebase entitlements are deliberately left untouched.
@@ -289,7 +343,22 @@ class AndroidPremiumService implements PremiumService {
       // This is the source of truth for new Android purchases. The purchase
       // stream will deliver active subscriptions and lifetime purchases.
       _storeEntitlementSeen = false;
-      await inAppPurchase.restorePurchases();
+      try {
+        await inAppPurchase.restorePurchases();
+      } catch (error) {
+        // The check itself failed, so it proves nothing about the purchase.
+        // Put back exactly what the user had.
+        logger.e('restorePurchases failed, keeping access: $error');
+        if (hasPlayEntitlement && keepIfUnreachable) {
+          UserProfile.setPlusMemberInfo(true,
+              hasCollectionAccess: hadCollectionAccess);
+          await prefs.setBool(keyPlusMember, true);
+          await prefs.setBool('user_has_collection_access', hadCollectionAccess);
+          _playExpiryEstimate = previousExpiryEstimate;
+          _subscriptionDaysLeft = previousDaysLeft;
+        }
+        return;
+      }
       if (_storeEntitlementSeen ||
           prefs.getString(keyEntitlementSource) == 'play') {
         return;
@@ -401,15 +470,28 @@ class AndroidPremiumService implements PremiumService {
       _selectedBasePlanId ??= prefs.getString(keyPlayBasePlanId);
       _selectedBillingPeriod ??= prefs.getString(keyPlayBillingPeriod);
     }
+    // Plan details only describe a wallrio_pro subscription. A pass or
+    // lifetime purchase must not inherit a base plan left over from an earlier
+    // subscription attempt in this session.
+    final isPlaySubscription = purchase.productID == 'wallrio_pro';
     final hasCollectionAccess = AndroidSubscriptionAccess.hasCollectionAccess(
       productId: purchase.productID,
-      basePlanId: _selectedBasePlanId,
+      basePlanId: isPlaySubscription ? _selectedBasePlanId : null,
     );
     UserProfile.setPlusMemberInfo(true,
         hasCollectionAccess: hasCollectionAccess);
     await prefs.setBool(keyPlusMember, true);
     await prefs.setBool('user_has_collection_access', hasCollectionAccess);
     await prefs.setString(keyEntitlementSource, 'play');
+    // Remember when a pass ends so the app can remind the user before it does
+    // and welcome them back after. Lifetime and subscriptions need neither.
+    if (PassAccess.isPass(purchase.productID)) {
+      final end =
+          PassAccess.expiry(purchase.productID, _purchaseDate(purchase));
+      if (end != null) await PassLifecycle.record(purchase.productID, end);
+    } else {
+      await PassLifecycle.clear();
+    }
     // Observe-only: let RevenueCat see this purchase (no-op unless shadow
     // mode is running).
     RevenueCatService.syncAndroidPurchases();
@@ -422,10 +504,10 @@ class AndroidPremiumService implements PremiumService {
       return;
     }
 
-    if (_selectedBasePlanId != null) {
+    if (isPlaySubscription && _selectedBasePlanId != null) {
       await prefs.setString(keyPlayBasePlanId, _selectedBasePlanId!);
     }
-    if (_selectedBillingPeriod != null) {
+    if (isPlaySubscription && _selectedBillingPeriod != null) {
       await prefs.setString(keyPlayBillingPeriod, _selectedBillingPeriod!);
     }
 
@@ -448,7 +530,8 @@ class AndroidPremiumService implements PremiumService {
 
     // A free trial runs before the first paid period, so the next renewal
     // lands that many days later than purchase date + period.
-    final trialDays = prefs.getInt(keyPlayTrialDays) ?? 0;
+    final trialDays =
+        isPlaySubscription ? (prefs.getInt(keyPlayTrialDays) ?? 0) : 0;
     final adjustedExpiry = trialDays > 0
         ? estimatedExpiry.add(Duration(days: trialDays))
         : estimatedExpiry;

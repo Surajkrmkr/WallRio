@@ -9,6 +9,9 @@ import 'package:wallrio/model/user_profile_model.dart';
 import 'package:wallrio/provider/export.dart';
 import 'package:wallrio/services/app_theme_tokens.dart';
 import 'package:wallrio/services/export.dart';
+import 'package:wallrio/services/premium/limited_offers.dart';
+import 'package:wallrio/services/premium/pass_access.dart';
+import 'package:wallrio/services/purchase_analytics.dart';
 import 'package:wallrio/services/theme_data.dart';
 import 'package:wallrio/ui/widgets/glass_sheet_background.dart';
 
@@ -23,22 +26,47 @@ Future<bool> maybeShowDropoffOffer(BuildContext context) async {
   if (!sub.shouldShowDropoff) return false;
   await sub.startDropoff();
   final choice = sub.dropoffChoice;
-  if (choice == null || !context.mounted) return false;
+  final pass = sub.dropoffPassOffer;
+  if ((PassAccess.passesOnly ? pass == null : choice == null) ||
+      !context.mounted) {
+    return false;
+  }
+
   PurchaseAnalytics.log('dropoff_offer_shown', {
-    'percent_off': choice.percentOff,
-    'offer_id': choice.purchase.offerId,
+    'percent_off': pass?.percentOff ?? choice?.percentOff,
+    'offer_id': choice?.purchase.offerId,
   });
 
   final claimed = await CNBottomSheet.show<bool>(
     context: context,
     backgroundColor: Colors.transparent,
     showDragHandle: Platform.isIOS,
-    builder: (_) => _DropoffSheet(choice: choice),
+    builder: (_) => _DropoffSheet(choice: choice, pass: pass),
   );
   if (claimed != true) {
     // "No thanks", swipe-down, back, or the 2 hour window ending.
     PurchaseAnalytics.log('dropoff_offer_declined');
   }
+  return claimed == true;
+}
+
+/// Shows the comeback or nudge offer when one is due, without the user asking
+/// for it (called when the home screen opens). Each opens its window once and
+/// is only shown when Play can sell it. Returns true if the user tapped it.
+Future<bool> maybeShowLimitedOffer(BuildContext context) async {
+  final sub = Provider.of<SubscriptionProvider>(context, listen: false);
+  final kind = sub.nextUnpromptedOffer;
+  if (kind == null) return false;
+  await sub.startLimitedOffer(kind);
+  final pass = sub.passOfferFor(kind);
+  if (pass == null || !context.mounted) return false;
+
+  final claimed = await CNBottomSheet.show<bool>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    showDragHandle: Platform.isIOS,
+    builder: (_) => _DropoffSheet(choice: null, pass: pass),
+  );
   return claimed == true;
 }
 
@@ -71,10 +99,11 @@ class _DropoffCountdownBannerState extends State<DropoffCountdownBanner> {
   @override
   Widget build(BuildContext context) {
     final sub = Provider.of<SubscriptionProvider>(context);
-    if (!sub.dropoffActive || sub.dropoffChoice == null) {
+    final kind = sub.activeOfferKind;
+    if (kind == null || !sub.dropoffAvailable) {
       return const SizedBox.shrink();
     }
-    final left = DropoffOffer.remaining();
+    final left = LimitedOffers.remaining(kind);
     if (left == Duration.zero) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -135,21 +164,40 @@ class _DropoffHomeBannerState extends State<DropoffHomeBanner> {
   Widget build(BuildContext context) {
     final sub = Provider.of<SubscriptionProvider>(context);
     final choice = sub.dropoffChoice;
-    final left = DropoffOffer.remaining();
-    if (!sub.dropoffActive ||
-        choice == null ||
+    final kind = sub.activeOfferKind;
+    final left = kind == null ? Duration.zero : LimitedOffers.remaining(kind);
+    if (kind == null ||
+        !sub.dropoffAvailable ||
         left == Duration.zero ||
         UserProfile.plusMember) {
       return const SizedBox.shrink();
     }
     const accent = Color(0xFFFF6B35);
-    final percent = choice.percentOff;
+    final percent = PassAccess.passesOnly
+        ? sub.dropoffPassOffer?.percentOff
+        : choice?.percentOff;
+    PurchaseAnalytics.offerShown(
+      kind: kind.analyticsName,
+      surface: 'home_banner',
+      productId: sub.dropoffPassOffer?.offer.id,
+      percentOff: percent,
+    );
+    final planName = sub.dropoffPassOffer == null
+        ? 'WallRio Pro'
+        : PassAccess.title(sub.dropoffPassOffer!.offer.id);
+    final headline = percent == null
+        ? 'Limited-time Pro offer'
+        : kind == LimitedOfferKind.comeback
+            ? 'Welcome back: $percent% off $planName'
+            : kind == LimitedOfferKind.nudge
+                ? '$percent% off $planName'
+                : '$percent% off WallRio Pro';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: GestureDetector(
         onTap: () {
           PurchaseAnalytics.log('dropoff_banner_tap', {
-            'percent_off': choice.percentOff,
+            'percent_off': percent,
             'seconds_left': left.inSeconds,
           });
           widget.onTap();
@@ -179,9 +227,7 @@ class _DropoffHomeBannerState extends State<DropoffHomeBanner> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      percent == null
-                          ? 'Limited-time Pro offer'
-                          : '$percent% off WallRio Pro',
+                      headline,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -225,8 +271,9 @@ class _DropoffHomeBannerState extends State<DropoffHomeBanner> {
 }
 
 class _DropoffSheet extends StatefulWidget {
-  final PlanChoice choice;
-  const _DropoffSheet({required this.choice});
+  final PlanChoice? choice;
+  final DropoffPassOffer? pass;
+  const _DropoffSheet({required this.choice, required this.pass});
 
   @override
   State<_DropoffSheet> createState() => _DropoffSheetState();
@@ -235,12 +282,21 @@ class _DropoffSheet extends StatefulWidget {
 class _DropoffSheetState extends State<_DropoffSheet> {
   Timer? _tick;
 
+  /// Which offer this sheet is selling (exit, comeback or nudge).
+  LimitedOfferKind get _kind => widget.pass?.kind ?? LimitedOfferKind.exit;
+
   @override
   void initState() {
     super.initState();
+    PurchaseAnalytics.offerShown(
+      kind: _kind.analyticsName,
+      surface: 'sheet',
+      productId: widget.pass?.offer.id,
+      percentOff: widget.pass?.percentOff,
+    );
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      if (DropoffOffer.remaining() == Duration.zero) {
+      if (LimitedOffers.remaining(_kind) == Duration.zero) {
         Navigator.of(context).pop(false);
         return;
       }
@@ -257,11 +313,23 @@ class _DropoffSheetState extends State<_DropoffSheet> {
   void _claim() {
     HapticFeedback.mediumImpact();
     PurchaseAnalytics.log('dropoff_offer_claim', {
-      'percent_off': widget.choice.percentOff,
-      'offer_id': widget.choice.purchase.offerId,
+      'percent_off': widget.pass?.percentOff ?? widget.choice?.percentOff,
+      'offer_id': widget.choice?.purchase.offerId,
     });
     final sub = Provider.of<SubscriptionProvider>(context, listen: false);
-    final choice = widget.choice;
+    final pass = widget.pass;
+    if (PassAccess.passesOnly && pass != null) {
+      PurchaseAnalytics.offerClaimed(
+        kind: _kind.analyticsName,
+        surface: 'sheet',
+        productId: pass.offer.id,
+        percentOff: pass.percentOff,
+      );
+      Navigator.of(context).pop(true);
+      sub.buyProduct(pass.offer);
+      return;
+    }
+    final choice = widget.choice!;
     // The purchase token must come from the offer, so find that exact product.
     ProductDetails? product;
     for (final p in sub.products) {
@@ -281,10 +349,32 @@ class _DropoffSheetState extends State<_DropoffSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetColor = isDark ? bgDark2Color : Colors.white;
     final choice = widget.choice;
-    final intro = choice.intro!;
-    final percent = choice.percentOff;
-    final left = DropoffOffer.remaining();
+    final pass = widget.pass;
+    final isPass = PassAccess.passesOnly && pass != null;
+    final percent = isPass ? pass.percentOff : choice?.percentOff;
+    final regularPrice =
+        isPass ? pass.regular.price : choice!.recurring.formattedPrice;
+    final offerPrice = isPass ? pass.offer.price : choice!.intro!.formattedPrice;
+    final left = LimitedOffers.remaining(_kind);
     const accent = Color(0xFFFF6B35);
+    final planName = isPass ? PassAccess.title(pass.offer.id) : '';
+    final days = isPass ? PassAccess.days(pass.offer.id) : null;
+    final title = _kind == LimitedOfferKind.comeback
+        ? 'Welcome back'
+        : _kind == LimitedOfferKind.nudge
+            ? 'Still thinking about Pro?'
+            : 'Wait, one-time offer';
+    final subtitle = percent == null
+        ? 'A special price on WallRio Pro, just for you.'
+        : isPass
+            ? (_kind == LimitedOfferKind.comeback
+                ? 'Your Pro has ended. Get $percent% off $planName: '
+                    'one payment, no renewal.'
+                : _kind == LimitedOfferKind.nudge
+                    ? 'The Pro wallpapers you looked at are still locked. '
+                        '$percent% off $planName for the next 24 hours.'
+                    : '$percent% off $planName. One payment, no renewal.')
+            : '$percent% off your first ${choice!.introPeriodText == null ? 'year' : choice.introPeriodText!.replaceFirst('first ', '')} of WallRio Pro.';
 
     return glassSheetBackground(
       Container(
@@ -323,7 +413,7 @@ class _DropoffSheetState extends State<_DropoffSheet> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Wait, one-time offer',
+                title,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 24,
@@ -332,9 +422,7 @@ class _DropoffSheetState extends State<_DropoffSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                percent == null
-                    ? 'A special price on WallRio Pro, just for you.'
-                    : '$percent% off your first ${choice.introPeriodText == null ? 'year' : choice.introPeriodText!.replaceFirst('first ', '')} of WallRio Pro.',
+                subtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: colors.textSecondary, fontSize: 14.5),
               ),
@@ -344,7 +432,7 @@ class _DropoffSheetState extends State<_DropoffSheet> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    choice.recurring.formattedPrice,
+                    regularPrice,
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontSize: 18,
@@ -353,7 +441,7 @@ class _DropoffSheetState extends State<_DropoffSheet> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    intro.formattedPrice,
+                    offerPrice,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 34,
@@ -385,15 +473,21 @@ class _DropoffSheetState extends State<_DropoffSheet> {
                 ),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () {
+                  PurchaseAnalytics.offerDismissed(
+                      kind: _kind.analyticsName, surface: 'sheet');
+                  Navigator.of(context).pop(false);
+                },
                 child: Text(
                   'No thanks',
                   style: TextStyle(color: colors.textSecondary),
                 ),
               ),
               Text(
-                'Then ${choice.recurring.formattedPrice} per year until canceled. '
-                'Cancel anytime in Google Play.',
+                isPass
+                    ? 'One-time payment for ${days ?? 365} days of Pro. It does not renew.'
+                    : 'Then $regularPrice per year until canceled. '
+                        'Cancel anytime in Google Play.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
               ),

@@ -29,6 +29,9 @@ class DropoffOffer {
     _loaded = true;
   }
 
+  /// Milliseconds since epoch of when the window opened, or null.
+  static int? get startedAtMs => _startedAt;
+
   /// The offer has been shown before (open or expired).
   static bool get wasShown => _startedAt != null;
 
